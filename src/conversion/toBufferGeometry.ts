@@ -1,7 +1,7 @@
 import { BufferGeometry, Float32BufferAttribute, Uint32BufferAttribute } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Face } from '../core/Face';
-import { triangulateFace } from '../utils/mathUtils';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Face } from '../core/Face.ts';
+import { triangulateFace } from '../utils/mathUtils.ts';
 
 /**
  * Options for converting to BufferGeometry
@@ -38,8 +38,7 @@ export function toBufferGeometry(
   const indices: number[] = [];
   const materialIndices: number[] = [];
   
-  // Map from EditableMesh vertex indices to BufferGeometry indices
-  const vertexMap = new Map<number, number>();
+
   
   // Process each face
   mesh.faces.forEach((face) => {
@@ -82,7 +81,7 @@ export function toBufferGeometry(
         // Add to indices
         const bufferIndex = positions.length / 3 - 1;
         indices.push(bufferIndex);
-        vertexMap.set(vertexIndex, bufferIndex);
+
         
         // Add material index if requested
         if (includeMaterialIndices) {
@@ -128,10 +127,7 @@ export function toBufferGeometry(
 function ensureCCWWinding(triangle: number[], face: Face): number[] {
   // If the face has a normal, use it to determine proper winding
   if (face.normal) {
-    // Calculate the triangle normal
-    const v0 = triangle[0];
-    const v1 = triangle[1];
-    const v2 = triangle[2];
+
     
     // For a simple check, we can use the first three vertices of the face
     // to determine the expected winding order
@@ -140,12 +136,12 @@ function ensureCCWWinding(triangle: number[], face: Face): number[] {
     const faceV2 = face.vertices[2];
     
     // If the triangle vertices match the face vertices in order, keep as is
-    if (v0 === faceV0 && v1 === faceV1 && v2 === faceV2) {
+    if (triangle[0] === faceV0 && triangle[1] === faceV1 && triangle[2] === faceV2) {
       return triangle;
     }
     
     // If the triangle vertices match the face vertices in reverse order, flip
-    if (v0 === faceV2 && v1 === faceV1 && v2 === faceV0) {
+    if (triangle[0] === faceV2 && triangle[1] === faceV1 && triangle[2] === faceV0) {
       return [triangle[0], triangle[2], triangle[1]];
     }
   }

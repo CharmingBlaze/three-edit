@@ -2,15 +2,15 @@
  * Operations module exports
  */
 
-// Boolean operations
+// Export from modular operations system
+export * from './boolean/types';
+export * from './boolean/csgOperations';
+export * from './boolean/modifier';
+export * from './boolean/history';
+// Core operations
 export * from './boolean';
-
-// Future operation modules will be exported here:
-// export * from './extrude';
-// export * from './bevel';
-// export * from './chamfer';
-// export * from './inset';
-// export * from './bridge';
-// export * from './weld';
-// export * from './split';
-// export * from './merge'; 
+export * from './morphing';
+export * from './smoothing';
+export * from './animation';
+export * from './weightPainting';
+export * from './skeletalAnimation';

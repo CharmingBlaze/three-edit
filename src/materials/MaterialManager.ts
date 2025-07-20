@@ -1,5 +1,5 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Selection } from '../selection/Selection';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Selection } from '../selection/Selection.ts';
 
 /**
  * Material slot information
@@ -73,7 +73,7 @@ export class MaterialManager {
     }
     
     // Create slots for existing materials
-    for (const index of materialIndices) {
+    Array.from(materialIndices).forEach(index => {
       this.slots.set(index, {
         id: `material_${index}`,
         name: `Material ${index}`,
@@ -82,7 +82,7 @@ export class MaterialManager {
       });
       
       this.nextMaterialIndex = Math.max(this.nextMaterialIndex, index + 1);
-    }
+    });
   }
   
   /**
@@ -139,34 +139,39 @@ export class MaterialManager {
     selection: Selection,
     materialIndex: number
   ): MaterialAssignmentResult {
-    const result: MaterialAssignmentResult = {
-      assignedFaces: 0,
-      alreadyAssigned: 0,
-      failed: 0
-    };
-    
-    // Ensure the material slot exists
+    let assignedFaces = 0;
+    let alreadyAssigned = 0;
+    let failed = 0;
+
+    // Validate material index
     if (!this.slots.has(materialIndex)) {
-      this.createMaterialSlot(`Material ${materialIndex}`);
+      return {
+        assignedFaces: 0,
+        alreadyAssigned: 0,
+        failed: selection.faces.size
+      };
     }
-    
+
     // Assign material to selected faces
-    for (const faceIndex of selection.faces) {
-      const face = this.mesh.getFace(faceIndex);
-      if (!face) {
-        result.failed++;
-        continue;
-      }
-      
-      if (face.materialIndex === materialIndex) {
-        result.alreadyAssigned++;
+    Array.from(selection.faces).forEach(faceIndex => {
+      if (faceIndex >= 0 && faceIndex < this.mesh.faces.length) {
+        const face = this.mesh.faces[faceIndex];
+        if (face.materialIndex === materialIndex) {
+          alreadyAssigned++;
+        } else {
+          face.materialIndex = materialIndex;
+          assignedFaces++;
+        }
       } else {
-        face.materialIndex = materialIndex;
-        result.assignedFaces++;
+        failed++;
       }
-    }
-    
-    return result;
+    });
+
+    return {
+      assignedFaces,
+      alreadyAssigned,
+      failed
+    };
   }
   
   /**
@@ -192,11 +197,11 @@ export class MaterialManager {
     
     // Find unused materials
     const unusedMaterials: number[] = [];
-    for (const [index] of this.slots) {
+    Array.from(this.slots.keys()).forEach(index => {
       if (!usedMaterials.has(index)) {
         unusedMaterials.push(index);
       }
-    }
+    });
     
     return {
       materialGroups,
@@ -275,9 +280,9 @@ export class MaterialManager {
     const grouping = this.groupFacesByMaterial();
     const facesByMaterial = new Map<number, number>();
     
-    for (const [materialIndex, faceIndices] of grouping.materialGroups) {
+    Array.from(grouping.materialGroups.entries()).forEach(([materialIndex, faceIndices]) => {
       facesByMaterial.set(materialIndex, faceIndices.length);
-    }
+    });
     
     return {
       totalSlots: this.slots.size,
@@ -316,5 +321,38 @@ export class MaterialManager {
       issues,
       unassignedFaces
     };
+  }
+
+  /**
+   * Adds a new material slot to the manager
+   * @returns The material index of the new slot
+   */
+  addMaterial(): number {
+    const slot = this.createMaterialSlot(`Material ${this.nextMaterialIndex}`);
+    return slot.index;
+  }
+
+  /**
+   * Gets a material by name
+   * @param name The material name
+   * @returns The material slot or undefined if not found
+   */
+  getMaterialByName(name: string): MaterialSlot | undefined {
+    return Array.from(this.slots.values()).find(slot => slot.name === name);
+  }
+
+  /**
+   * Gets faces with a specific material index
+   * @param materialIndex The material index
+   * @returns Array of face indices that use this material
+   */
+  getFacesWithMaterial(materialIndex: number): number[] {
+    const faceIndices: number[] = [];
+    for (let i = 0; i < this.mesh.faces.length; i++) {
+      if (this.mesh.faces[i].materialIndex === materialIndex) {
+        faceIndices.push(i);
+      }
+    }
+    return faceIndices;
   }
 }

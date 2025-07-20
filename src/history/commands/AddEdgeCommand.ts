@@ -1,6 +1,6 @@
-import { EditableMesh } from '../../core/EditableMesh';
-import { Edge } from '../../core/Edge';
-import { BaseSerializableCommand } from '../Command';
+import { EditableMesh } from '../../core/EditableMesh.ts';
+import { Edge } from '../../core/Edge.ts';
+import { BaseSerializableCommand } from '../Command.ts';
 
 /**
  * Command to add an edge to a mesh

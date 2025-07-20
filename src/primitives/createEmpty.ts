@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for creating an empty object
@@ -54,96 +54,37 @@ export function createEmpty(options: CreateEmptyOptions = {}): EditableMesh {
     vertices.push(mesh.addVertex(vertex));
   }
   
-  // Create faces with their own edges (material index 0 for all faces)
-  // Bottom face
-  const bottomEdges = [
-    mesh.addEdge(new Edge(vertices[0], vertices[1])),
-    mesh.addEdge(new Edge(vertices[1], vertices[2])),
-    mesh.addEdge(new Edge(vertices[2], vertices[3])),
-    mesh.addEdge(new Edge(vertices[3], vertices[0]))
-  ];
-  mesh.addFace(
-    new Face(
-      [vertices[0], vertices[1], vertices[2], vertices[3]],
-      bottomEdges,
-      { materialIndex: 0 }
-    )
-  );
-  
-  // Top face
-  const topEdges = [
-    mesh.addEdge(new Edge(vertices[4], vertices[5])),
-    mesh.addEdge(new Edge(vertices[5], vertices[6])),
-    mesh.addEdge(new Edge(vertices[6], vertices[7])),
-    mesh.addEdge(new Edge(vertices[7], vertices[4]))
-  ];
-  mesh.addFace(
-    new Face(
-      [vertices[4], vertices[5], vertices[6], vertices[7]],
-      topEdges,
-      { materialIndex: 0 }
-    )
-  );
-  
-  // Left face
-  const leftEdges = [
-    mesh.addEdge(new Edge(vertices[0], vertices[3])),
-    mesh.addEdge(new Edge(vertices[3], vertices[7])),
-    mesh.addEdge(new Edge(vertices[7], vertices[4])),
-    mesh.addEdge(new Edge(vertices[4], vertices[0]))
-  ];
-  mesh.addFace(
-    new Face(
-      [vertices[0], vertices[3], vertices[7], vertices[4]],
-      leftEdges,
-      { materialIndex: 0 }
-    )
-  );
-  
-  // Right face
-  const rightEdges = [
-    mesh.addEdge(new Edge(vertices[1], vertices[2])),
-    mesh.addEdge(new Edge(vertices[2], vertices[6])),
-    mesh.addEdge(new Edge(vertices[6], vertices[5])),
-    mesh.addEdge(new Edge(vertices[5], vertices[1]))
-  ];
-  mesh.addFace(
-    new Face(
-      [vertices[1], vertices[2], vertices[6], vertices[5]],
-      rightEdges,
-      { materialIndex: 0 }
-    )
-  );
-  
-  // Front face
-  const frontEdges = [
-    mesh.addEdge(new Edge(vertices[0], vertices[1])),
-    mesh.addEdge(new Edge(vertices[1], vertices[5])),
-    mesh.addEdge(new Edge(vertices[5], vertices[4])),
-    mesh.addEdge(new Edge(vertices[4], vertices[0]))
-  ];
-  mesh.addFace(
-    new Face(
-      [vertices[0], vertices[1], vertices[5], vertices[4]],
-      frontEdges,
-      { materialIndex: 0 }
-    )
-  );
-  
-  // Back face
-  const backEdges = [
-    mesh.addEdge(new Edge(vertices[3], vertices[2])),
-    mesh.addEdge(new Edge(vertices[2], vertices[6])),
-    mesh.addEdge(new Edge(vertices[6], vertices[7])),
-    mesh.addEdge(new Edge(vertices[7], vertices[3]))
-  ];
-  mesh.addFace(
-    new Face(
-      [vertices[3], vertices[2], vertices[6], vertices[7]],
-      backEdges,
-      { materialIndex: 0 }
-    )
-  );
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
+  const addFace = (v: number[]) => {
+    const edges = [
+      addEdge(v[0], v[1]),
+      addEdge(v[1], v[2]),
+      addEdge(v[2], v[3]),
+      addEdge(v[3], v[0]),
+    ];
+    mesh.addFace(new Face(v, edges, { materialIndex: 0 }));
+  };
+
+  // Bottom
+  addFace([vertices[0], vertices[1], vertices[2], vertices[3]]);
+  // Top
+  addFace([vertices[4], vertices[5], vertices[6], vertices[7]]);
+  // Left
+  addFace([vertices[0], vertices[4], vertices[7], vertices[3]]);
+  // Right
+  addFace([vertices[1], vertices[2], vertices[6], vertices[5]]);
+  // Front
+  addFace([vertices[0], vertices[1], vertices[5], vertices[4]]);
+  // Back
+  addFace([vertices[3], vertices[7], vertices[6], vertices[2]]);
   
   return mesh;
 } 

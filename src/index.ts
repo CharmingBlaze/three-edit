@@ -41,3 +41,9 @@ export * from './conversion';
 
 // IO operations (import/export)
 export * from './io';
+
+// Performance optimization
+export * from './performance';
+
+// Integration features
+export * from './integration';

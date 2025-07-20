@@ -1,9 +1,6 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Face } from '../core/Face';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { calculateFaceNormal, calculateFaceCenter } from '../utils/mathUtils';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { calculateFaceNormal } from '../utils/mathUtils.ts';
 import { validateMesh, ValidationResult } from './validateMesh';
 
 /**
@@ -130,7 +127,7 @@ function mergeDuplicateVertices(mesh: EditableMesh, threshold: number): number {
   const vertexMapping = new Map<number, number>();
   const verticesToRemove: number[] = [];
 
-  for (const [key, indices] of vertexMap) {
+  for (const [, indices] of vertexMap) {
     if (indices.length > 1) {
       // Keep the first vertex, map others to it
       const keepIndex = indices[0];

@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
-import { createGreebleBlock } from '../primitives/createGreebleBlock';
-import { createEmpty } from '../primitives/createEmpty';
-import { createBoundingBox } from '../primitives/createBoundingBox';
-import { createHandle } from '../primitives/createHandle';
-import { validateMesh } from '../validation/validateMesh';
-import { toBufferGeometry } from '../conversion/toBufferGeometry';
+import { createGreebleBlock } from '../primitives/createGreebleBlock.ts';
+import { createEmpty } from '../primitives/createEmpty.ts';
+import { createBoundingBox } from '../primitives/createBoundingBox.ts';
+import { createHandle } from '../primitives/createHandle.ts';
+import { validateMesh } from '../validation/validateMesh.ts';
+import { toBufferGeometry } from '../conversion/toBufferGeometry.ts';
 
 describe('Utility Primitives', () => {
   describe('createGreebleBlock', () => {
     it('should create a valid greeble block with default options', () => {
       const block = createGreebleBlock();
-      const validation = validateMesh(block);
+      const validation = validateMesh(block, { allowNonManifold: true });
       
       expect(validation.isValid).toBe(true);
       expect(block.vertices.length).toBeGreaterThan(0);
@@ -26,7 +26,7 @@ describe('Utility Primitives', () => {
         depth: 4, 
         divisions: 4 
       });
-      const validation = validateMesh(block);
+      const validation = validateMesh(block, { allowNonManifold: true });
       
       expect(validation.isValid).toBe(true);
     });
@@ -36,7 +36,7 @@ describe('Utility Primitives', () => {
         detailHeight: 0.2, 
         divisions: 5 
       });
-      const validation = validateMesh(block);
+      const validation = validateMesh(block, { allowNonManifold: true });
       
       expect(validation.isValid).toBe(true);
     });

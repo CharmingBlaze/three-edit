@@ -11,7 +11,14 @@ export * from './gltf';
 // PLY format support
 export * from './ply';
 
-// Future format modules will be exported here:
-// export * from './fbx';
-// export * from './stl';
-// export * from './dae'; 
+// FBX format support
+export * from './fbx';
+
+// Collada format support
+export * from './collada';
+
+// STL format support
+export * from './stl';
+
+// 3DS format support
+export * from './3ds'; 

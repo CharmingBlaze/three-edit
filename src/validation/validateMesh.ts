@@ -1,9 +1,6 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Face } from '../core/Face';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { calculateFaceNormal, calculateFaceCenter } from '../utils/mathUtils';
+import { EditableMesh, Face, Vertex, Edge } from '../core/index.ts';
+import { calculateFaceNormal, calculateFaceCenter } from '../utils/mathUtils.ts';
 
 /**
  * Validation result for mesh integrity checks
@@ -28,9 +25,13 @@ export interface ValidationResult {
 /**
  * Validates the integrity of a mesh
  * @param mesh The mesh to validate
+ * @param options Optional validation options
  * @returns Validation result with detailed information
  */
-export function validateMesh(mesh: EditableMesh): ValidationResult {
+export function validateMesh(mesh: EditableMesh, options: {
+  allowNonManifold?: boolean;
+  allowBoundaryEdges?: boolean;
+} = {}): ValidationResult {
   const result: ValidationResult = {
     isValid: true,
     errors: [],
@@ -73,7 +74,7 @@ export function validateMesh(mesh: EditableMesh): ValidationResult {
   findFlippedFaces(mesh, result);
 
   // Check for non-manifold geometry
-  checkNonManifoldGeometry(mesh, result);
+  checkNonManifoldGeometry(mesh, result, options);
 
   return result;
 }
@@ -247,7 +248,11 @@ function findFlippedFaces(mesh: EditableMesh, result: ValidationResult): void {
 /**
  * Checks for non-manifold geometry
  */
-function checkNonManifoldGeometry(mesh: EditableMesh, result: ValidationResult): void {
+function checkNonManifoldGeometry(
+  mesh: EditableMesh, 
+  result: ValidationResult, 
+  options: { allowNonManifold?: boolean; allowBoundaryEdges?: boolean } = {}
+): void {
   // Count edge usage
   const edgeUsage = new Map<number, number>();
   
@@ -259,9 +264,11 @@ function checkNonManifoldGeometry(mesh: EditableMesh, result: ValidationResult):
   
   // Check for edges used by more than 2 faces (non-manifold)
   for (const [edgeIndex, usage] of edgeUsage) {
-    if (usage > 2) {
+    if (usage > 2 && !options.allowNonManifold) {
       result.errors.push(`Edge ${edgeIndex} is used by ${usage} faces (non-manifold)`);
       result.isValid = false;
+    } else if (usage > 2 && options.allowNonManifold) {
+      result.warnings.push(`Edge ${edgeIndex} is used by ${usage} faces (non-manifold)`);
     }
   }
   
@@ -273,7 +280,7 @@ function checkNonManifoldGeometry(mesh: EditableMesh, result: ValidationResult):
     }
   }
   
-  if (boundaryEdges.length > 0) {
+  if (boundaryEdges.length > 0 && !options.allowBoundaryEdges) {
     result.warnings.push(`Mesh has ${boundaryEdges.length} boundary edges`);
   }
 }

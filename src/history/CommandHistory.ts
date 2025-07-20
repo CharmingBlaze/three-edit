@@ -1,4 +1,4 @@
-import { EditableMesh } from '../core/EditableMesh';
+import { EditableMesh } from '../core/EditableMesh.ts';
 import { Command, SerializableCommand } from './Command';
 
 /**
@@ -306,13 +306,7 @@ export class CommandHistory {
       listeners.forEach(listener => listener(event));
     }
     
-    // Also emit to HISTORY_CHANGED listeners for specific events
-    if (event.type !== CommandHistoryEventType.HISTORY_CHANGED) {
-      const changeListeners = this.listeners.get(CommandHistoryEventType.HISTORY_CHANGED);
-      if (changeListeners) {
-        changeListeners.forEach(listener => listener(event));
-      }
-    }
+
   }
   
   /**

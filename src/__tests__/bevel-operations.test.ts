@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { createCube } from '../primitives/createCube';
-import { bevel, bevelEdge, bevelVertex, bevelFace } from '../editing/bevel';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { createCube } from '../primitives/createCube.ts';
+import { bevel, bevelEdge, bevelVertex, bevelFace } from '../editing/bevel.ts';
+import { Face } from '../core/Face.ts';
+import { Vertex } from '../core/Vertex.ts';
 
 describe('Bevel Operations', () => {
   let mesh: EditableMesh;
@@ -138,7 +139,7 @@ describe('Bevel Operations', () => {
     it('should throw error for vertex with no connected edges', () => {
       // Create a mesh with isolated vertex
       const isolatedMesh = new EditableMesh();
-      isolatedMesh.addVertex({ x: 0, y: 0, z: 0 });
+      isolatedMesh.addVertex(new Vertex(0, 0, 0));
       
       expect(() => {
         bevelVertex(isolatedMesh, 0);

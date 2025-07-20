@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for creating a cylinder
@@ -73,133 +73,81 @@ export function createCylinder(options: CreateCylinderOptions = {}): EditableMes
     vertices.push(row);
   }
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      const newEdge = new Edge(v1, v2);
+      edgeMap[key] = mesh.addEdge(newEdge);
+    }
+    return edgeMap[key];
+  };
+
   // Create edges and faces for the side walls
   for (let h = 0; h < heightSegments; h++) {
     for (let r = 0; r < radialSegments; r++) {
-      const a = vertices[h][r];
-      const b = vertices[h][r + 1];
-      const c = vertices[h + 1][r + 1];
-      const d = vertices[h + 1][r];
-      
-      // Create edges
-      const edgeAB = mesh.addEdge(new Edge(a, b));
-      const edgeBC = mesh.addEdge(new Edge(b, c));
-      const edgeCD = mesh.addEdge(new Edge(c, d));
-      const edgeDA = mesh.addEdge(new Edge(d, a));
-      
-      // Create face (material index 0 for sides)
-      mesh.addFace(
-        new Face(
-          [a, b, c, d],
-          [edgeAB, edgeBC, edgeCD, edgeDA],
-          { materialIndex: 0 }
-        )
-      );
+      const v1 = vertices[h][r];
+      const v2 = vertices[h][r + 1];
+      const v3 = vertices[h + 1][r + 1];
+      const v4 = vertices[h + 1][r];
+
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
+
+      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
     }
   }
-  
+
   // Create caps if not open-ended
   if (!openEnded) {
-    // Bottom cap
-    if (thetaLength === Math.PI * 2) {
-      // Full circle - create a single face
-      const bottomVertices: number[] = [];
-      const bottomEdges: number[] = [];
-      
-      for (let r = 0; r < radialSegments; r++) {
-        bottomVertices.push(vertices[0][r]);
-        if (r > 0) {
-          const edge = mesh.addEdge(new Edge(vertices[0][r - 1], vertices[0][r]));
-          bottomEdges.push(edge);
+    const createCap = (isTop: boolean) => {
+      const y = isTop ? halfHeight : -halfHeight;
+      const vertexRow = isTop ? vertices[heightSegments] : vertices[0];
+      const materialIndex = isTop ? 2 : 1;
+
+      if (thetaLength >= Math.PI * 2) {
+        const capVertexIndices = [];
+        for (let r = 0; r < radialSegments; r++) {
+          capVertexIndices.push(vertexRow[r]);
+        }
+
+        const capEdgeIndices = [];
+        for (let r = 0; r < radialSegments; r++) {
+          const v1 = vertexRow[r];
+          const v2 = vertexRow[(r + 1) % radialSegments];
+          capEdgeIndices.push(addEdge(v1, v2));
+        }
+
+        if (isTop) {
+          mesh.addFace(new Face(capVertexIndices.slice().reverse(), capEdgeIndices.slice().reverse(), { materialIndex }));
+        } else {
+          mesh.addFace(new Face(capVertexIndices, capEdgeIndices, { materialIndex }));
+        }
+      } else {
+        const centerVertex = new Vertex(0, y, 0);
+        centerVertex.uv = { u: 0.5, v: 0.5 };
+        const centerIndex = mesh.addVertex(centerVertex);
+
+        for (let r = 0; r < radialSegments; r++) {
+          const v1 = vertexRow[r];
+          const v2 = vertexRow[r + 1];
+          const edge1 = addEdge(centerIndex, v1);
+          const edge2 = addEdge(v1, v2);
+          const edge3 = addEdge(v2, centerIndex);
+          if (isTop) {
+            mesh.addFace(new Face([centerIndex, v2, v1], [edge3, edge2, edge1], { materialIndex }));
+          } else {
+            mesh.addFace(new Face([centerIndex, v1, v2], [edge1, edge2, edge3], { materialIndex }));
+          }
         }
       }
-      
-      // Close the circle
-      const edge = mesh.addEdge(new Edge(vertices[0][radialSegments - 1], vertices[0][0]));
-      bottomEdges.push(edge);
-      
-      mesh.addFace(
-        new Face(
-          bottomVertices,
-          bottomEdges,
-          { materialIndex: 1 } // Bottom cap material
-        )
-      );
-    } else {
-      // Partial circle - create individual triangles
-      // Create center vertex for the bottom cap
-      const bottomCenterVertex = new Vertex(0, -halfHeight, 0);
-      bottomCenterVertex.uv = { u: 0.5, v: 0.5 };
-      const bottomCenterIndex = mesh.addVertex(bottomCenterVertex);
-      
-      for (let r = 0; r < radialSegments; r++) {
-        const v1 = vertices[0][r];
-        const v2 = vertices[0][r + 1];
-        
-        const edge1 = mesh.addEdge(new Edge(bottomCenterIndex, v1));
-        const edge2 = mesh.addEdge(new Edge(v1, v2));
-        const edge3 = mesh.addEdge(new Edge(v2, bottomCenterIndex));
-        
-        mesh.addFace(
-          new Face(
-            [bottomCenterIndex, v1, v2],
-            [edge1, edge2, edge3],
-            { materialIndex: 1 }
-          )
-        );
-      }
-    }
-    
-    // Top cap
-    if (thetaLength === Math.PI * 2) {
-      // Full circle - create a single face
-      const topVertices: number[] = [];
-      const topEdges: number[] = [];
-      
-      for (let r = 0; r < radialSegments; r++) {
-        topVertices.push(vertices[heightSegments][r]);
-        if (r > 0) {
-          const edge = mesh.addEdge(new Edge(vertices[heightSegments][r - 1], vertices[heightSegments][r]));
-          topEdges.push(edge);
-        }
-      }
-      
-      // Close the circle
-      const edge = mesh.addEdge(new Edge(vertices[heightSegments][radialSegments - 1], vertices[heightSegments][0]));
-      topEdges.push(edge);
-      
-      mesh.addFace(
-        new Face(
-          topVertices,
-          topEdges,
-          { materialIndex: 2 } // Top cap material
-        )
-      );
-    } else {
-      // Partial circle - create individual triangles
-      // Create center vertex for the top cap
-      const topCenterVertex = new Vertex(0, halfHeight, 0);
-      topCenterVertex.uv = { u: 0.5, v: 0.5 };
-      const topCenterIndex = mesh.addVertex(topCenterVertex);
-      
-      for (let r = 0; r < radialSegments; r++) {
-        const v1 = vertices[heightSegments][r];
-        const v2 = vertices[heightSegments][r + 1];
-        
-        const edge1 = mesh.addEdge(new Edge(topCenterIndex, v1));
-        const edge2 = mesh.addEdge(new Edge(v1, v2));
-        const edge3 = mesh.addEdge(new Edge(v2, topCenterIndex));
-        
-        mesh.addFace(
-          new Face(
-            [topCenterIndex, v1, v2],
-            [edge1, edge2, edge3],
-            { materialIndex: 2 }
-          )
-        );
-      }
-    }
+    };
+
+    createCap(false); // Bottom cap
+    createCap(true);  // Top cap
   }
   
   return mesh;
-} 
+}

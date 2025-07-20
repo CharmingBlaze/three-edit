@@ -1,8 +1,8 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for creating a Möbius strip
@@ -24,8 +24,7 @@ export interface MobiusStripOptions {
   generateUVs?: boolean;
   /** Whether to generate vertex normals (default: true) */
   generateNormals?: boolean;
-  /** Center point of the Möbius strip (default: origin) */
-  center?: Vector3;
+
 }
 
 /**
@@ -42,7 +41,6 @@ export function createMobiusStrip(options: MobiusStripOptions = {}): EditableMes
   const materialIndex = options.materialIndex ?? 0;
   const generateUVs = options.generateUVs ?? true;
   const generateNormals = options.generateNormals ?? true;
-  const center = options.center ?? new Vector3(0, 0, 0);
 
   const mesh = new EditableMesh();
 
@@ -79,49 +77,38 @@ export function createMobiusStrip(options: MobiusStripOptions = {}): EditableMes
 
   // Add vertices to mesh
   const vertexIndices: number[] = [];
-  for (let i = 0; i < vertices.length; i++) {
-    const vertex = vertices[i];
-    const uv = uvs[i];
-    const normal = normals[i];
-    
-    vertex.add(center);
-    
-    const vertexIndex = mesh.addVertex({
-      x: vertex.x,
-      y: vertex.y,
-      z: vertex.z,
-      uv: generateUVs ? uv : undefined,
-      normal: generateNormals ? normal : undefined
+  for (const vertex of vertices) {
+    const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, {
+      uv: generateUVs ? { u: 0, v: 0 } : undefined,
+      normal: generateNormals ? normals[0] : undefined
     });
+    const vertexIndex = mesh.addVertex(newVertex);
     vertexIndices.push(vertexIndex);
   }
+
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
 
   // Generate faces
   for (let i = 0; i < segments; i++) {
     for (let j = 0; j < widthSegments; j++) {
-      const a = i * (widthSegments + 1) + j;
-      const b = (i + 1) * (widthSegments + 1) + j;
-      const c = (i + 1) * (widthSegments + 1) + j + 1;
-      const d = i * (widthSegments + 1) + j + 1;
+      const v1 = vertexIndices[i * (widthSegments + 1) + j];
+      const v2 = vertexIndices[((i + 1) % (segments + 1)) * (widthSegments + 1) + j];
+      const v3 = vertexIndices[((i + 1) % (segments + 1)) * (widthSegments + 1) + j + 1];
+      const v4 = vertexIndices[i * (widthSegments + 1) + j + 1];
 
-      // Create edges for the face
-      const edgeIndices: number[] = [];
-      const faceVertices = [a, b, c, d];
-      
-      for (let k = 0; k < faceVertices.length; k++) {
-        const v1 = vertexIndices[faceVertices[k]];
-        const v2 = vertexIndices[faceVertices[(k + 1) % faceVertices.length]];
-        const edge = new Edge(v1, v2);
-        const edgeIndex = mesh.addEdge(edge);
-        edgeIndices.push(edgeIndex);
-      }
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
 
-      // Create face
-      const meshFaceVertices = faceVertices.map(index => vertexIndices[index]);
-      const face = new Face(meshFaceVertices, edgeIndices, {
-        materialIndex: materialIndex
-      });
-      mesh.addFace(face);
+      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex }));
     }
   }
 
@@ -135,8 +122,14 @@ export function createMobiusStrip(options: MobiusStripOptions = {}): EditableMes
         const v3 = mesh.getVertex(face.vertices[2]);
         
         if (v1 && v2 && v3) {
-          const vec1 = new Vector3().subVectors(v2, v1);
-          const vec2 = new Vector3().subVectors(v3, v1);
+          const vec1 = new Vector3().subVectors(
+            new Vector3(v2.x, v2.y, v2.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
+          const vec2 = new Vector3().subVectors(
+            new Vector3(v3.x, v3.y, v3.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
           const normal = new Vector3();
           normal.crossVectors(vec1, vec2).normalize();
           face.normal = normal;

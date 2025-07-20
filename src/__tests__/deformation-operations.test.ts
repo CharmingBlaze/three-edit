@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { createCube } from '../primitives/createCube';
-import { bend, twist, taper, deform, bendAdvanced, twistAdvanced, taperAdvanced } from '../transform/deform';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { createCube } from '../primitives/createCube.ts';
+import { bend, twist, taper, deform, bendAdvanced, twistAdvanced, taperAdvanced } from '../transform/deform.ts';
 
 describe('Deformation Operations', () => {
   let mesh: EditableMesh;

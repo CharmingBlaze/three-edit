@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3, Vector2 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { createCube } from '../primitives/createCube';
+import { EditableMesh } from '../core/index.ts';
+import { createCube } from '../primitives/index.ts';
 import { 
   parseOBJ, 
   exportOBJ, 
@@ -15,7 +15,7 @@ import {
   exportPLY,
   loadPLY,
   savePLY
-} from '../io';
+} from '../io/index.ts';
 
 describe('IO Operations', () => {
   let mesh: EditableMesh;

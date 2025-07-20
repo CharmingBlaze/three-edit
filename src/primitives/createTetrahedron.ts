@@ -1,8 +1,8 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 
 /**
  * Options for creating a tetrahedron
@@ -51,13 +51,11 @@ export function createTetrahedron(options: TetrahedronOptions = {}): EditableMes
   // Add vertices to mesh
   const vertexIndices: number[] = [];
   for (const vertex of vertices) {
-    const vertexIndex = mesh.addVertex({
-      x: vertex.x,
-      y: vertex.y,
-      z: vertex.z,
+    const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, {
       uv: generateUVs ? { u: 0, v: 0 } : undefined,
       normal: generateNormals ? new Vector3(0, 1, 0) : undefined
     });
+    const vertexIndex = mesh.addVertex(newVertex);
     vertexIndices.push(vertexIndex);
   }
 
@@ -113,8 +111,14 @@ export function createTetrahedron(options: TetrahedronOptions = {}): EditableMes
         const v3 = mesh.getVertex(face.vertices[2]);
         
         if (v1 && v2 && v3) {
-          const vec1 = new Vector3().subVectors(v2, v1);
-          const vec2 = new Vector3().subVectors(v3, v1);
+          const vec1 = new Vector3().subVectors(
+            new Vector3(v2.x, v2.y, v2.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
+          const vec2 = new Vector3().subVectors(
+            new Vector3(v3.x, v3.y, v3.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
           const normal = new Vector3();
           normal.crossVectors(vec1, vec2).normalize();
           face.normal = normal;

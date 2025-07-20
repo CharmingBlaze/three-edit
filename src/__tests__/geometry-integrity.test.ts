@@ -1,16 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
-import { createCube } from '../primitives/createCube';
-import { validateGeometryIntegrity, checkFlippedFaces, validateMaterialIndices, validateUVCoordinates, validateMeshForRendering } from '../validation/validateGeometryIntegrity';
-import { fixWindingOrder, recalculateNormals, recalculateVertexNormals, fixGeometryIntegrity } from '../validation/fixWindingOrder';
-import { generatePlanarUVs, generateCylindricalUVs, generateSphericalUVs } from '../uv/generatePlanarUVs';
-import { MaterialManager } from '../materials/materialManager';
-import { calculateFaceNormal } from '../utils/mathUtils';
-import { Selection } from '../selection/Selection';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
+import { createCube } from '../primitives/createCube.ts';
+import { validateGeometryIntegrity, checkFlippedFaces, validateMaterialIndices, validateUVCoordinates, validateMeshForRendering } from '../validation/validateGeometryIntegrity.ts';
+import { fixWindingOrder, recalculateNormals, recalculateVertexNormals, fixGeometryIntegrity } from '../validation/fixWindingOrder.ts';
+import { generatePlanarUVs, generateCylindricalUVs, generateSphericalUVs } from '../uv/generatePlanarUVs.ts';
+import { MaterialManager } from '../materials/materialManager.ts';
+import { calculateFaceNormal } from '../utils/mathUtils.ts';
+import { Selection } from '../selection/Selection.ts';
 
 describe('Geometry Integrity Validation', () => {
   it('should validate a properly constructed mesh', () => {

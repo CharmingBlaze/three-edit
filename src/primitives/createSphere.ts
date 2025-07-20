@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 import { Vector3 } from 'three';
 
 /**
@@ -85,56 +85,40 @@ export function createSphere(options: CreateSphereOptions = {}): EditableMesh {
     vertexGrid.push(vertexRow);
   }
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
   // Create faces and edges
   for (let iy = 0; iy < heightSegments; iy++) {
     for (let ix = 0; ix < widthSegments; ix++) {
-      // Get indices of the four vertices of the current grid cell
       const a = vertexGrid[iy][ix];
       const b = vertexGrid[iy][ix + 1];
       const c = vertexGrid[iy + 1][ix + 1];
       const d = vertexGrid[iy + 1][ix];
-      
-      // For the poles (top and bottom rows), we create triangles instead of quads
-      if (iy === 0) {
-        // Top pole: triangle (a, c, b)
-        const edgeAC = mesh.addEdge(new Edge(a, c));
-        const edgeCB = mesh.addEdge(new Edge(c, b));
-        const edgeBA = mesh.addEdge(new Edge(b, a));
-        
-        mesh.addFace(
-          new Face(
-            [a, c, b],
-            [edgeAC, edgeCB, edgeBA],
-            { materialIndex: 0 }
-          )
-        );
-      } else if (iy === heightSegments - 1) {
-        // Bottom pole: triangle (a, d, c)
-        const edgeAD = mesh.addEdge(new Edge(a, d));
-        const edgeDC = mesh.addEdge(new Edge(d, c));
-        const edgeCA = mesh.addEdge(new Edge(c, a));
-        
-        mesh.addFace(
-          new Face(
-            [a, d, c],
-            [edgeAD, edgeDC, edgeCA],
-            { materialIndex: 0 }
-          )
-        );
+
+      if (iy === 0 && thetaStart === 0) {
+        // Top pole
+        const edge1 = addEdge(a, c);
+        const edge2 = addEdge(c, b);
+        mesh.addFace(new Face([a, c, b], [edge1, edge2, addEdge(b,a)], { materialIndex: 0 }));
+      } else if (iy === heightSegments - 1 && thetaStart + thetaLength === Math.PI) {
+        // Bottom pole
+        const edge1 = addEdge(a, d);
+        const edge2 = addEdge(d, c);
+        mesh.addFace(new Face([a, d, c], [edge1, edge2, addEdge(c,a)], { materialIndex: 0 }));
       } else {
-        // Regular case: quad (a, b, c, d)
-        const edgeAB = mesh.addEdge(new Edge(a, b));
-        const edgeBC = mesh.addEdge(new Edge(b, c));
-        const edgeCD = mesh.addEdge(new Edge(c, d));
-        const edgeDA = mesh.addEdge(new Edge(d, a));
-        
-        mesh.addFace(
-          new Face(
-            [a, b, c, d],
-            [edgeAB, edgeBC, edgeCD, edgeDA],
-            { materialIndex: 0 }
-          )
-        );
+        // Quad face
+        const edge1 = addEdge(a,b);
+        const edge2 = addEdge(b,c);
+        const edge3 = addEdge(c,d);
+        const edge4 = addEdge(d,a);
+        mesh.addFace(new Face([a, b, c, d], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
       }
     }
   }

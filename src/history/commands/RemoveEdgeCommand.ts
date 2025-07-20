@@ -1,6 +1,6 @@
-import { EditableMesh } from '../../core/EditableMesh';
-import { Edge } from '../../core/Edge';
-import { BaseSerializableCommand } from '../Command';
+import { EditableMesh } from '../../core/EditableMesh.ts';
+import { Edge } from '../../core/Edge.ts';
+import { BaseSerializableCommand } from '../Command.ts';
 
 /**
  * Command to remove an edge from a mesh
@@ -53,11 +53,10 @@ export class RemoveEdgeCommand extends BaseSerializableCommand {
     }
     
     // Add the edge back to the mesh at the same index
-    const addedIndex = mesh.addEdge(
-      new Edge(this.removedEdge.v1, this.removedEdge.v2, { ...this.removedEdge.userData })
+    return mesh.insertEdge(
+      new Edge(this.removedEdge.v1, this.removedEdge.v2, { ...this.removedEdge.userData }),
+      this.edgeIndex
     );
-    
-    return addedIndex === this.edgeIndex;
   }
   
   /**

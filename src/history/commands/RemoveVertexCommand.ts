@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../../core/EditableMesh';
-import { Vertex } from '../../core/Vertex';
-import { BaseSerializableCommand } from '../Command';
+import { EditableMesh } from '../../core/EditableMesh.ts';
+import { Vertex } from '../../core/Vertex.ts';
+import { BaseSerializableCommand } from '../Command.ts';
 
 /**
  * Command to remove a vertex from a mesh
@@ -54,8 +54,7 @@ export class RemoveVertexCommand extends BaseSerializableCommand {
     }
     
     // Add the vertex back to the mesh at the same index
-    const addedIndex = mesh.addVertex(this.removedVertex.clone());
-    return addedIndex === this.vertexIndex;
+    return mesh.insertVertex(this.removedVertex.clone(), this.vertexIndex);
   }
   
   /**

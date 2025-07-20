@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for creating a handle
@@ -61,79 +61,57 @@ export function createHandle(options: CreateHandleOptions = {}): EditableMesh {
     vertices.push(row);
   }
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
   // Create edges and faces for the side walls
   for (let h = 0; h < heightSegments; h++) {
     for (let r = 0; r < radialSegments; r++) {
-      const a = vertices[h][r];
-      const b = vertices[h][r + 1];
-      const c = vertices[h + 1][r + 1];
-      const d = vertices[h + 1][r];
-      
-      // Create edges
-      const edgeAB = mesh.addEdge(new Edge(a, b));
-      const edgeBC = mesh.addEdge(new Edge(b, c));
-      const edgeCD = mesh.addEdge(new Edge(c, d));
-      const edgeDA = mesh.addEdge(new Edge(d, a));
-      
-      // Create face (material index 0 for sides)
-      mesh.addFace(
-        new Face(
-          [a, b, c, d],
-          [edgeAB, edgeBC, edgeCD, edgeDA],
-          { materialIndex: 0 }
-        )
-      );
+      const v1 = vertices[h][r];
+      const v2 = vertices[h][r + 1];
+      const v3 = vertices[h + 1][r + 1];
+      const v4 = vertices[h + 1][r];
+
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
+
+      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
     }
   }
-  
+
   // Create top and bottom caps
-  // Bottom cap
-  const bottomVertices: number[] = [];
-  const bottomEdges: number[] = [];
-  
-  for (let r = 0; r < radialSegments; r++) {
-    bottomVertices.push(vertices[0][r]);
-    if (r > 0) {
-      const edge = mesh.addEdge(new Edge(vertices[0][r - 1], vertices[0][r]));
-      bottomEdges.push(edge);
+  const createCap = (isTop: boolean) => {
+    const vertexRow = isTop ? vertices[heightSegments] : vertices[0];
+    const materialIndex = isTop ? 2 : 1;
+    const capVertexIndices = [];
+    for (let r = 0; r < radialSegments; r++) {
+      capVertexIndices.push(vertexRow[r]);
     }
-  }
-  
-  // Close the circle
-  const bottomCloseEdge = mesh.addEdge(new Edge(vertices[0][radialSegments - 1], vertices[0][0]));
-  bottomEdges.push(bottomCloseEdge);
-  
-  mesh.addFace(
-    new Face(
-      bottomVertices,
-      bottomEdges,
-      { materialIndex: 1 } // Bottom cap material
-    )
-  );
-  
-  // Top cap
-  const topVertices: number[] = [];
-  const topEdges: number[] = [];
-  
-  for (let r = 0; r < radialSegments; r++) {
-    topVertices.push(vertices[heightSegments][r]);
-    if (r > 0) {
-      const edge = mesh.addEdge(new Edge(vertices[heightSegments][r - 1], vertices[heightSegments][r]));
-      topEdges.push(edge);
+
+    const capEdgeIndices = [];
+    for (let r = 0; r < radialSegments; r++) {
+      const v1 = vertexRow[r];
+      const v2 = vertexRow[(r + 1) % radialSegments];
+      capEdgeIndices.push(addEdge(v1, v2));
     }
-  }
-  
-  // Close the circle
-  const topCloseEdge = mesh.addEdge(new Edge(vertices[heightSegments][radialSegments - 1], vertices[heightSegments][0]));
-  topEdges.push(topCloseEdge);
-  
-  mesh.addFace(
-    new Face(
-      topVertices,
-      topEdges,
-      { materialIndex: 2 } // Top cap material
-    )
-  );
+
+    if (isTop) {
+      mesh.addFace(new Face(capVertexIndices.slice().reverse(), capEdgeIndices.slice().reverse(), { materialIndex }));
+    } else {
+      mesh.addFace(new Face(capVertexIndices, capEdgeIndices, { materialIndex }));
+    }
+  };
+
+  createCap(false); // Bottom cap
+  createCap(true);  // Top cap
   
   return mesh;
 } 

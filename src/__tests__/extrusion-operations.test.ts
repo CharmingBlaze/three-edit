@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { createCube } from '../primitives/createCube';
-import { extrudeEdge, extrudeEdges } from '../editing/extrudeEdge';
-import { extrudeVertex, extrudeVertices, extrudeVertexWithFace } from '../editing/extrudeVertex';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { createCube } from '../primitives/createCube.ts';
+import { extrudeEdge, extrudeEdges } from '../editing/extrudeEdge.ts';
+import { extrudeVertex, extrudeVertices, extrudeVertexWithFace } from '../editing/extrudeVertex.ts';
 
 describe('Extrusion Operations', () => {
   let mesh: EditableMesh;

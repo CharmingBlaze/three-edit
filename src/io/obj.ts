@@ -1,11 +1,11 @@
 import { Vector3, Vector2 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Face } from '../core/Face.ts';
+import { Edge } from '../core/Edge.ts';
 
 /**
- * Options for OBJ import/export operations
+ * Options for OBJ import/export
  */
 export interface OBJOptions {
   /** Whether to include vertex normals */
@@ -23,34 +23,35 @@ export interface OBJOptions {
 }
 
 /**
- * Parses OBJ file content and creates an EditableMesh
- * @param content The OBJ file content as a string
+ * Parses OBJ content and creates an EditableMesh
+ * @param content The OBJ file content
  * @param options Options for parsing
  * @returns The created EditableMesh
  */
 export function parseOBJ(content: string, options: OBJOptions = {}): EditableMesh {
   const includeNormals = options.includeNormals ?? true;
   const includeUVs = options.includeUVs ?? true;
-  const includeMaterials = options.includeMaterials ?? true;
   const scale = options.scale ?? 1.0;
   const flipY = options.flipY ?? false;
   const flipZ = options.flipZ ?? false;
 
   const mesh = new EditableMesh();
   const vertices: Vector3[] = [];
-  const normals: Vector3[] = [];
   const uvs: Vector2[] = [];
-  const materials: Map<string, any> = new Map();
-  let currentMaterial = 'default';
+  const normals: Vector3[] = [];
 
   const lines = content.split('\n');
   
   for (const line of lines) {
     const trimmedLine = line.trim();
-    if (!trimmedLine || trimmedLine.startsWith('#')) continue;
+    if (trimmedLine === '' || trimmedLine.startsWith('#')) {
+      continue;
+    }
 
     const parts = trimmedLine.split(/\s+/);
-    const command = parts[0];
+    if (parts.length === 0) continue;
+
+    const command = parts[0].toLowerCase();
 
     switch (command) {
       case 'v': // Vertex
@@ -62,15 +63,6 @@ export function parseOBJ(content: string, options: OBJOptions = {}): EditableMes
         }
         break;
 
-      case 'vn': // Vertex normal
-        if (parts.length >= 4 && includeNormals) {
-          const x = parseFloat(parts[1]);
-          const y = parseFloat(parts[2]) * (flipY ? -1 : 1);
-          const z = parseFloat(parts[3]) * (flipZ ? -1 : 1);
-          normals.push(new Vector3(x, y, z).normalize());
-        }
-        break;
-
       case 'vt': // Texture coordinate
         if (parts.length >= 3 && includeUVs) {
           const u = parseFloat(parts[1]);
@@ -79,16 +71,25 @@ export function parseOBJ(content: string, options: OBJOptions = {}): EditableMes
         }
         break;
 
+      case 'vn': // Normal
+        if (parts.length >= 4 && includeNormals) {
+          const x = parseFloat(parts[1]);
+          const y = parseFloat(parts[2]) * (flipY ? -1 : 1);
+          const z = parseFloat(parts[3]) * (flipZ ? -1 : 1);
+          normals.push(new Vector3(x, y, z));
+        }
+        break;
+
       case 'f': // Face
         if (parts.length >= 4) {
           const faceVertices: number[] = [];
-          const faceNormals: number[] = [];
           const faceUVs: number[] = [];
+          const faceNormals: number[] = [];
 
           for (let i = 1; i < parts.length; i++) {
             const vertexData = parts[i].split('/');
-            const vertexIndex = parseInt(vertexData[0]) - 1;
-            
+            const vertexIndex = parseInt(vertexData[0]) - 1; // Convert to 0-based
+
             if (vertexIndex >= 0 && vertexIndex < vertices.length) {
               faceVertices.push(vertexIndex);
             }
@@ -116,13 +117,14 @@ export function parseOBJ(content: string, options: OBJOptions = {}): EditableMes
               const uv = faceUVs[i] !== undefined ? uvs[faceUVs[i]] : undefined;
               const normal = faceNormals[i] !== undefined ? normals[faceNormals[i]] : undefined;
               
-              const vertexIndex = mesh.addVertex({
-                x: vertex.x,
-                y: vertex.y,
-                z: vertex.z,
-                uv: uv,
+              // Convert Vector2 UV to expected format
+              const uvCoord = uv ? { u: uv.x, v: uv.y } : undefined;
+              
+              const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, {
+                uv: uvCoord,
                 normal: normal
               });
+              const vertexIndex = mesh.addVertex(newVertex);
               meshVertices.push(vertexIndex);
             }
 
@@ -146,11 +148,7 @@ export function parseOBJ(content: string, options: OBJOptions = {}): EditableMes
         }
         break;
 
-      case 'usemtl': // Use material
-        if (parts.length >= 2 && includeMaterials) {
-          currentMaterial = parts[1];
-        }
-        break;
+
 
       case 'mtllib': // Material library
         // Material library loading would be implemented separately
@@ -170,7 +168,6 @@ export function parseOBJ(content: string, options: OBJOptions = {}): EditableMes
 export function exportOBJ(mesh: EditableMesh, options: OBJOptions = {}): string {
   const includeNormals = options.includeNormals ?? true;
   const includeUVs = options.includeUVs ?? true;
-  const includeMaterials = options.includeMaterials ?? true;
   const scale = options.scale ?? 1.0;
   const flipY = options.flipY ?? false;
   const flipZ = options.flipZ ?? false;

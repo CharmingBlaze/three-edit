@@ -1,8 +1,8 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 
 /**
  * Options for creating an octahedron
@@ -53,13 +53,11 @@ export function createOctahedron(options: OctahedronOptions = {}): EditableMesh 
   // Add vertices to mesh
   const vertexIndices: number[] = [];
   for (const vertex of vertices) {
-    const vertexIndex = mesh.addVertex({
-      x: vertex.x,
-      y: vertex.y,
-      z: vertex.z,
+    const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, {
       uv: generateUVs ? { u: 0, v: 0 } : undefined,
       normal: generateNormals ? new Vector3(0, 1, 0) : undefined
     });
+    const vertexIndex = mesh.addVertex(newVertex);
     vertexIndices.push(vertexIndex);
   }
 
@@ -75,24 +73,26 @@ export function createOctahedron(options: OctahedronOptions = {}): EditableMesh 
     [1, 5, 2]  // Left-Back-Top
   ];
 
-  // Create faces
-  for (const faceVertices of faces) {
-    // Create edges for the face
-    const edgeIndices: number[] = [];
-    for (let i = 0; i < faceVertices.length; i++) {
-      const v1 = vertexIndices[faceVertices[i]];
-      const v2 = vertexIndices[faceVertices[(i + 1) % faceVertices.length]];
-      const edge = new Edge(v1, v2);
-      const edgeIndex = mesh.addEdge(edge);
-      edgeIndices.push(edgeIndex);
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
     }
+    return edgeMap[key];
+  };
 
-    // Create face
-    const meshFaceVertices = faceVertices.map(i => vertexIndices[i]);
-    const face = new Face(meshFaceVertices, edgeIndices, {
-      materialIndex: materialIndex
-    });
-    mesh.addFace(face);
+  // Create faces
+  for (const face of faces) {
+    const v1 = vertexIndices[face[0]];
+    const v2 = vertexIndices[face[1]];
+    const v3 = vertexIndices[face[2]];
+
+    const edge1 = addEdge(v1, v2);
+    const edge2 = addEdge(v2, v3);
+    const edge3 = addEdge(v3, v1);
+
+    mesh.addFace(new Face([v1, v2, v3], [edge1, edge2, edge3], { materialIndex }));
   }
 
   // Generate proper UVs if requested
@@ -119,8 +119,14 @@ export function createOctahedron(options: OctahedronOptions = {}): EditableMesh 
         const v3 = mesh.getVertex(face.vertices[2]);
         
         if (v1 && v2 && v3) {
-          const vec1 = new Vector3().subVectors(v2, v1);
-          const vec2 = new Vector3().subVectors(v3, v1);
+          const vec1 = new Vector3().subVectors(
+            new Vector3(v2.x, v2.y, v2.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
+          const vec2 = new Vector3().subVectors(
+            new Vector3(v3.x, v3.y, v3.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
           const normal = new Vector3();
           normal.crossVectors(vec1, vec2).normalize();
           face.normal = normal;

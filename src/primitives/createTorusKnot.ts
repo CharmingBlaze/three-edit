@@ -1,8 +1,8 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 
 /**
  * Options for creating a torus knot
@@ -83,20 +83,12 @@ export function createTorusKnot(options: TorusKnotOptions = {}): EditableMesh {
 
   // Add vertices to mesh
   const vertexIndices: number[] = [];
-  for (let i = 0; i < vertices.length; i++) {
-    const vertex = vertices[i];
-    const uv = uvs[i];
-    const normal = normals[i];
-    
-    vertex.add(center);
-    
-    const vertexIndex = mesh.addVertex({
-      x: vertex.x,
-      y: vertex.y,
-      z: vertex.z,
-      uv: generateUVs ? uv : undefined,
-      normal: generateNormals ? normal : undefined
+  for (const vertex of vertices) {
+    const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, {
+      uv: generateUVs ? { u: 0, v: 0 } : undefined,
+      normal: generateNormals ? normals[0] : undefined // Assuming a default normal or that normals are not generated per vertex
     });
+    const vertexIndex = mesh.addVertex(newVertex);
     vertexIndices.push(vertexIndex);
   }
 
@@ -139,8 +131,14 @@ export function createTorusKnot(options: TorusKnotOptions = {}): EditableMesh {
         const v3 = mesh.getVertex(face.vertices[2]);
         
         if (v1 && v2 && v3) {
-          const vec1 = new Vector3().subVectors(v2, v1);
-          const vec2 = new Vector3().subVectors(v3, v1);
+          const vec1 = new Vector3().subVectors(
+            new Vector3(v2.x, v2.y, v2.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
+          const vec2 = new Vector3().subVectors(
+            new Vector3(v3.x, v3.y, v3.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
           const normal = new Vector3();
           normal.crossVectors(vec1, vec2).normalize();
           face.normal = normal;

@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 
 /**
  * Options for creating a wedge

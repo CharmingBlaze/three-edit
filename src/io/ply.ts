@@ -1,8 +1,8 @@
 import { Vector3, Vector2 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for PLY import/export operations
@@ -35,18 +35,14 @@ export interface PLYOptions {
 export function parsePLY(content: string | ArrayBuffer, options: PLYOptions = {}): EditableMesh {
   const includeNormals = options.includeNormals ?? true;
   const includeUVs = options.includeUVs ?? true;
-  const includeColors = options.includeColors ?? false;
   const scale = options.scale ?? 1.0;
   const flipY = options.flipY ?? false;
   const flipZ = options.flipZ ?? false;
-  const binary = options.binary ?? false;
-  const littleEndian = options.littleEndian ?? true;
 
   const mesh = new EditableMesh();
   const vertices: Vector3[] = [];
   const normals: Vector3[] = [];
   const uvs: Vector2[] = [];
-  const colors: Vector3[] = [];
   const faces: number[][] = [];
 
   if (typeof content === 'string') {
@@ -58,9 +54,7 @@ export function parsePLY(content: string | ArrayBuffer, options: PLYOptions = {}
     let vertexCount = 0;
     let faceCount = 0;
     let headerEnd = false;
-    const vertexProperties: string[] = [];
-    const faceProperties: string[] = [];
-    
+
     while (lineIndex < lines.length && !headerEnd) {
       const line = lines[lineIndex].trim();
       
@@ -84,11 +78,6 @@ export function parsePLY(content: string | ArrayBuffer, options: PLYOptions = {}
           }
           break;
         case 'property':
-          if (parts[1] === 'vertex') {
-            vertexProperties.push(parts[2]);
-          } else if (parts[1] === 'face') {
-            faceProperties.push(parts[2]);
-          }
           break;
       }
       
@@ -122,14 +111,6 @@ export function parsePLY(content: string | ArrayBuffer, options: PLYOptions = {}
         const u = parseFloat(values[valueIndex++]);
         const v = parseFloat(values[valueIndex++]);
         uvs.push(new Vector2(u, v));
-      }
-      
-      // Colors
-      if (includeColors && valueIndex < values.length) {
-        const r = parseFloat(values[valueIndex++]) / 255;
-        const g = parseFloat(values[valueIndex++]) / 255;
-        const b = parseFloat(values[valueIndex++]) / 255;
-        colors.push(new Vector3(r, g, b));
       }
       
       lineIndex++;
@@ -173,13 +154,12 @@ export function parsePLY(content: string | ArrayBuffer, options: PLYOptions = {}
     const normal = normals[i] || new Vector3(0, 1, 0);
     const uv = uvs[i] || new Vector2(0, 0);
     
-    mesh.addVertex({
-      x: vertex.x,
-      y: vertex.y,
-      z: vertex.z,
-      normal: normal,
-      uv: uv
+    const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, {
+      uv: uv ? { u: uv.x, v: uv.y } : undefined,
+      normal: normal
     });
+    
+    mesh.addVertex(newVertex);
   }
   
   // Create faces
@@ -219,7 +199,6 @@ export function exportPLY(mesh: EditableMesh, options: PLYOptions = {}): string 
   const scale = options.scale ?? 1.0;
   const flipY = options.flipY ?? false;
   const flipZ = options.flipZ ?? false;
-  const binary = options.binary ?? false;
 
   let content = 'ply\n';
   content += 'format ascii 1.0\n';

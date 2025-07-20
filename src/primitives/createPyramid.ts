@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 
 /**
  * Options for creating a pyramid
@@ -70,103 +70,80 @@ export function createPyramid(options: CreatePyramidOptions = {}): EditableMesh 
   apexVertex.uv = { u: 0.5, v: 0.5 };
   const apexIndex = mesh.addVertex(apexVertex);
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
   // Create base faces
   for (let h = 0; h < heightSegments; h++) {
     for (let w = 0; w < widthSegments; w++) {
-      const a = vertices[h][w];
-      const b = vertices[h][w + 1];
-      const c = vertices[h + 1][w + 1];
-      const d = vertices[h + 1][w];
-      
-      // Create edges
-      const edgeAB = mesh.addEdge(new Edge(a, b));
-      const edgeBC = mesh.addEdge(new Edge(b, c));
-      const edgeCD = mesh.addEdge(new Edge(c, d));
-      const edgeDA = mesh.addEdge(new Edge(d, a));
-      
-      // Create base face (material index 0)
-      mesh.addFace(
-        new Face(
-          [a, b, c, d],
-          [edgeAB, edgeBC, edgeCD, edgeDA],
-          { materialIndex: 0 }
-        )
-      );
+      const v1 = vertices[h][w];
+      const v2 = vertices[h][w + 1];
+      const v3 = vertices[h + 1][w + 1];
+      const v4 = vertices[h + 1][w];
+
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
+
+      mesh.addFace(new Face([v4, v3, v2, v1], [edge4, edge3, edge2, edge1], { materialIndex: 0 }));
     }
   }
-  
+
   // Create side faces (triangles from base to apex)
   // Front face
   for (let w = 0; w < widthSegments; w++) {
     const v1 = vertices[0][w];
     const v2 = vertices[0][w + 1];
-    
-    const edge1 = mesh.addEdge(new Edge(v1, v2));
-    const edge2 = mesh.addEdge(new Edge(v2, apexIndex));
-    const edge3 = mesh.addEdge(new Edge(apexIndex, v1));
-    
-    mesh.addFace(
-      new Face(
-        [v1, v2, apexIndex],
-        [edge1, edge2, edge3],
-        { materialIndex: 1 }
-      )
-    );
+
+    const edge1 = addEdge(v1, v2);
+    const edge2 = addEdge(v2, apexIndex);
+    const edge3 = addEdge(apexIndex, v1);
+
+    mesh.addFace(new Face([v1, v2, apexIndex], [edge1, edge2, edge3], { materialIndex: 1 }));
   }
-  
+
   // Back face
   for (let w = 0; w < widthSegments; w++) {
-    const v1 = vertices[heightSegments][w];
-    const v2 = vertices[heightSegments][w + 1];
-    
-    const edge1 = mesh.addEdge(new Edge(v1, v2));
-    const edge2 = mesh.addEdge(new Edge(v2, apexIndex));
-    const edge3 = mesh.addEdge(new Edge(apexIndex, v1));
-    
-    mesh.addFace(
-      new Face(
-        [v1, v2, apexIndex],
-        [edge1, edge2, edge3],
-        { materialIndex: 2 }
-      )
-    );
+    const v1 = vertices[heightSegments][w + 1];
+    const v2 = vertices[heightSegments][w];
+
+    const edge1 = addEdge(v1, v2);
+    const edge2 = addEdge(v2, apexIndex);
+    const edge3 = addEdge(apexIndex, v1);
+
+    mesh.addFace(new Face([v1, v2, apexIndex], [edge1, edge2, edge3], { materialIndex: 2 }));
   }
-  
+
   // Left face
   for (let h = 0; h < heightSegments; h++) {
-    const v1 = vertices[h][0];
-    const v2 = vertices[h + 1][0];
-    
-    const edge1 = mesh.addEdge(new Edge(v1, v2));
-    const edge2 = mesh.addEdge(new Edge(v2, apexIndex));
-    const edge3 = mesh.addEdge(new Edge(apexIndex, v1));
-    
-    mesh.addFace(
-      new Face(
-        [v1, v2, apexIndex],
-        [edge1, edge2, edge3],
-        { materialIndex: 3 }
-      )
-    );
+    const v1 = vertices[h + 1][0];
+    const v2 = vertices[h][0];
+
+    const edge1 = addEdge(v1, v2);
+    const edge2 = addEdge(v2, apexIndex);
+    const edge3 = addEdge(apexIndex, v1);
+
+    mesh.addFace(new Face([v1, v2, apexIndex], [edge1, edge2, edge3], { materialIndex: 3 }));
   }
-  
+
   // Right face
   for (let h = 0; h < heightSegments; h++) {
     const v1 = vertices[h][widthSegments];
     const v2 = vertices[h + 1][widthSegments];
-    
-    const edge1 = mesh.addEdge(new Edge(v1, v2));
-    const edge2 = mesh.addEdge(new Edge(v2, apexIndex));
-    const edge3 = mesh.addEdge(new Edge(apexIndex, v1));
-    
-    mesh.addFace(
-      new Face(
-        [v1, v2, apexIndex],
-        [edge1, edge2, edge3],
-        { materialIndex: 4 }
-      )
-    );
+
+    const edge1 = addEdge(v1, v2);
+    const edge2 = addEdge(v2, apexIndex);
+    const edge3 = addEdge(apexIndex, v1);
+
+    mesh.addFace(new Face([v1, v2, apexIndex], [edge1, edge2, edge3], { materialIndex: 4 }));
   }
   
   return mesh;
-} 
+}

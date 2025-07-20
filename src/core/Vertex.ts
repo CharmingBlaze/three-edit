@@ -47,9 +47,9 @@ export class Vertex {
    * @param {Record<string, any>} [options.userData] - Custom data.
    */
   constructor(
-    x: number = 0,
-    y: number = 0,
-    z: number = 0,
+    x = 0,
+    y = 0,
+    z = 0,
     options: {
       normal?: Vector3;
       uv?: { u: number; v: number };

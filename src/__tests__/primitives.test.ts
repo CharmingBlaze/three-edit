@@ -1,16 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
-import { createCube } from '../primitives/createCube';
-import { createSphere } from '../primitives/createSphere';
-import { createCylinder } from '../primitives/createCylinder';
-import { createCone } from '../primitives/createCone';
-import { createPlane } from '../primitives/createPlane';
-import { createTorus } from '../primitives/createTorus';
-import { createCircle } from '../primitives/createCircle';
-import { createPyramid } from '../primitives/createPyramid';
-import { createCapsule } from '../primitives/createCapsule';
-import { validateMesh } from '../validation/validateMesh';
-import { toBufferGeometry } from '../conversion/toBufferGeometry';
+import { createCube } from '../primitives/createCube.ts';
+import { createSphere } from '../primitives/createSphere.ts';
+import { createCylinder } from '../primitives/createCylinder.ts';
+import { createCone } from '../primitives/createCone.ts';
+import { createPlane } from '../primitives/createPlane.ts';
+import { createTorus } from '../primitives/createTorus.ts';
+import { createCircle } from '../primitives/createCircle.ts';
+import { createPyramid } from '../primitives/createPyramid.ts';
+import { createCapsule } from '../primitives/createCapsule.ts';
+import { validateMesh } from '../validation/validateMesh.ts';
+import { toBufferGeometry } from '../conversion/toBufferGeometry.ts';
 
 describe('Primitives', () => {
   describe('createCube', () => {

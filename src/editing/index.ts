@@ -2,17 +2,11 @@
  * Editing operations module exports
  */
 
-// Extrusion operations
-export * from './extrudeEdge';
-export * from './extrudeVertex';
-export * from './extrudeFace';
-
-// Beveling operations
+// Export bevel types and the main bevel function aggregator
+export * from './bevel/types';
 export * from './bevel';
 
-// Future editing modules will be exported here:
-// export * from './chamfer';
-// export * from './fillet';
-// export * from './subdivide';
-// export * from './smooth';
-// export * from './decimate'; 
+// Export individual editing functions
+export * from './extrudeEdge';
+export * from './extrudeFace';
+export * from './extrudeVertex';

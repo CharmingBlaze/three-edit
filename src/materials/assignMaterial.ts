@@ -1,5 +1,5 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Selection } from '../selection/Selection';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Selection } from '../selection/Selection.ts';
 import { Material } from './Material';
 import { MaterialManager } from './MaterialManager';
 
@@ -16,39 +16,30 @@ export function assignMaterial(
   materialIndex: number
 ): boolean {
   // Get or create material manager
-  let materialManager = mesh.userData.materialManager as MaterialManager;
-  if (!materialManager) {
-    materialManager = new MaterialManager(mesh);
-    mesh.userData.materialManager = materialManager;
-  }
+  const materialManager = ensureMaterialManager(mesh);
   
-  return materialManager.assignMaterial(selection, materialIndex);
+  const result = materialManager.assignMaterialToSelection(selection, materialIndex);
+  return result.assignedFaces > 0;
 }
 
 /**
  * Creates a new material and assigns it to selected faces
  * @param mesh The mesh to modify
  * @param selection The selection containing faces
- * @param material The material to create and assign
  * @returns The index of the created material, or -1 if failed
  */
 export function createAndAssignMaterial(
   mesh: EditableMesh,
-  selection: Selection,
-  material: Material
+  selection: Selection
 ): number {
   // Get or create material manager
-  let materialManager = mesh.userData.materialManager as MaterialManager;
-  if (!materialManager) {
-    materialManager = new MaterialManager(mesh);
-    mesh.userData.materialManager = materialManager;
-  }
+  const materialManager = ensureMaterialManager(mesh);
   
   // Add the material
-  const materialIndex = materialManager.addMaterial(material);
+  const materialIndex = materialManager.addMaterial();
   
   // Assign it to the selection
-  materialManager.assignMaterial(selection, materialIndex);
+  materialManager.assignMaterialToSelection(selection, materialIndex);
   
   return materialIndex;
 }
@@ -64,7 +55,11 @@ export function getMaterials(mesh: EditableMesh): Material[] {
     return [];
   }
   
-  return materialManager.getMaterials();
+  // Convert MaterialSlot to Material
+  return materialManager.getAllMaterialSlots().map(slot => new Material({
+    name: slot.name,
+    userData: { slotIndex: slot.index }
+  }));
 }
 
 /**
@@ -79,7 +74,16 @@ export function getMaterial(mesh: EditableMesh, index: number): Material | undef
     return undefined;
   }
   
-  return materialManager.getMaterial(index);
+  const slot = materialManager.getMaterialSlot(index);
+  if (!slot) {
+    return undefined;
+  }
+  
+  // Convert MaterialSlot to Material
+  return new Material({
+    name: slot.name,
+    userData: { slotIndex: slot.index }
+  });
 }
 
 /**
@@ -94,7 +98,16 @@ export function getMaterialByName(mesh: EditableMesh, name: string): Material | 
     return undefined;
   }
   
-  return materialManager.getMaterialByName(name);
+  const slot = materialManager.getMaterialByName(name);
+  if (!slot) {
+    return undefined;
+  }
+  
+  // Convert MaterialSlot to Material
+  return new Material({
+    name: slot.name,
+    userData: { slotIndex: slot.index }
+  });
 }
 
 /**

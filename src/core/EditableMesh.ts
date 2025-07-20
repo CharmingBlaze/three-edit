@@ -1,7 +1,7 @@
 import { Matrix4, Vector3 } from 'three';
-import { Vertex } from './Vertex';
-import { Edge } from './Edge';
-import { Face } from './Face';
+import { Vertex } from './Vertex.ts';
+import { Edge } from './Edge.ts';
+import { Face } from './Face.ts';
 
 /**
  * @class EditableMesh
@@ -96,6 +96,32 @@ export class EditableMesh {
     this.vertices.push(vertex);
     return this.vertices.length - 1;
   }
+
+  /**
+   * Inserts a vertex at a specific index, updating references.
+   * @param {Vertex} vertex - The vertex to insert.
+   * @param {number} index - The index at which to insert the vertex.
+   * @returns {boolean} True if the vertex was inserted, false otherwise.
+   */
+  insertVertex(vertex: Vertex, index: number): boolean {
+    if (index < 0 || index > this.vertices.length) {
+      return false;
+    }
+
+    // Update indices in edges and faces before inserting
+    this.edges.forEach((edge: Edge) => {
+      if (edge.v1 >= index) edge.v1++;
+      if (edge.v2 >= index) edge.v2++;
+    });
+
+    this.faces.forEach((face: Face) => {
+      face.vertices = face.vertices.map((v: number) => v >= index ? v + 1 : v);
+    });
+
+    this.vertices.splice(index, 0, vertex);
+
+    return true;
+  }
   
   /**
    * Adds an edge to the mesh.
@@ -106,6 +132,27 @@ export class EditableMesh {
     this.edges.push(edge);
     return this.edges.length - 1;
   }
+
+  /**
+   * Inserts an edge at a specific index, updating references.
+   * @param {Edge} edge - The edge to insert.
+   * @param {number} index - The index at which to insert the edge.
+   * @returns {boolean} True if the edge was inserted, false otherwise.
+   */
+  insertEdge(edge: Edge, index: number): boolean {
+    if (index < 0 || index > this.edges.length) {
+      return false;
+    }
+
+    // Update indices in faces before inserting
+    this.faces.forEach((face: Face) => {
+      face.edges = face.edges.map((e: number) => e >= index ? e + 1 : e);
+    });
+
+    this.edges.splice(index, 0, edge);
+
+    return true;
+  }
   
   /**
    * Adds a face to the mesh.
@@ -115,6 +162,22 @@ export class EditableMesh {
   addFace(face: Face): number {
     this.faces.push(face);
     return this.faces.length - 1;
+  }
+
+  /**
+   * Inserts a face at a specific index.
+   * @param {Face} face - The face to insert.
+   * @param {number} index - The index at which to insert the face.
+   * @returns {boolean} True if the face was inserted, false otherwise.
+   */
+  insertFace(face: Face, index: number): boolean {
+    if (index < 0 || index > this.faces.length) {
+      return false;
+    }
+
+    this.faces.splice(index, 0, face);
+
+    return true;
   }
   
   /**

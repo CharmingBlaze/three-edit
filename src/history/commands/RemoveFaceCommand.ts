@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../../core/EditableMesh';
-import { Face } from '../../core/Face';
-import { BaseSerializableCommand } from '../Command';
+import { EditableMesh } from '../../core/EditableMesh.ts';
+import { Face } from '../../core/Face.ts';
+import { BaseSerializableCommand } from '../Command.ts';
 
 /**
  * Command to remove a face from a mesh
@@ -62,7 +62,7 @@ export class RemoveFaceCommand extends BaseSerializableCommand {
     }
     
     // Add the face back to the mesh at the same index
-    const addedIndex = mesh.addFace(
+    return mesh.insertFace(
       new Face(
         [...this.removedFace.vertices],
         [...this.removedFace.edges],
@@ -71,10 +71,9 @@ export class RemoveFaceCommand extends BaseSerializableCommand {
           normal: this.removedFace.normal?.clone(),
           userData: { ...this.removedFace.userData }
         }
-      )
+      ),
+      this.faceIndex
     );
-    
-    return addedIndex === this.faceIndex;
   }
   
   /**

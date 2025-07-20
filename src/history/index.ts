@@ -25,11 +25,11 @@ export { AssignMaterialCommand } from './commands/AssignMaterialCommand';
 
 // Export command creation helpers
 import { Vector3, Matrix4 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
-import { Selection } from '../selection/Selection';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
+import { Selection } from '../selection/Selection.ts';
 import { AddVertexCommand } from './commands/AddVertexCommand';
 import { AddEdgeCommand } from './commands/AddEdgeCommand';
 import { AddFaceCommand } from './commands/AddFaceCommand';

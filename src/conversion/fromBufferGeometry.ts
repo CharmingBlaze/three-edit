@@ -1,8 +1,8 @@
 import { BufferGeometry, Vector3, BufferAttribute, InterleavedBufferAttribute } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for converting from BufferGeometry
@@ -178,7 +178,7 @@ export function fromBufferGeometry(
  * This is useful after converting from BufferGeometry, which may have duplicate vertices
  * @param mesh The mesh to process
  * @param threshold The distance threshold for considering vertices as duplicates
- * @returns The processed mesh (modified in place)
+ * @returns A new mesh with merged vertices
  */
 export function mergeVertices(
   mesh: EditableMesh,
@@ -228,7 +228,7 @@ export function mergeVertices(
     const newVertices = face.vertices.map(v => vertexMap.get(v) ?? v);
     return new Face(
       newVertices,
-      face.edges,
+      [], // Edges will need to be re-calculated
       {
         materialIndex: face.materialIndex,
         normal: face.normal?.clone(),

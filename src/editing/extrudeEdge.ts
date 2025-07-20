@@ -1,8 +1,8 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
-import { calculateFaceNormal } from '../utils/mathUtils';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
+
 
 /**
  * Options for extruding an edge
@@ -33,7 +33,7 @@ export function extrudeEdge(
   // Default options
   const distance = options.distance ?? 1;
   const keepOriginal = options.keepOriginal ?? false;
-  const width = options.width ?? 0.1;
+
   
   // Get the edge to extrude
   const edge = mesh.getEdge(edgeIndex);

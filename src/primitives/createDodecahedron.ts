@@ -1,8 +1,8 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for creating a dodecahedron
@@ -78,13 +78,11 @@ export function createDodecahedron(options: DodecahedronOptions = {}): EditableM
   // Add vertices to mesh
   const vertexIndices: number[] = [];
   for (const vertex of vertices) {
-    const vertexIndex = mesh.addVertex({
-      x: vertex.x,
-      y: vertex.y,
-      z: vertex.z,
+    const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, {
       uv: generateUVs ? { u: 0, v: 0 } : undefined,
       normal: generateNormals ? new Vector3(0, 1, 0) : undefined
     });
+    const vertexIndex = mesh.addVertex(newVertex);
     vertexIndices.push(vertexIndex);
   }
 
@@ -109,20 +107,26 @@ export function createDodecahedron(options: DodecahedronOptions = {}): EditableM
     [8, 13, 15, 19, 17]
   ];
 
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      const newEdge = new Edge(v1, v2);
+      edgeMap[key] = mesh.addEdge(newEdge);
+    }
+    return edgeMap[key];
+  };
+
   // Create faces
-  for (const faceVertices of faces) {
-    // Create edges for the face
+  for (const faceVertexIndices of faces) {
+    const meshFaceVertices = faceVertexIndices.map(i => vertexIndices[i]);
     const edgeIndices: number[] = [];
-    for (let i = 0; i < faceVertices.length; i++) {
-      const v1 = vertexIndices[faceVertices[i]];
-      const v2 = vertexIndices[faceVertices[(i + 1) % faceVertices.length]];
-      const edge = new Edge(v1, v2);
-      const edgeIndex = mesh.addEdge(edge);
-      edgeIndices.push(edgeIndex);
+    for (let i = 0; i < meshFaceVertices.length; i++) {
+      const v1 = meshFaceVertices[i];
+      const v2 = meshFaceVertices[(i + 1) % meshFaceVertices.length];
+      edgeIndices.push(addEdge(v1, v2));
     }
 
-    // Create face
-    const meshFaceVertices = faceVertices.map(i => vertexIndices[i]);
     const face = new Face(meshFaceVertices, edgeIndices, {
       materialIndex: materialIndex
     });
@@ -153,8 +157,14 @@ export function createDodecahedron(options: DodecahedronOptions = {}): EditableM
         const v3 = mesh.getVertex(face.vertices[2]);
         
         if (v1 && v2 && v3) {
-          const vec1 = new Vector3().subVectors(v2, v1);
-          const vec2 = new Vector3().subVectors(v3, v1);
+          const vec1 = new Vector3().subVectors(
+            new Vector3(v2.x, v2.y, v2.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
+          const vec2 = new Vector3().subVectors(
+            new Vector3(v3.x, v3.y, v3.z),
+            new Vector3(v1.x, v1.y, v1.z)
+          );
           const normal = new Vector3();
           normal.crossVectors(vec1, vec2).normalize();
           face.normal = normal;

@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Face } from '../core/Face';
-import { Vertex } from '../core/Vertex';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Face } from '../core/Face.ts';
+import { Vertex } from '../core/Vertex.ts';
 
 /**
  * Calculates the normal vector of a face
@@ -66,7 +66,6 @@ export function calculateFaceCenter(mesh: EditableMesh, face: Face): Vector3 {
 export function calculateFaceArea(mesh: EditableMesh, face: Face): number {
   if (face.vertices.length < 3) return 0;
   
-  const center = calculateFaceCenter(mesh, face);
   let area = 0;
   
   // Calculate area using triangulation

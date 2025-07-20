@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { calculateFaceNormal } from '../utils/mathUtils';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { calculateFaceNormal } from '../utils/mathUtils.ts';
 
 /**
  * Geometry integrity validation result

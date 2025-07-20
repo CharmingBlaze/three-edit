@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 
 /**
  * Options for creating a pipe
@@ -82,102 +82,80 @@ export function createPipe(options: CreatePipeOptions = {}): EditableMesh {
     innerVertices.push(innerRow);
   }
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
   // Create edges and faces for the outer wall
   for (let h = 0; h < heightSegments; h++) {
     for (let r = 0; r < radialSegments; r++) {
-      const a = outerVertices[h][r];
-      const b = outerVertices[h][r + 1];
-      const c = outerVertices[h + 1][r + 1];
-      const d = outerVertices[h + 1][r];
-      
-      // Create edges
-      const edgeAB = mesh.addEdge(new Edge(a, b));
-      const edgeBC = mesh.addEdge(new Edge(b, c));
-      const edgeCD = mesh.addEdge(new Edge(c, d));
-      const edgeDA = mesh.addEdge(new Edge(d, a));
-      
-      // Create face (material index 0 for outer wall)
-      mesh.addFace(
-        new Face(
-          [a, b, c, d],
-          [edgeAB, edgeBC, edgeCD, edgeDA],
-          { materialIndex: 0 }
-        )
-      );
+      const v1 = outerVertices[h][r];
+      const v2 = outerVertices[h][r + 1];
+      const v3 = outerVertices[h + 1][r + 1];
+      const v4 = outerVertices[h + 1][r];
+
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
+
+      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
     }
   }
-  
+
   // Create edges and faces for the inner wall
   for (let h = 0; h < heightSegments; h++) {
     for (let r = 0; r < radialSegments; r++) {
-      const a = innerVertices[h][r];
-      const b = innerVertices[h][r + 1];
-      const c = innerVertices[h + 1][r + 1];
-      const d = innerVertices[h + 1][r];
-      
-      // Create edges
-      const edgeAB = mesh.addEdge(new Edge(a, b));
-      const edgeBC = mesh.addEdge(new Edge(b, c));
-      const edgeCD = mesh.addEdge(new Edge(c, d));
-      const edgeDA = mesh.addEdge(new Edge(d, a));
-      
-      // Create face (material index 1 for inner wall)
-      mesh.addFace(
-        new Face(
-          [a, b, c, d],
-          [edgeAB, edgeBC, edgeCD, edgeDA],
-          { materialIndex: 1 }
-        )
-      );
+      const v1 = innerVertices[h][r];
+      const v2 = innerVertices[h][r + 1];
+      const v3 = innerVertices[h + 1][r + 1];
+      const v4 = innerVertices[h + 1][r];
+
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
+
+      // Note: Faces are wound in reverse for the inner wall to face inwards
+      mesh.addFace(new Face([v4, v3, v2, v1], [edge4, edge3, edge2, edge1], { materialIndex: 1 }));
     }
   }
-  
+
   // Create edges and faces for the end caps (connecting outer to inner)
   if (!openEnded) {
     // Bottom cap
     for (let r = 0; r < radialSegments; r++) {
-      const outerA = outerVertices[0][r];
-      const outerB = outerVertices[0][r + 1];
-      const innerA = innerVertices[0][r];
-      const innerB = innerVertices[0][r + 1];
-      
-      // Create edges
-      const edgeOuterAB = mesh.addEdge(new Edge(outerA, outerB));
-      const edgeOuterBInnerB = mesh.addEdge(new Edge(outerB, innerB));
-      const edgeInnerBInnerA = mesh.addEdge(new Edge(innerB, innerA));
-      const edgeInnerAOuterA = mesh.addEdge(new Edge(innerA, outerA));
-      
-      // Create face (material index 2 for bottom cap)
-      mesh.addFace(
-        new Face(
-          [outerA, outerB, innerB, innerA],
-          [edgeOuterAB, edgeOuterBInnerB, edgeInnerBInnerA, edgeInnerAOuterA],
-          { materialIndex: 2 }
-        )
-      );
+      const v1 = outerVertices[0][r];
+      const v2 = outerVertices[0][r + 1];
+      const v3 = innerVertices[0][r + 1];
+      const v4 = innerVertices[0][r];
+
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
+
+      mesh.addFace(new Face([v4, v3, v2, v1], [edge4, edge3, edge2, edge1], { materialIndex: 2 }));
     }
-    
+
     // Top cap
     for (let r = 0; r < radialSegments; r++) {
-      const outerA = outerVertices[heightSegments][r];
-      const outerB = outerVertices[heightSegments][r + 1];
-      const innerA = innerVertices[heightSegments][r];
-      const innerB = innerVertices[heightSegments][r + 1];
-      
-      // Create edges
-      const edgeOuterAB = mesh.addEdge(new Edge(outerA, outerB));
-      const edgeOuterBInnerB = mesh.addEdge(new Edge(outerB, innerB));
-      const edgeInnerBInnerA = mesh.addEdge(new Edge(innerB, innerA));
-      const edgeInnerAOuterA = mesh.addEdge(new Edge(innerA, outerA));
-      
-      // Create face (material index 3 for top cap)
-      mesh.addFace(
-        new Face(
-          [outerA, outerB, innerB, innerA],
-          [edgeOuterAB, edgeOuterBInnerB, edgeInnerBInnerA, edgeInnerAOuterA],
-          { materialIndex: 3 }
-        )
-      );
+      const v1 = outerVertices[heightSegments][r];
+      const v2 = outerVertices[heightSegments][r + 1];
+      const v3 = innerVertices[heightSegments][r + 1];
+      const v4 = innerVertices[heightSegments][r];
+
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
+
+      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex: 3 }));
     }
   }
   

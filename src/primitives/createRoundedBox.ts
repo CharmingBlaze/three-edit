@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 
 /**
  * Options for creating a rounded box
@@ -48,10 +48,7 @@ export function createRoundedBox(options: CreateRoundedBoxOptions = {}): Editabl
   
   const mesh = new EditableMesh({ name });
   
-  // Calculate half dimensions for positioning
-  const halfWidth = width / 2;
-  const halfHeight = height / 2;
-  const halfDepth = depth / 2;
+
   
   // Helper function to create corner vertices
   const createCornerVertices = (
@@ -146,90 +143,72 @@ export function createRoundedBox(options: CreateRoundedBoxOptions = {}): Editabl
     vertices.push(depthPlane);
   }
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
   // Create edges and faces
   for (let d = 0; d < depthSegments; d++) {
     for (let h = 0; h < heightSegments; h++) {
       for (let w = 0; w < widthSegments; w++) {
-        const a = vertices[d][h][w];
-        const b = vertices[d][h][w + 1];
-        const c = vertices[d][h + 1][w + 1];
-        const d_vertex = vertices[d][h + 1][w];
-        const e = vertices[d + 1][h][w];
-        const f = vertices[d + 1][h][w + 1];
-        const g = vertices[d + 1][h + 1][w + 1];
-        const h_vertex = vertices[d + 1][h + 1][w];
-        
-        // Create edges
-        const edgeAB = mesh.addEdge(new Edge(a, b));
-        const edgeBC = mesh.addEdge(new Edge(b, c));
-        const edgeCD = mesh.addEdge(new Edge(c, d_vertex));
-        const edgeDA = mesh.addEdge(new Edge(d_vertex, a));
-        const edgeEF = mesh.addEdge(new Edge(e, f));
-        const edgeFG = mesh.addEdge(new Edge(f, g));
-        const edgeGH = mesh.addEdge(new Edge(g, h_vertex));
-        const edgeHE = mesh.addEdge(new Edge(h_vertex, e));
-        const edgeAE = mesh.addEdge(new Edge(a, e));
-        const edgeBF = mesh.addEdge(new Edge(b, f));
-        const edgeCG = mesh.addEdge(new Edge(c, g));
-        const edgeDH = mesh.addEdge(new Edge(d_vertex, h_vertex));
-        
-        // Create faces (material indices: 0=bottom, 1=top, 2=left, 3=right, 4=front, 5=back)
+        const v_a = vertices[d][h][w];
+        const v_b = vertices[d][h][w + 1];
+        const v_c = vertices[d][h + 1][w + 1];
+        const v_d = vertices[d][h + 1][w];
+        const v_e = vertices[d + 1][h][w];
+        const v_f = vertices[d + 1][h][w + 1];
+        const v_g = vertices[d + 1][h + 1][w + 1];
+        const v_h = vertices[d + 1][h + 1][w];
+
         // Bottom face
-        mesh.addFace(
-          new Face(
-            [a, b, c, d_vertex],
-            [edgeAB, edgeBC, edgeCD, edgeDA],
-            { materialIndex: 0 }
-          )
-        );
-        
+        const bot_edge1 = addEdge(v_a, v_b);
+        const bot_edge2 = addEdge(v_b, v_c);
+        const bot_edge3 = addEdge(v_c, v_d);
+        const bot_edge4 = addEdge(v_d, v_a);
+        mesh.addFace(new Face([v_d, v_c, v_b, v_a], [bot_edge4, bot_edge3, bot_edge2, bot_edge1], { materialIndex: 0 }));
+
         // Top face
-        mesh.addFace(
-          new Face(
-            [e, f, g, h_vertex],
-            [edgeEF, edgeFG, edgeGH, edgeHE],
-            { materialIndex: 1 }
-          )
-        );
-        
+        const top_edge1 = addEdge(v_e, v_f);
+        const top_edge2 = addEdge(v_f, v_g);
+        const top_edge3 = addEdge(v_g, v_h);
+        const top_edge4 = addEdge(v_h, v_e);
+        mesh.addFace(new Face([v_e, v_f, v_g, v_h], [top_edge1, top_edge2, top_edge3, top_edge4], { materialIndex: 1 }));
+
         // Left face
-        mesh.addFace(
-          new Face(
-            [a, d_vertex, h_vertex, e],
-            [edgeDA, edgeDH, edgeHE, edgeAE],
-            { materialIndex: 2 }
-          )
-        );
-        
+        const left_edge1 = addEdge(v_a, v_d);
+        const left_edge2 = addEdge(v_d, v_h);
+        const left_edge3 = addEdge(v_h, v_e);
+        const left_edge4 = addEdge(v_e, v_a);
+        mesh.addFace(new Face([v_a, v_d, v_h, v_e], [left_edge1, left_edge2, left_edge3, left_edge4], { materialIndex: 2 }));
+
         // Right face
-        mesh.addFace(
-          new Face(
-            [b, c, g, f],
-            [edgeBC, edgeCG, edgeFG, edgeBF],
-            { materialIndex: 3 }
-          )
-        );
-        
+        const right_edge1 = addEdge(v_b, v_c);
+        const right_edge2 = addEdge(v_c, v_g);
+        const right_edge3 = addEdge(v_g, v_f);
+        const right_edge4 = addEdge(v_f, v_b);
+        mesh.addFace(new Face([v_b, v_c, v_g, v_f], [right_edge1, right_edge2, right_edge3, right_edge4], { materialIndex: 3 }));
+
         // Front face
-        mesh.addFace(
-          new Face(
-            [a, b, f, e],
-            [edgeAB, edgeBF, edgeEF, edgeAE],
-            { materialIndex: 4 }
-          )
-        );
-        
+        const front_edge1 = addEdge(v_a, v_b);
+        const front_edge2 = addEdge(v_b, v_f);
+        const front_edge3 = addEdge(v_f, v_e);
+        const front_edge4 = addEdge(v_e, v_a);
+        mesh.addFace(new Face([v_a, v_b, v_f, v_e], [front_edge1, front_edge2, front_edge3, front_edge4], { materialIndex: 4 }));
+
         // Back face
-        mesh.addFace(
-          new Face(
-            [d_vertex, c, g, h_vertex],
-            [edgeCD, edgeCG, edgeGH, edgeDH],
-            { materialIndex: 5 }
-          )
-        );
+        const back_edge1 = addEdge(v_d, v_c);
+        const back_edge2 = addEdge(v_c, v_g);
+        const back_edge3 = addEdge(v_g, v_h);
+        const back_edge4 = addEdge(v_h, v_d);
+        mesh.addFace(new Face([v_d, v_c, v_g, v_h], [back_edge1, back_edge2, back_edge3, back_edge4], { materialIndex: 5 }));
       }
     }
   }
   
   return mesh;
-} 
+}

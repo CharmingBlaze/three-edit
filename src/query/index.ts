@@ -3,14 +3,16 @@
  * @module query
  */
 
-// Geometry queries
+// Export from modular query system
+export * from './types';
+export * from './geometry';
+export * from './nearest';
+export * from './raycast';
 export * from './queryGeometry';
-
-// Topology queries
+export * from './querySelection';
 export * from './queryTopology';
 
-// Selection queries
-export * from './querySelection';
-
-// Nearest element queries
-export * from './queryNearest';
+// Main query functions
+export { findNearestElement, findNearestVertex, findNearestEdge, findNearestFace } from './nearest';
+export { findRayIntersections, findFirstRayIntersection, hasRayIntersection } from './raycast';
+export { closestPointOnLineSegment, closestPointOnTriangle } from './geometry';

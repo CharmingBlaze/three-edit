@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for creating a plane
@@ -59,28 +59,29 @@ export function createPlane(options: CreatePlaneOptions = {}): EditableMesh {
     vertices.push(row);
   }
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
   // Create edges and faces
   for (let h = 0; h < heightSegments; h++) {
     for (let w = 0; w < widthSegments; w++) {
-      const a = vertices[h][w];
-      const b = vertices[h][w + 1];
-      const c = vertices[h + 1][w + 1];
-      const d = vertices[h + 1][w];
-      
-      // Create edges
-      const edgeAB = mesh.addEdge(new Edge(a, b));
-      const edgeBC = mesh.addEdge(new Edge(b, c));
-      const edgeCD = mesh.addEdge(new Edge(c, d));
-      const edgeDA = mesh.addEdge(new Edge(d, a));
-      
-      // Create face (material index 0)
-      mesh.addFace(
-        new Face(
-          [a, b, c, d],
-          [edgeAB, edgeBC, edgeCD, edgeDA],
-          { materialIndex: 0 }
-        )
-      );
+      const v1 = vertices[h][w];
+      const v2 = vertices[h][w + 1];
+      const v3 = vertices[h + 1][w + 1];
+      const v4 = vertices[h + 1][w];
+
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
+
+      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
     }
   }
   

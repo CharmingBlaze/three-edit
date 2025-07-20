@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../../core/EditableMesh';
-import { Face } from '../../core/Face';
-import { BaseSerializableCommand } from '../Command';
+import { EditableMesh } from '../../core/EditableMesh.ts';
+import { Face } from '../../core/Face.ts';
+import { BaseSerializableCommand } from '../Command.ts';
 
 /**
  * Command to add a face to a mesh

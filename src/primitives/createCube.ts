@@ -1,8 +1,8 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
-import { calculateFaceNormal } from '../utils/mathUtils';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
+import { calculateFaceNormal } from '../utils/mathUtils.ts';
 
 /**
  * Options for creating a cube
@@ -14,12 +14,6 @@ export interface CreateCubeOptions {
   height?: number;
   /** Depth of the cube */
   depth?: number;
-  /** Number of width segments */
-  widthSegments?: number;
-  /** Number of height segments */
-  heightSegments?: number;
-  /** Number of depth segments */
-  depthSegments?: number;
   /** Name of the mesh */
   name?: string;
 }
@@ -64,71 +58,37 @@ export function createCube(options: CreateCubeOptions = {}): EditableMesh {
     return mesh.addVertex(vertex);
   });
   
-  // Create edges
-  const edges = [
-    // Front face edges
-    mesh.addEdge(new Edge(vertexIndices[0], vertexIndices[1])), // bottom
-    mesh.addEdge(new Edge(vertexIndices[1], vertexIndices[3])), // right
-    mesh.addEdge(new Edge(vertexIndices[3], vertexIndices[2])), // top
-    mesh.addEdge(new Edge(vertexIndices[2], vertexIndices[0])), // left
-    
-    // Back face edges
-    mesh.addEdge(new Edge(vertexIndices[4], vertexIndices[5])), // bottom
-    mesh.addEdge(new Edge(vertexIndices[5], vertexIndices[7])), // right
-    mesh.addEdge(new Edge(vertexIndices[7], vertexIndices[6])), // top
-    mesh.addEdge(new Edge(vertexIndices[6], vertexIndices[4])), // left
-    
-    // Connecting edges
-    mesh.addEdge(new Edge(vertexIndices[0], vertexIndices[4])), // bottom-left
-    mesh.addEdge(new Edge(vertexIndices[1], vertexIndices[5])), // bottom-right
-    mesh.addEdge(new Edge(vertexIndices[2], vertexIndices[6])), // top-left
-    mesh.addEdge(new Edge(vertexIndices[3], vertexIndices[7])), // top-right
-  ];
-  
   // Create faces with proper winding order (CCW)
-  const faces = [
-    // Front face (z = halfDepth)
-    new Face(
-      [vertexIndices[0], vertexIndices[1], vertexIndices[3], vertexIndices[2]],
-      [edges[0], edges[1], edges[2], edges[3]],
-      { materialIndex: 0 }
-    ),
-    
-    // Back face (z = -halfDepth)
-    new Face(
-      [vertexIndices[5], vertexIndices[4], vertexIndices[6], vertexIndices[7]],
-      [edges[4], edges[7], edges[6], edges[5]],
-      { materialIndex: 1 }
-    ),
-    
-    // Top face (y = halfHeight)
-    new Face(
-      [vertexIndices[2], vertexIndices[3], vertexIndices[7], vertexIndices[6]],
-      [edges[2], edges[11], edges[6], edges[10]],
-      { materialIndex: 2 }
-    ),
-    
-    // Bottom face (y = -halfHeight)
-    new Face(
-      [vertexIndices[4], vertexIndices[5], vertexIndices[1], vertexIndices[0]],
-      [edges[4], edges[9], edges[0], edges[8]],
-      { materialIndex: 3 }
-    ),
-    
-    // Right face (x = halfWidth)
-    new Face(
-      [vertexIndices[1], vertexIndices[5], vertexIndices[7], vertexIndices[3]],
-      [edges[1], edges[9], edges[11], edges[5]],
-      { materialIndex: 4 }
-    ),
-    
-    // Left face (x = -halfWidth)
-    new Face(
-      [vertexIndices[4], vertexIndices[0], vertexIndices[2], vertexIndices[6]],
-      [edges[8], edges[3], edges[10], edges[7]],
-      { materialIndex: 5 }
-    ),
-  ];
+  const faces: Face[] = [];
+
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      const newEdge = new Edge(v1, v2);
+      edgeMap[key] = mesh.addEdge(newEdge);
+    }
+    return edgeMap[key];
+  };
+
+  const addFace = (verts: number[], materialIndex: number) => {
+    const edgeIndices: number[] = [];
+    for (let i = 0; i < verts.length; i++) {
+      const v1 = verts[i];
+      const v2 = verts[(i + 1) % verts.length];
+      edgeIndices.push(addEdge(v1, v2));
+    }
+    const face = new Face(verts, edgeIndices, { materialIndex });
+    faces.push(face);
+  };
+
+  // Add faces
+  addFace([vertexIndices[0], vertexIndices[1], vertexIndices[3], vertexIndices[2]], 0); // Front
+  addFace([vertexIndices[5], vertexIndices[4], vertexIndices[6], vertexIndices[7]], 1); // Back
+  addFace([vertexIndices[2], vertexIndices[3], vertexIndices[7], vertexIndices[6]], 2); // Top
+  addFace([vertexIndices[4], vertexIndices[5], vertexIndices[1], vertexIndices[0]], 3); // Bottom
+  addFace([vertexIndices[1], vertexIndices[5], vertexIndices[7], vertexIndices[3]], 4); // Right
+  addFace([vertexIndices[4], vertexIndices[0], vertexIndices[2], vertexIndices[6]], 5); // Left
   
   // Add faces to mesh
   faces.forEach(face => mesh.addFace(face));

@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
+import { EditableMesh } from '../core/EditableMesh.ts';
 import { Selection } from './Selection';
-import { Face } from '../core/Face';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for face selection

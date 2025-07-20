@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 
 /**
  * Options for creating an NGon
@@ -73,130 +73,75 @@ export function createNGon(options: CreateNGonOptions = {}): EditableMesh {
     vertices.push(row);
   }
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
   // Create edges and faces for the side walls
   for (let h = 0; h < heightSegments; h++) {
     for (let s = 0; s < sides; s++) {
-      const a = vertices[h][s];
-      const b = vertices[h][s + 1];
-      const c = vertices[h + 1][s + 1];
-      const d = vertices[h + 1][s];
-      
-      // Create edges
-      const edgeAB = mesh.addEdge(new Edge(a, b));
-      const edgeBC = mesh.addEdge(new Edge(b, c));
-      const edgeCD = mesh.addEdge(new Edge(c, d));
-      const edgeDA = mesh.addEdge(new Edge(d, a));
-      
-      // Create face (material index 0 for sides)
-      mesh.addFace(
-        new Face(
-          [a, b, c, d],
-          [edgeAB, edgeBC, edgeCD, edgeDA],
-          { materialIndex: 0 }
-        )
-      );
+      const v1 = vertices[h][s];
+      const v2 = vertices[h][s + 1];
+      const v3 = vertices[h + 1][s + 1];
+      const v4 = vertices[h + 1][s];
+
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
+
+      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
     }
   }
-  
+
   // Create caps if not open-ended
   if (!openEnded) {
     // Bottom cap
     if (thetaLength === Math.PI * 2) {
-      // Full NGon - create a single face
-      const bottomVertices: number[] = [];
+      const bottomVertices = vertices[0].slice(0, sides).reverse();
       const bottomEdges: number[] = [];
-      
       for (let s = 0; s < sides; s++) {
-        bottomVertices.push(vertices[0][s]);
-        if (s > 0) {
-          const edge = mesh.addEdge(new Edge(vertices[0][s - 1], vertices[0][s]));
-          bottomEdges.push(edge);
-        }
+        bottomEdges.push(addEdge(bottomVertices[s], bottomVertices[(s + 1) % sides]));
       }
-      
-      // Close the NGon
-      const edge = mesh.addEdge(new Edge(vertices[0][sides - 1], vertices[0][0]));
-      bottomEdges.push(edge);
-      
-      mesh.addFace(
-        new Face(
-          bottomVertices,
-          bottomEdges,
-          { materialIndex: 1 } // Bottom cap material
-        )
-      );
+      mesh.addFace(new Face(bottomVertices, bottomEdges, { materialIndex: 1 }));
     } else {
-      // Partial NGon - create individual triangles
-      // Create center vertex for the bottom cap
       const bottomCenterVertex = new Vertex(0, -halfHeight, 0);
       bottomCenterVertex.uv = { u: 0.5, v: 0.5 };
       const bottomCenterIndex = mesh.addVertex(bottomCenterVertex);
-      
       for (let s = 0; s < sides; s++) {
         const v1 = vertices[0][s];
         const v2 = vertices[0][s + 1];
-        
-        const edge1 = mesh.addEdge(new Edge(bottomCenterIndex, v1));
-        const edge2 = mesh.addEdge(new Edge(v1, v2));
-        const edge3 = mesh.addEdge(new Edge(v2, bottomCenterIndex));
-        
-        mesh.addFace(
-          new Face(
-            [bottomCenterIndex, v1, v2],
-            [edge1, edge2, edge3],
-            { materialIndex: 1 }
-          )
-        );
+        const edge1 = addEdge(bottomCenterIndex, v1);
+        const edge2 = addEdge(v1, v2);
+        const edge3 = addEdge(v2, bottomCenterIndex);
+        mesh.addFace(new Face([bottomCenterIndex, v1, v2], [edge1, edge2, edge3], { materialIndex: 1 }));
       }
     }
-    
+
     // Top cap
     if (thetaLength === Math.PI * 2) {
-      // Full NGon - create a single face
-      const topVertices: number[] = [];
+      const topVertices = vertices[heightSegments].slice(0, sides);
       const topEdges: number[] = [];
-      
       for (let s = 0; s < sides; s++) {
-        topVertices.push(vertices[heightSegments][s]);
-        if (s > 0) {
-          const edge = mesh.addEdge(new Edge(vertices[heightSegments][s - 1], vertices[heightSegments][s]));
-          topEdges.push(edge);
-        }
+        topEdges.push(addEdge(topVertices[s], topVertices[(s + 1) % sides]));
       }
-      
-      // Close the NGon
-      const edge = mesh.addEdge(new Edge(vertices[heightSegments][sides - 1], vertices[heightSegments][0]));
-      topEdges.push(edge);
-      
-      mesh.addFace(
-        new Face(
-          topVertices,
-          topEdges,
-          { materialIndex: 2 } // Top cap material
-        )
-      );
+      mesh.addFace(new Face(topVertices, topEdges, { materialIndex: 2 }));
     } else {
-      // Partial NGon - create individual triangles
-      // Create center vertex for the top cap
       const topCenterVertex = new Vertex(0, halfHeight, 0);
       topCenterVertex.uv = { u: 0.5, v: 0.5 };
       const topCenterIndex = mesh.addVertex(topCenterVertex);
-      
       for (let s = 0; s < sides; s++) {
         const v1 = vertices[heightSegments][s];
         const v2 = vertices[heightSegments][s + 1];
-        
-        const edge1 = mesh.addEdge(new Edge(topCenterIndex, v1));
-        const edge2 = mesh.addEdge(new Edge(v1, v2));
-        const edge3 = mesh.addEdge(new Edge(v2, topCenterIndex));
-        
-        mesh.addFace(
-          new Face(
-            [topCenterIndex, v1, v2],
-            [edge1, edge2, edge3],
-            { materialIndex: 2 }
-          )
-        );
+        const edge1 = addEdge(topCenterIndex, v1);
+        const edge2 = addEdge(v1, v2);
+        const edge3 = addEdge(v2, topCenterIndex);
+        mesh.addFace(new Face([topCenterIndex, v1, v2], [edge1, edge2, edge3], { materialIndex: 2 }));
       }
     }
   }

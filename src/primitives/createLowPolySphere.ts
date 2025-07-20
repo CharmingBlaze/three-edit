@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/index.ts';
+import { Edge } from '../core/index.ts';
+import { Face } from '../core/index.ts';
 
 /**
  * Options for creating a low-poly sphere
@@ -48,24 +48,26 @@ export function createLowPolySphere(options: CreateLowPolySphereOptions = {}): E
     vertices.push(vertexIndex);
   }
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
   // Create edges and faces
   for (let i = 0; i < segments; i++) {
     const v1 = vertices[i];
     const v2 = vertices[(i + 1) % segments];
-    
-    // Create edges
-    const edge1 = mesh.addEdge(new Edge(centerIndex, v1));
-    const edge2 = mesh.addEdge(new Edge(v1, v2));
-    const edge3 = mesh.addEdge(new Edge(v2, centerIndex));
-    
+
+    const edge1 = addEdge(centerIndex, v1);
+    const edge2 = addEdge(v1, v2);
+    const edge3 = addEdge(v2, centerIndex);
+
     // Create face (material index 0)
-    mesh.addFace(
-      new Face(
-        [centerIndex, v1, v2],
-        [edge1, edge2, edge3],
-        { materialIndex: 0 }
-      )
-    );
+    mesh.addFace(new Face([centerIndex, v1, v2], [edge1, edge2, edge3], { materialIndex: 0 }));
   }
   
   return mesh;

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { createCube } from '../primitives/createCube';
-import { createSphere } from '../primitives/createSphere';
-import { EditableMesh } from '../core/EditableMesh';
-import { union, subtract, intersect, booleanOperation, BooleanAdvanced } from '../operations/boolean';
-import { validateGeometryIntegrity } from '../validation/validateGeometryIntegrity';
+import { createCube } from '../primitives/createCube.ts';
+import { createSphere } from '../primitives/createSphere.ts';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { union, subtract, intersect, booleanOperation, BooleanAdvanced } from '../operations/boolean.ts';
+import { validateGeometryIntegrity } from '../validation/validateGeometryIntegrity.ts';
 
 describe('Boolean Operations', () => {
   describe('Union Operations', () => {

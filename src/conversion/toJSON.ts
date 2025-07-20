@@ -1,4 +1,4 @@
-import { EditableMesh } from '../core/EditableMesh';
+import { EditableMesh } from '../core/EditableMesh.ts';
 
 /**
  * Interface for the JSON representation of a mesh

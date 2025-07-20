@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Edge } from '../core/Edge';
-import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Edge } from '../core/Edge.ts';
+import { Face } from '../core/Face.ts';
 
 /**
  * Options for creating a greeble block
@@ -52,9 +52,6 @@ export function createGreebleBlock(options: CreateGreebleBlockOptions = {}): Edi
   const random = seededRandom(seed);
   
   // Calculate dimensions
-  const divisionWidth = width / divisions;
-  const divisionHeight = height / divisions;
-  const divisionDepth = depth / divisions;
   
   // Create vertices for the greeble block
   const vertices: number[][][] = [];
@@ -88,94 +85,48 @@ export function createGreebleBlock(options: CreateGreebleBlockOptions = {}): Edi
     vertices.push(depthPlane);
   }
   
+  const edgeMap: { [key: string]: number } = {};
+  const addEdge = (v1: number, v2: number): number => {
+    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+    if (edgeMap[key] === undefined) {
+      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+    }
+    return edgeMap[key];
+  };
+
   // Create edges and faces
   for (let d = 0; d < divisions; d++) {
     for (let h = 0; h < divisions; h++) {
       for (let w = 0; w < divisions; w++) {
-        const a = vertices[d][h][w];
-        const b = vertices[d][h][w + 1];
-        const c = vertices[d][h + 1][w + 1];
-        const d_vertex = vertices[d][h + 1][w];
-        const e = vertices[d + 1][h][w];
-        const f = vertices[d + 1][h][w + 1];
-        const g = vertices[d + 1][h + 1][w + 1];
-        const h_vertex = vertices[d + 1][h + 1][w];
-        
-        // Create edges
-        const edgeAB = mesh.addEdge(new Edge(a, b));
-        const edgeBC = mesh.addEdge(new Edge(b, c));
-        const edgeCD = mesh.addEdge(new Edge(c, d_vertex));
-        const edgeDA = mesh.addEdge(new Edge(d_vertex, a));
-        const edgeEF = mesh.addEdge(new Edge(e, f));
-        const edgeFG = mesh.addEdge(new Edge(f, g));
-        const edgeGH = mesh.addEdge(new Edge(g, h_vertex));
-        const edgeHE = mesh.addEdge(new Edge(h_vertex, e));
-        const edgeAE = mesh.addEdge(new Edge(a, e));
-        const edgeBF = mesh.addEdge(new Edge(b, f));
-        const edgeCG = mesh.addEdge(new Edge(c, g));
-        const edgeDH = mesh.addEdge(new Edge(d_vertex, h_vertex));
-        
-        // Create faces (material indices: 0=top, 1=bottom, 2=left, 3=right, 4=front, 5=back)
+        const v_d_h_w = vertices[d][h][w];
+        const v_d_h_w1 = vertices[d][h][w + 1];
+        const v_d_h1_w1 = vertices[d][h + 1][w + 1];
+        const v_d_h1_w = vertices[d][h + 1][w];
+        const v_d1_h_w = vertices[d + 1][h][w];
+        const v_d1_h_w1 = vertices[d + 1][h][w + 1];
+        const v_d1_h1_w1 = vertices[d + 1][h + 1][w + 1];
+        const v_d1_h1_w = vertices[d + 1][h + 1][w];
+
         // Top face
-        mesh.addFace(
-          new Face(
-            [e, f, g, h_vertex],
-            [edgeEF, edgeFG, edgeGH, edgeHE],
-            { materialIndex: 0 }
-          )
-        );
-        
+        mesh.addFace(new Face([v_d1_h_w, v_d1_h_w1, v_d1_h1_w1, v_d1_h1_w], [addEdge(v_d1_h_w, v_d1_h_w1), addEdge(v_d1_h_w1, v_d1_h1_w1), addEdge(v_d1_h1_w1, v_d1_h1_w), addEdge(v_d1_h1_w, v_d1_h_w)], { materialIndex: 0 }));
         // Bottom face
-        mesh.addFace(
-          new Face(
-            [a, b, c, d_vertex],
-            [edgeAB, edgeBC, edgeCD, edgeDA],
-            { materialIndex: 1 }
-          )
-        );
-        
+        mesh.addFace(new Face([v_d_h_w, v_d_h1_w, v_d_h1_w1, v_d_h_w1], [addEdge(v_d_h_w, v_d_h1_w), addEdge(v_d_h1_w, v_d_h1_w1), addEdge(v_d_h1_w1, v_d_h_w1), addEdge(v_d_h_w1, v_d_h_w)], { materialIndex: 1 }));
+
         // Left side
         if (w === 0) {
-          mesh.addFace(
-            new Face(
-              [a, d_vertex, h_vertex, e],
-              [edgeDA, edgeDH, edgeHE, edgeAE],
-              { materialIndex: 2 }
-            )
-          );
+            mesh.addFace(new Face([v_d_h_w, v_d_h_w, v_d1_h_w, v_d1_h1_w, v_d_h1_w], [addEdge(v_d_h_w, v_d1_h_w), addEdge(v_d1_h_w, v_d1_h1_w), addEdge(v_d1_h1_w, v_d_h1_w), addEdge(v_d_h1_w, v_d_h_w)], { materialIndex: 2 }));
         }
-        
         // Right side
         if (w === divisions - 1) {
-          mesh.addFace(
-            new Face(
-              [b, c, g, f],
-              [edgeBC, edgeCG, edgeFG, edgeBF],
-              { materialIndex: 3 }
-            )
-          );
+            mesh.addFace(new Face([v_d_h_w1, v_d_h1_w1, v_d1_h1_w1, v_d1_h_w1], [addEdge(v_d_h_w1, v_d_h1_w1), addEdge(v_d_h1_w1, v_d1_h1_w1), addEdge(v_d1_h1_w1, v_d1_h_w1), addEdge(v_d1_h_w1, v_d_h_w1)], { materialIndex: 3 }));
         }
-        
         // Front face
-        if (d === 0) {
-          mesh.addFace(
-            new Face(
-              [a, b, f, e],
-              [edgeAB, edgeBF, edgeEF, edgeAE],
-              { materialIndex: 4 }
-            )
-          );
+        if (h === 0) {
+            mesh.addFace(new Face([v_d_h_w, v_d_h_w1, v_d1_h_w1, v_d1_h_w], [addEdge(v_d_h_w, v_d_h_w1), addEdge(v_d_h_w1, v_d1_h_w1), addEdge(v_d1_h_w1, v_d1_h_w), addEdge(v_d1_h_w, v_d_h_w)], { materialIndex: 4 }));
         }
-        
         // Back face
-        if (d === divisions - 1) {
-          mesh.addFace(
-            new Face(
-              [d_vertex, c, g, h_vertex],
-              [edgeCD, edgeCG, edgeGH, edgeDH],
-              { materialIndex: 5 }
-            )
-          );
+        if (h === divisions - 1) {
+            mesh.addFace(new Face([v_d_h1_w, v_d1_h1_w, v_d1_h1_w1, v_d_h1_w1], [addEdge(v_d_h1_w, v_d1_h1_w), addEdge(v_d1_h1_w, v_d1_h1_w1), addEdge(v_d1_h1_w1, v_d_h1_w1), addEdge(v_d_h1_w1, v_d_h1_w)], { materialIndex: 5 }));
         }
       }
     }

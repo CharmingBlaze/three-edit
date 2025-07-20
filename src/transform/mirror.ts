@@ -1,6 +1,6 @@
 import { Vector3, Matrix4 } from 'three';
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
+import { EditableMesh } from '../core/EditableMesh.ts';
+import { Selection } from '../selection/Selection.ts';
 
 /**
  * Options for mirroring geometry

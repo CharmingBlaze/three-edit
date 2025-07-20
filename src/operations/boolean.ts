@@ -1,6 +1,6 @@
-import { EditableMesh } from '../core/EditableMesh';
-import { Vector3 } from 'three';
-import { validateGeometryIntegrity } from '../validation/validateGeometryIntegrity';
+import { EditableMesh } from '../core/EditableMesh.ts';
+
+import { validateGeometryIntegrity } from '../validation/validateGeometryIntegrity.ts';
 
 /**
  * Options for boolean operations
@@ -117,50 +117,33 @@ export function booleanOperation(
 }
 
 /**
- * Internal function to perform boolean operations
- * @param meshA First mesh
- * @param meshB Second mesh
- * @param operation Type of boolean operation
- * @param options Boolean operation options
- * @returns Result containing the operated mesh
+ * Copy mesh data to result mesh
+ * @param source Source mesh
+ * @param target Target mesh
+ * @param vertexOffset Offset for vertex indices
  */
-function performBooleanOperation(
-  meshA: EditableMesh,
-  meshB: EditableMesh,
-  operation: 'union' | 'subtract' | 'intersect',
-  options: BooleanOptions = {}
-): BooleanResult {
-  const {
-    validate = true,
-    repair = true,
-    tolerance = 1e-6,
-    preserveMaterials = true
-  } = options;
-
-  // Create a new mesh for the result
-  const resultMesh = new EditableMesh({ name: `${meshA.name}_${operation}_${meshB.name}` });
-
-  // For now, implement a basic approach
-  // In a full implementation, this would use a proper CSG library
-  const result = implementBasicBoolean(meshA, meshB, operation, {
-    tolerance,
-    preserveMaterials
-  });
-
-  // Validate and repair if requested
-  if (validate) {
-    const validation = validateGeometryIntegrity(result);
-    if (validation.hasErrors && repair) {
-      // TODO: Implement repair functionality
-      console.warn('Geometry validation failed, repair not yet implemented');
-    }
+function copyMeshData(source: EditableMesh, target: EditableMesh, vertexOffset: number): void {
+  // Copy vertices
+  for (const vertex of source.vertices) {
+    const newVertex = vertex.clone();
+    target.addVertex(newVertex);
   }
 
-  return {
-    mesh: result,
-    success: true,
-    validation: validate ? validateGeometryIntegrity(result) : undefined
-  };
+  // Copy edges
+  for (const edge of source.edges) {
+    const newEdge = edge.clone();
+    newEdge.v1 += vertexOffset;
+    newEdge.v2 += vertexOffset;
+    target.addEdge(newEdge);
+  }
+
+  // Copy faces
+  for (const face of source.faces) {
+    const newFace = face.clone();
+    // Adjust vertex indices
+    newFace.vertices = newFace.vertices.map((v: number) => v + vertexOffset);
+    target.addFace(newFace);
+  }
 }
 
 /**
@@ -169,14 +152,12 @@ function performBooleanOperation(
  * @param meshA First mesh
  * @param meshB Second mesh
  * @param operation Type of boolean operation
- * @param options Operation options
  * @returns Resulting mesh
  */
 function implementBasicBoolean(
   meshA: EditableMesh,
   meshB: EditableMesh,
   operation: 'union' | 'subtract' | 'intersect',
-  options: { tolerance: number; preserveMaterials: boolean }
 ): EditableMesh {
   const resultMesh = new EditableMesh({ name: `${meshA.name}_${operation}_${meshB.name}` });
 
@@ -200,43 +181,52 @@ function implementBasicBoolean(
 }
 
 /**
- * Copy mesh data to result mesh
- * @param source Source mesh
- * @param target Target mesh
- * @param vertexOffset Offset for vertex indices
+ * Internal function to perform boolean operations
+ * @param meshA First mesh
+ * @param meshB Second mesh
+ * @param operation Type of boolean operation
+ * @param options Boolean operation options
+ * @returns Result containing the operated mesh
  */
-function copyMeshData(source: EditableMesh, target: EditableMesh, vertexOffset: number): void {
-  // Copy vertices
-  for (const vertex of source.vertices) {
-    const newVertex = vertex.clone();
-    target.addVertex(newVertex);
+function performBooleanOperation(
+  meshA: EditableMesh,
+  meshB: EditableMesh,
+  operation: 'union' | 'subtract' | 'intersect',
+  options: BooleanOptions = {}
+): BooleanResult {
+  const {
+    validate = true,
+    repair = false, // repair is not implemented
+  } = options;
+
+  // For now, implement a basic approach
+  // In a full implementation, this would use a proper CSG library
+  const result = implementBasicBoolean(meshA, meshB, operation);
+
+  // Validate and repair if requested
+  if (validate) {
+    const validation = validateGeometryIntegrity(result);
+    if (!validation.valid && repair) {
+      // TODO: Implement repair functionality
+      console.warn('Geometry validation failed, repair not yet implemented');
+    }
   }
 
-  // Copy edges
-  for (const edge of source.edges) {
-    const newEdge = edge.clone();
-    newEdge.vertexA += vertexOffset;
-    newEdge.vertexB += vertexOffset;
-    target.addEdge(newEdge);
-  }
-
-  // Copy faces
-  for (const face of source.faces) {
-    const newFace = face.clone();
-    // Adjust vertex indices
-    newFace.vertices = newFace.vertices.map(v => v + vertexOffset);
-    target.addFace(newFace);
-  }
+  return {
+    mesh: result,
+    success: true,
+    validation: validate ? validateGeometryIntegrity(result) : undefined
+  };
 }
 
 /**
- * Advanced boolean operations with more options
+ * Advanced boolean operations with additional options
  */
-export namespace BooleanAdvanced {
+export const BooleanAdvanced = {
   /**
-   * Union with advanced options
+   * Union operation with advanced options
    */
-  export function unionWithOptions(
+  unionWithOptions(
     meshA: EditableMesh,
     meshB: EditableMesh,
     options: BooleanOptions & {
@@ -245,12 +235,12 @@ export namespace BooleanAdvanced {
     } = {}
   ): BooleanResult {
     return union(meshA, meshB, options);
-  }
+  },
 
   /**
-   * Subtract with advanced options
+   * Subtract operation with advanced options
    */
-  export function subtractWithOptions(
+  subtractWithOptions(
     meshA: EditableMesh,
     meshB: EditableMesh,
     options: BooleanOptions & {
@@ -259,12 +249,12 @@ export namespace BooleanAdvanced {
     } = {}
   ): BooleanResult {
     return subtract(meshA, meshB, options);
-  }
+  },
 
   /**
-   * Intersect with advanced options
+   * Intersect operation with advanced options
    */
-  export function intersectWithOptions(
+  intersectWithOptions(
     meshA: EditableMesh,
     meshB: EditableMesh,
     options: BooleanOptions & {
@@ -274,4 +264,4 @@ export namespace BooleanAdvanced {
   ): BooleanResult {
     return intersect(meshA, meshB, options);
   }
-} 
+};
