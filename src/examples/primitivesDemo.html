@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flexible Primitives Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            z-index: 1000;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        h1, h2, h3 {
+            margin: 0 0 10px 0;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-list li:before {
+            content: "✓ ";
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            z-index: 2000;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="loading">Loading Flexible Primitives Demo...</div>
+        
+        <div id="info">
+            <h1>🎯 Flexible Primitives</h1>
+            <p>All primitives now use optional parameters with safe defaults!</p>
+            
+            <h3>✨ Key Features:</h3>
+            <ul class="feature-list">
+                <li>Optional parameters with safe defaults</li>
+                <li>Position, scale, and rotation support</li>
+                <li>Custom material properties</li>
+                <li>Automatic validation and error fixing</li>
+                <li>Comprehensive UV mapping</li>
+                <li>Proper normals and tangents</li>
+                <li>Edge generation for wireframe</li>
+                <li>Flexible input (Maps or objects)</li>
+            </ul>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="primitiveCount">10</div>
+                    <div class="stat-label">Primitives</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="meshCount">0</div>
+                    <div class="stat-label">Meshes</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="controls">
+            <h3>🎮 Controls</h3>
+            <button onclick="demo.createRandomPrimitive()">🎲 Random Primitive</button>
+            <button onclick="demo.clearAll()">🗑️ Clear All</button>
+            <button onclick="toggleTransformMode()">🔧 Transform Mode</button>
+            
+            <h3>📋 Instructions</h3>
+            <ul class="feature-list">
+                <li>Click to select meshes</li>
+                <li>Drag to move camera</li>
+                <li>Scroll to zoom</li>
+                <li>Use transform controls</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="module">
+        import { PrimitivesDemo } from './primitivesDemo.js';
+
+        let demo;
+        let transformMode = 'translate';
+
+        // Initialize demo when page loads
+        window.addEventListener('load', () => {
+            const container = document.getElementById('container');
+            demo = new PrimitivesDemo(container);
+            
+            // Hide loading screen
+            document.getElementById('loading').classList.add('hidden');
+            
+            // Update stats
+            updateStats();
+        });
+
+        // Make demo globally accessible
+        window.demo = demo;
+
+        function toggleTransformMode() {
+            if (!demo || !demo.transformControls) return;
+            
+            const modes = ['translate', 'rotate', 'scale'];
+            const currentIndex = modes.indexOf(transformMode);
+            transformMode = modes[(currentIndex + 1) % modes.length];
+            
+            demo.transformControls.setMode(transformMode);
+            console.log('Transform mode:', transformMode);
+        }
+
+        function updateStats() {
+            if (!demo) return;
+            
+            const meshes = demo.getMeshes();
+            document.getElementById('meshCount').textContent = meshes.length;
+            
+            // Update primitive count
+            const primitiveCount = document.getElementById('primitiveCount');
+            if (primitiveCount) {
+                primitiveCount.textContent = meshes.length;
+            }
+        }
+
+        // Update stats periodically
+        setInterval(updateStats, 1000);
+
+        // Global functions for buttons
+        window.toggleTransformMode = toggleTransformMode;
+    </script>
+</body>
+</html> 
