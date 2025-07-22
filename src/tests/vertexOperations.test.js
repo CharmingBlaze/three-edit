@@ -1,10 +1,10 @@
 /**
  * @fileoverview
- * Tests for the modular VertexOperations.
+ * Tests for the modular vertex operations.
  */
 
 import * as THREE from 'three';
-import { VertexOperations } from '../editing/operations/index.js';
+import { mergeVertices } from '../editing/operations/vertex/index.js';
 import { describe, it, beforeEach, assert, assertEqual } from './TestFramework.js';
 
 describe('Vertex Operations Tests', () => {
@@ -26,16 +26,17 @@ describe('Vertex Operations Tests', () => {
   describe('Merge Operation', () => {
     it('should merge specified vertices to a target vertex', () => {
       // Perform the merge operation
-      const result = VertexOperations.merge(geometry, {
-        indices: [0, 2, 4], // Indices of vertices to merge
-        target: 1           // Index of the target vertex
+      const result = mergeVertices(geometry, [0, 2, 4], {
+        targetVertexIndex: 1 // Index of the target vertex
       });
       
       // Assertions
-      assert(result, 'Merge operation should return a result object');
-      assertEqual(result.impacted.length, 4, 'Should impact 4 vertices (3 merged + 1 target)');
+      assert(result.success, 'Merge operation should be successful');
+      
+      const newGeometry = result.geometry;
+      const positions = newGeometry.attributes.position.array;
 
-      const positions = geometry.attributes.position.array;
+      // Verify that vertices 0, 2, and 4 were merged to vertex 1's position
       const targetX = positions[1 * 3 + 0];
       const targetY = positions[1 * 3 + 1];
       const targetZ = positions[1 * 3 + 2];

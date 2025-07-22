@@ -1,22 +1,21 @@
 /**
- * @fileoverview Scene System
- * Provides comprehensive scene management for the 3D editor
+ * @fileoverview Scene System Index
+ * Centralized exports for all scene management functionality
  */
 
-import { SceneManager } from './SceneManager.js';
-import { Scene } from './Scene.js';
+// Core scene classes
+export { Scene } from './core/Scene.js';
+export { SceneManager } from './core/SceneManager.js';
 
-// Scene utilities
-export { SceneUtils } from './SceneUtils.js';
+// Scene operations and utilities
+export * from './SceneOperations.js';
+export * from './SceneSerializer.js';
+export * from './SceneUtils.js';
+export * from './SceneValidator.js';
 
-// Scene operations
-export { SceneOperations } from './SceneOperations.js';
-
-// Scene validation
-export { SceneValidator } from './SceneValidator.js';
-
-// Scene serialization
-export { SceneSerializer } from './SceneSerializer.js';
+// Modern scene system
+export * from './modernSceneManager.js';
+export * from './modernIndex.js';
 
 /**
  * Create a scene manager with default settings

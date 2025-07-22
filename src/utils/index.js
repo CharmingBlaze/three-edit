@@ -3,10 +3,16 @@
  * Utility functions for the 3D editor
  */
 
-// Mathematical utilities
+// Mathematical utilities (modular)
+export * from './math/index.js';
+
+// Legacy math utilities (deprecated)
 export { MathUtils } from './MathUtils.js';
 
-// Validation utilities
+// Validation utilities (modular)
+export * from './validation/index.js';
+
+// Legacy validation utilities (deprecated)
 export { ValidationUtils } from './ValidationUtils.js';
 
 // String utilities

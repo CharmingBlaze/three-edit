@@ -3,15 +3,23 @@
  * Centralized exports for all modular editing operations.
  */
 
-// New modular exports
+// Core geometry operations
 export * from './geometry/index.js';
 export * from './vertex/index.js';
 export * from './edge/index.js';
 export * from './face/index.js';
 
-// Un-refactored module exports
-export * from './uvOperations.js';
-export * from './drawingOperations.js';
-export * from './sculptingOperations.js';
-export * from './objectOperations.js';
-export * from './mirrorOperations.js';
+// UV operations
+export * from './uv/index.js';
+
+// Drawing operations
+export * from './drawing/index.js';
+
+// Sculpting operations
+export * from './sculpting/index.js';
+
+// Object operations
+export * from './object/index.js';
+
+// Mirror operations
+export * from './mirror/index.js';

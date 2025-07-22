@@ -1,19 +1,15 @@
 /**
- * @fileoverview History Module Index
- * Main entry point for the history/undo-redo system
+ * @fileoverview History System Index
+ * Centralized exports for all history functionality
  */
 
-import { HistoryManager } from './HistoryManager.js';
-export { HistoryEntry } from './HistoryEntry.js';
-export { 
-  HistoryEntryTypes, 
-  HistoryEntryStates, 
-  HistoryEntryPriorities,
-  HistoryManagerStates 
-} from './HistoryTypes.js';
+// Core history classes
+export { HistoryEntry } from './core/HistoryEntry.js';
+export { HistoryManager, HistoryManagerStates } from './core/HistoryManager.js';
 
-// Import utility functions
-import * as historyUtils from './historyUtils.js';
+// History utilities and types
+export * from './HistoryTypes.js';
+export * from './historyUtils.js';
 
 /**
  * Create a history manager with default configuration

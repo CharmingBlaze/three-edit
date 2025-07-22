@@ -1,10 +1,11 @@
 /**
- * @fileoverview Scene Class
- * Represents a scene in the 3D editor with meshes, hierarchy, and settings
+ * @fileoverview Scene class for 3D Editor
+ * Represents a scene in the editor with meshes, hierarchy, and properties
  */
 
-import { EditableMesh } from '../../mesh/EditableMesh.js';
+import { EditableMesh } from '../../EditableMesh.js';
 import { convertToThreeJS } from '../../threejsConverter.js';
+import * as THREE from 'three';
 
 /**
  * Scene object representing a scene in the editor
@@ -13,12 +14,12 @@ export class Scene {
   /**
    * Create a scene
    * @param {Object} options - Scene options
-   * @param {string} [options.name='Scene'] - Scene name
-   * @param {string} [options.id] - Scene ID (auto-generated if not provided)
-   * @param {Object} [options.camera={}] - Camera settings
-   * @param {Object} [options.lighting={}] - Lighting settings
-   * @param {Object} [options.environment={}] - Environment settings
-   * @param {Object} [options.customProperties={}] - Custom properties
+   * @param {string} options.name - Scene name, defaults to 'Scene'
+   * @param {string} options.id - Scene ID
+   * @param {Object} options.camera - Camera settings
+   * @param {Object} options.lighting - Lighting settings
+   * @param {Object} options.environment - Environment settings
+   * @param {Object} options.customProperties - Custom properties
    */
   constructor(options = {}) {
     const {
@@ -112,15 +113,15 @@ export class Scene {
   /**
    * Get mesh by ID
    * @param {string} meshId - Mesh ID
-   * @returns {EditableMesh|undefined} Mesh or undefined if not found
+   * @returns {EditableMesh|null} Mesh or null if not found
    */
   getMesh(meshId) {
-    return this.meshes.get(meshId);
+    return this.meshes.get(meshId) || null;
   }
 
   /**
    * Get all meshes in scene
-   * @returns {Array<EditableMesh>} Array of all meshes
+   * @returns {Array<EditableMesh>} Array of meshes
    */
   getAllMeshes() {
     return Array.from(this.meshes.values());
@@ -137,13 +138,8 @@ export class Scene {
       return false;
     }
 
-    if (child.parent) {
-      console.error('Child scene already has a parent');
-      return false;
-    }
-
-    this.children.set(child.id, child);
     child.parent = this;
+    this.children.set(child.id, child);
     this.updatedAt = Date.now();
     return true;
   }
@@ -155,132 +151,113 @@ export class Scene {
    */
   removeChild(childId) {
     const child = this.children.get(childId);
-    if (!child) {
-      return false;
+    if (child) {
+      child.parent = null;
+      this.children.delete(childId);
+      this.updatedAt = Date.now();
+      return true;
     }
-
-    this.children.delete(childId);
-    child.parent = null;
-    this.updatedAt = Date.now();
-    return true;
+    return false;
   }
 
   /**
    * Get child scene by ID
    * @param {string} childId - Child scene ID
-   * @returns {Scene|undefined} Child scene or undefined if not found
+   * @returns {Scene|null} Child scene or null if not found
    */
   getChild(childId) {
-    return this.children.get(childId);
+    return this.children.get(childId) || null;
   }
 
   /**
    * Get all child scenes
-   * @returns {Array<Scene>} Array of all child scenes
+   * @returns {Array<Scene>} Array of child scenes
    */
   getAllChildren() {
     return Array.from(this.children.values());
   }
 
   /**
-   * Get scene hierarchy
-   * @returns {Object} Hierarchy object
+   * Get scene hierarchy as tree structure
+   * @returns {Object} Hierarchy tree
    */
   getHierarchy() {
-    const hierarchy = {
+    return {
       id: this.id,
       name: this.name,
-      meshes: Array.from(this.meshes.keys()),
-      children: []
+      type: 'scene',
+      children: Array.from(this.children.values()).map(child => child.getHierarchy()),
+      meshes: Array.from(this.meshes.values()).map(mesh => ({
+        id: mesh.id,
+        name: mesh.name,
+        type: 'mesh'
+      }))
     };
-
-    this.children.forEach(child => {
-      hierarchy.children.push(child.getHierarchy());
-    });
-
-    return hierarchy;
   }
 
   /**
    * Get scene statistics
-   * @returns {Object} Statistics object
+   * @returns {Object} Scene statistics
    */
   getStatistics() {
     let totalVertices = 0;
-    let totalEdges = 0;
     let totalFaces = 0;
-    let totalUVs = 0;
+    let totalEdges = 0;
 
-    // Count mesh statistics
     this.meshes.forEach(mesh => {
       totalVertices += mesh.vertices.size;
-      totalEdges += mesh.edges.size;
       totalFaces += mesh.faces.size;
-      totalUVs += mesh.uvs.size;
-    });
-
-    // Count child scene statistics
-    this.children.forEach(child => {
-      const childStats = child.getStatistics();
-      totalVertices += childStats.totalVertices;
-      totalEdges += childStats.totalEdges;
-      totalFaces += childStats.totalFaces;
-      totalUVs += childStats.totalUVs;
+      totalEdges += mesh.edges.size;
     });
 
     return {
       meshCount: this.meshes.size,
-      childCount: this.children.size,
+      childSceneCount: this.children.size,
       totalVertices,
-      totalEdges,
       totalFaces,
-      totalUVs,
+      totalEdges,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      visible: this.visible,
-      active: this.active
+      updatedAt: this.updatedAt
     };
   }
 
   /**
-   * Convert scene to Three.js format
-   * @returns {Object} Three.js scene object
+   * Convert scene to Three.js objects
+   * @returns {THREE.Group} Three.js group containing scene objects
    */
   toThreeJS() {
-    const threeScene = {
-      scene: new THREE.Scene(),
-      meshes: [],
-      cameras: [],
-      lights: []
-    };
+    const group = new THREE.Group();
+    group.name = this.name;
 
     // Convert meshes
     this.meshes.forEach(mesh => {
       try {
         const threeMesh = convertToThreeJS(mesh);
         if (threeMesh) {
-          threeScene.meshes.push(threeMesh);
-          threeScene.scene.add(threeMesh);
+          group.add(threeMesh);
         }
       } catch (error) {
-        console.error('Error converting mesh to Three.js:', error);
+        console.error(`Error converting mesh ${mesh.id}:`, error);
       }
     });
 
     // Convert children
     this.children.forEach(child => {
-      const childThreeJS = child.toThreeJS();
-      threeScene.scene.add(childThreeJS.scene);
-      threeScene.meshes.push(...childThreeJS.meshes);
-      threeScene.cameras.push(...childThreeJS.cameras);
-      threeScene.lights.push(...childThreeJS.lights);
+      try {
+        const childGroup = child.toThreeJS();
+        if (childGroup) {
+          group.add(childGroup);
+        }
+      } catch (error) {
+        console.error(`Error converting child scene ${child.id}:`, error);
+      }
     });
 
-    return threeScene;
+    return group;
   }
 
   /**
-   * Validate scene structure
+   * Validate scene integrity
    * @returns {Object} Validation result
    */
   validate() {
@@ -295,30 +272,20 @@ export class Scene {
       }
 
       visited.add(scene.id);
-
-      scene.children.forEach(child => {
-        checkCircular(child, new Set(visited));
-      });
+      scene.children.forEach(child => checkCircular(child, new Set(visited)));
     };
 
     checkCircular(this);
 
     // Check mesh validity
-    this.meshes.forEach((mesh, meshId) => {
-      const meshValidation = mesh.validate();
-      if (!meshValidation.isValid) {
-        errors.push(`Mesh ${meshId}: ${meshValidation.errors.join(', ')}`);
+    this.meshes.forEach(mesh => {
+      const validation = mesh.validate();
+      if (!validation.isValid) {
+        errors.push(`Invalid mesh ${mesh.id}: ${validation.errors.join(', ')}`);
       }
-      if (meshValidation.warnings.length > 0) {
-        warnings.push(`Mesh ${meshId}: ${meshValidation.warnings.join(', ')}`);
+      if (validation.warnings.length > 0) {
+        warnings.push(`Mesh ${mesh.id} warnings: ${validation.warnings.join(', ')}`);
       }
-    });
-
-    // Check child scenes
-    this.children.forEach(child => {
-      const childValidation = child.validate();
-      errors.push(...childValidation.errors);
-      warnings.push(...childValidation.warnings);
     });
 
     return {
@@ -326,180 +293,5 @@ export class Scene {
       errors,
       warnings
     };
-  }
-
-  /**
-   * Set scene name
-   * @param {string} name - New scene name
-   */
-  setName(name) {
-    this.name = name;
-    this.updatedAt = Date.now();
-  }
-
-  /**
-   * Set scene visibility
-   * @param {boolean} visible - Visibility state
-   */
-  setVisible(visible) {
-    this.visible = visible;
-    this.updatedAt = Date.now();
-  }
-
-  /**
-   * Set scene active state
-   * @param {boolean} active - Active state
-   */
-  setActive(active) {
-    this.active = active;
-    this.updatedAt = Date.now();
-  }
-
-  /**
-   * Update camera settings
-   * @param {Object} cameraSettings - New camera settings
-   */
-  updateCamera(cameraSettings) {
-    this.camera = { ...this.camera, ...cameraSettings };
-    this.updatedAt = Date.now();
-  }
-
-  /**
-   * Update lighting settings
-   * @param {Object} lightingSettings - New lighting settings
-   */
-  updateLighting(lightingSettings) {
-    this.lighting = { ...this.lighting, ...lightingSettings };
-    this.updatedAt = Date.now();
-  }
-
-  /**
-   * Update environment settings
-   * @param {Object} environmentSettings - New environment settings
-   */
-  updateEnvironment(environmentSettings) {
-    this.environment = { ...this.environment, ...environmentSettings };
-    this.updatedAt = Date.now();
-  }
-
-  /**
-   * Set custom property
-   * @param {string} key - Property key
-   * @param {*} value - Property value
-   */
-  setCustomProperty(key, value) {
-    this.customProperties[key] = value;
-    this.updatedAt = Date.now();
-  }
-
-  /**
-   * Get custom property
-   * @param {string} key - Property key
-   * @returns {*} Property value or undefined
-   */
-  getCustomProperty(key) {
-    return this.customProperties[key];
-  }
-
-  /**
-   * Remove custom property
-   * @param {string} key - Property key
-   * @returns {boolean} True if property was removed
-   */
-  removeCustomProperty(key) {
-    const removed = delete this.customProperties[key];
-    if (removed) {
-      this.updatedAt = Date.now();
-    }
-    return removed;
-  }
-
-  /**
-   * Get all custom properties
-   * @returns {Object} Custom properties object
-   */
-  getCustomProperties() {
-    return { ...this.customProperties };
-  }
-
-  /**
-   * Find mesh by name
-   * @param {string} name - Mesh name
-   * @returns {EditableMesh|undefined} Mesh or undefined if not found
-   */
-  findMeshByName(name) {
-    for (const mesh of this.meshes.values()) {
-      if (mesh.name === name) {
-        return mesh;
-      }
-    }
-    return undefined;
-  }
-
-  /**
-   * Find child scene by name
-   * @param {string} name - Child scene name
-   * @returns {Scene|undefined} Child scene or undefined if not found
-   */
-  findChildByName(name) {
-    for (const child of this.children.values()) {
-      if (child.name === name) {
-        return child;
-      }
-    }
-    return undefined;
-  }
-
-  /**
-   * Get scene depth in hierarchy
-   * @returns {number} Depth level (0 for root)
-   */
-  getDepth() {
-    let depth = 0;
-    let current = this.parent;
-    while (current) {
-      depth++;
-      current = current.parent;
-    }
-    return depth;
-  }
-
-  /**
-   * Get root scene
-   * @returns {Scene} Root scene
-   */
-  getRoot() {
-    let root = this;
-    while (root.parent) {
-      root = root.parent;
-    }
-    return root;
-  }
-
-  /**
-   * Get all ancestors
-   * @returns {Array<Scene>} Array of ancestor scenes
-   */
-  getAncestors() {
-    const ancestors = [];
-    let current = this.parent;
-    while (current) {
-      ancestors.unshift(current);
-      current = current.parent;
-    }
-    return ancestors;
-  }
-
-  /**
-   * Get all descendants
-   * @returns {Array<Scene>} Array of descendant scenes
-   */
-  getDescendants() {
-    const descendants = [];
-    this.children.forEach(child => {
-      descendants.push(child);
-      descendants.push(...child.getDescendants());
-    });
-    return descendants;
   }
 } 

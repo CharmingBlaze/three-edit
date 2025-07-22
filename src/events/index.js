@@ -1,27 +1,16 @@
 /**
- * @fileoverview Events System
- * Comprehensive event management for the 3D editor
+ * @fileoverview Events System Index
+ * Centralized exports for all events functionality
  */
 
-import { EventManager } from './EventManager.js';
+// Core event manager
+export { EventManager } from './EventManager.js';
 
-// Event types and constants
-export { EventTypes, getEventCategory, getEventsByCategory } from './EventTypes.js';
+// Event types
+export * from './types/index.js';
 
-// Event utilities
-export { EventUtils } from './EventUtils.js';
-
-// Event decorators
-export { EventDecorators } from './EventDecorators.js';
-
-/**
- * Create an event manager with default settings
- * @param {Object} options - Configuration options
- * @returns {EventManager} Event manager instance
- */
-export function createEventManager(options = {}) {
-  return new EventManager(options);
-}
+// Legacy export for backward compatibility
+export * from './EventTypes.js';
 
 /**
  * Standard event priorities

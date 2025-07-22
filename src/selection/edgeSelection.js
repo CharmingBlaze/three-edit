@@ -1,380 +1,246 @@
 /**
- * Edge Selection - Pure functions for edge selection operations
- * All functions return selection data, never modify the original mesh
+ * @fileoverview Edge selection operations
+ * Provides functionality for selecting edges in meshes
  */
 
+import { raycastEdge } from './raycasting/raycastUtils.js';
+
 /**
- * Select edges by raycast
- * @param {EditableMesh} mesh - The mesh to query
+ * Select mesh edges by raycasting
  * @param {Object} ray - Ray object {origin: {x,y,z}, direction: {x,y,z}}
- * @param {number} maxDistance - Maximum ray distance
- * @returns {Array} Array of edge IDs hit by ray
+ * @param {EditableMesh} mesh - Target mesh
+ * @param {Object} options - Selection options
+ * @param {number} options.threshold - Selection threshold distance
+ * @param {boolean} options.selectNearest - Select nearest edge only
+ * @returns {Array<string>} Selected edge IDs
  */
-export function selectEdgesByRaycast(mesh, ray, maxDistance = Infinity) {
+export function selectEdgesByRay(ray, mesh, options = {}) {
+  const {
+    threshold = 0.1,
+    selectNearest = true
+  } = options;
+
   const selectedEdges = [];
-  
-  for (const [edgeId, edge] of mesh.edges) {
-    const vertexA = mesh.vertices.get(edge.vertexA);
-    const vertexB = mesh.vertices.get(edge.vertexB);
+  let nearestDistance = Infinity;
+  let nearestEdge = null;
+
+  mesh.edges.forEach((edge, id) => {
+    const distance = raycastEdge(ray, edge, mesh);
     
-    // Calculate edge direction
-    const edgeDirection = {
-      x: vertexB.position.x - vertexA.position.x,
-      y: vertexB.position.y - vertexA.position.y,
-      z: vertexB.position.z - vertexA.position.z
-    };
-    
-    const edgeLength = Math.sqrt(edgeDirection.x * edgeDirection.x + edgeDirection.y * edgeDirection.y + edgeDirection.z * edgeDirection.z);
-    const unitEdgeDirection = {
-      x: edgeDirection.x / edgeLength,
-      y: edgeDirection.y / edgeLength,
-      z: edgeDirection.z / edgeLength
-    };
-    
-    // Calculate distance from ray to edge
-    const toVertexA = {
-      x: vertexA.position.x - ray.origin.x,
-      y: vertexA.position.y - ray.origin.y,
-      z: vertexA.position.z - ray.origin.z
-    };
-    
-    // Calculate closest point on edge to ray
-    const dot = toVertexA.x * unitEdgeDirection.x + toVertexA.y * unitEdgeDirection.y + toVertexA.z * unitEdgeDirection.z;
-    const closestPoint = {
-      x: vertexA.position.x + unitEdgeDirection.x * dot,
-      y: vertexA.position.y + unitEdgeDirection.y * dot,
-      z: vertexA.position.z + unitEdgeDirection.z * dot
-    };
-    
-    // Check if closest point is within edge bounds
-    if (dot < 0) {
-      Object.assign(closestPoint, vertexA.position);
-    } else if (dot > edgeLength) {
-      Object.assign(closestPoint, vertexB.position);
+    if (distance !== null && distance <= threshold) {
+      if (selectNearest) {
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestEdge = id;
+        }
+      } else {
+        selectedEdges.push(id);
+      }
     }
+  });
+
+  if (selectNearest && nearestEdge) {
+    selectedEdges.push(nearestEdge);
+  }
+
+  return selectedEdges;
+}
+
+/**
+ * Select edges by rectangle selection
+ * @param {Object} bounds - Rectangle bounds {min: {x,y}, max: {x,y}}
+ * @param {EditableMesh} mesh - Target mesh
+ * @param {Object} camera - Camera object for projection
+ * @returns {Array<string>} Selected edge IDs
+ */
+export function selectEdgesByRectangle(bounds, mesh, camera) {
+  const selectedEdges = [];
+
+  mesh.edges.forEach((edge, id) => {
+    const v1 = mesh.vertices.get(edge.vertexIds[0]);
+    const v2 = mesh.vertices.get(edge.vertexIds[1]);
     
-    // Calculate distance from ray to closest point
-    const toClosest = {
-      x: closestPoint.x - ray.origin.x,
-      y: closestPoint.y - ray.origin.y,
-      z: closestPoint.z - ray.origin.z
+    if (!v1 || !v2) return;
+
+    const p1 = worldToScreen(v1, camera);
+    const p2 = worldToScreen(v2, camera);
+
+    if (lineIntersectsRectangle(p1, p2, bounds)) {
+      selectedEdges.push(id);
+    }
+  });
+
+  return selectedEdges;
+}
+
+/**
+ * Select edges by sphere selection
+ * @param {Object} center - Sphere center {x, y, z}
+ * @param {number} radius - Sphere radius
+ * @param {EditableMesh} mesh - Target mesh
+ * @returns {Array<string>} Selected edge IDs
+ */
+export function selectEdgesBySphere(center, radius, mesh) {
+  const selectedEdges = [];
+
+  mesh.edges.forEach((edge, id) => {
+    const v1 = mesh.vertices.get(edge.vertexIds[0]);
+    const v2 = mesh.vertices.get(edge.vertexIds[1]);
+    
+    if (!v1 || !v2) return;
+
+    // Check if edge intersects with sphere
+    const edgeVector = {
+      x: v2.x - v1.x,
+      y: v2.y - v1.y,
+      z: v2.z - v1.z
     };
-    
-    const rayLength = Math.sqrt(ray.direction.x * ray.direction.x + ray.direction.y * ray.direction.y + ray.direction.z * ray.direction.z);
-    const distanceAlongRay = (toClosest.x * ray.direction.x + toClosest.y * ray.direction.y + toClosest.z * ray.direction.z) / rayLength;
-    
-    if (distanceAlongRay < 0 || distanceAlongRay > maxDistance) {continue;}
-    
-    // Calculate perpendicular distance
-    const projectedPoint = {
-      x: ray.origin.x + ray.direction.x * distanceAlongRay,
-      y: ray.origin.y + ray.direction.y * distanceAlongRay,
-      z: ray.origin.z + ray.direction.z * distanceAlongRay
+
+    const toCenter = {
+      x: center.x - v1.x,
+      y: center.y - v1.y,
+      z: center.z - v1.z
     };
-    
-    const perpendicularDistance = Math.sqrt(
-      Math.pow(closestPoint.x - projectedPoint.x, 2) +
-      Math.pow(closestPoint.y - projectedPoint.y, 2) +
-      Math.pow(closestPoint.z - projectedPoint.z, 2)
+
+    const edgeLength = Math.sqrt(
+      edgeVector.x * edgeVector.x +
+      edgeVector.y * edgeVector.y +
+      edgeVector.z * edgeVector.z
     );
-    
-    // Select if within threshold
-    if (perpendicularDistance <= 0.1) {
-      selectedEdges.push({
-        edgeId,
-        distance: distanceAlongRay,
-        perpendicularDistance
-      });
-    }
-  }
-  
-  // Sort by distance along ray
-  selectedEdges.sort((a, b) => a.distance - b.distance);
-  
-  return selectedEdges.map(e => e.edgeId);
-}
 
-/**
- * Select edges by vertex IDs
- * @param {EditableMesh} mesh - The mesh to query
- * @param {Array} vertexIds - Array of vertex IDs
- * @returns {Array} Array of edge IDs connected to the vertices
- */
-export function selectEdgesByVertices(mesh, vertexIds) {
-  const selectedEdges = [];
-  const vertexSet = new Set(vertexIds);
-  
-  for (const [edgeId, edge] of mesh.edges) {
-    if (vertexSet.has(edge.vertexA) || vertexSet.has(edge.vertexB)) {
-      selectedEdges.push(edgeId);
+    if (edgeLength === 0) return;
+
+    const t = Math.max(0, Math.min(1, 
+      (toCenter.x * edgeVector.x + toCenter.y * edgeVector.y + toCenter.z * edgeVector.z) / 
+      (edgeLength * edgeLength)
+    ));
+
+    const closestPoint = {
+      x: v1.x + t * edgeVector.x,
+      y: v1.y + t * edgeVector.y,
+      z: v1.z + t * edgeVector.z
+    };
+
+    const distance = Math.sqrt(
+      Math.pow(closestPoint.x - center.x, 2) +
+      Math.pow(closestPoint.y - center.y, 2) +
+      Math.pow(closestPoint.z - center.z, 2)
+    );
+
+    if (distance <= radius) {
+      selectedEdges.push(id);
     }
-  }
-  
+  });
+
   return selectedEdges;
 }
 
 /**
- * Select edges by face IDs
- * @param {EditableMesh} mesh - The mesh to query
- * @param {Array} faceIds - Array of face IDs
- * @returns {Array} Array of edge IDs belonging to the faces
+ * Select edges by connected components
+ * @param {Array<string>} seedEdges - Starting edge IDs
+ * @param {EditableMesh} mesh - Target mesh
+ * @param {Object} options - Selection options
+ * @param {number} options.maxEdges - Maximum number of edges to select
+ * @returns {Array<string>} Selected edge IDs
  */
-export function selectEdgesByFaces(mesh, faceIds) {
-  const selectedEdges = new Set();
-  
-  for (const faceId of faceIds) {
-    if (!mesh.faces.has(faceId)) {continue;}
+export function selectEdgesByConnection(seedEdges, mesh, options = {}) {
+  const {
+    maxEdges = 1000
+  } = options;
+
+  const selectedEdges = new Set(seedEdges);
+  const queue = [...seedEdges];
+
+  while (queue.length > 0 && selectedEdges.size < maxEdges) {
+    const currentId = queue.shift();
+    const currentEdge = mesh.edges.get(currentId);
     
-    const face = mesh.faces.get(faceId);
-    for (const edgeId of face.edges) {
-      selectedEdges.add(edgeId);
-    }
+    if (!currentEdge) continue;
+
+    // Find connected edges
+    mesh.edges.forEach((edge, id) => {
+      if (selectedEdges.has(id)) return;
+
+      // Check if edges share a vertex
+      const sharesVertex = currentEdge.vertexIds.some(vertexId =>
+        edge.vertexIds.includes(vertexId)
+      );
+
+      if (sharesVertex) {
+        selectedEdges.add(id);
+        queue.push(id);
+      }
+    });
   }
-  
+
   return Array.from(selectedEdges);
 }
 
 /**
- * Select boundary edges (edges with only one connected face)
- * @param {EditableMesh} mesh - The mesh to query
- * @returns {Array} Array of boundary edge IDs
+ * Convert world point to screen coordinates
+ * @param {Object} worldPoint - World point {x, y, z}
+ * @param {Object} camera - Camera object
+ * @returns {Object} Screen point {x, y}
  */
-export function selectBoundaryEdges(mesh) {
-  const edgeFaceCount = new Map();
+function worldToScreen(worldPoint, camera) {
+  // This is a simplified implementation
+  // In a real application, you would use Three.js projection methods
+  const screenX = (worldPoint.x / worldPoint.z) * camera.fov;
+  const screenY = (worldPoint.y / worldPoint.z) * camera.fov;
   
-  // Count faces for each edge
-  for (const [faceId, face] of mesh.faces) {
-    for (const edgeId of face.edges) {
-      edgeFaceCount.set(edgeId, (edgeFaceCount.get(edgeId) || 0) + 1);
-    }
-  }
-  
-  // Select edges with only one face
-  const boundaryEdges = [];
-  for (const [edgeId, count] of edgeFaceCount) {
-    if (count === 1) {
-      boundaryEdges.push(edgeId);
-    }
-  }
-  
-  return boundaryEdges;
+  return { x: screenX, y: screenY };
 }
 
 /**
- * Select edges by length
- * @param {EditableMesh} mesh - The mesh to query
- * @param {number} minLength - Minimum edge length
- * @param {number} maxLength - Maximum edge length
- * @returns {Array} Array of edge IDs within length range
+ * Check if line intersects rectangle
+ * @param {Object} p1 - Line start point {x, y}
+ * @param {Object} p2 - Line end point {x, y}
+ * @param {Object} bounds - Rectangle bounds {min: {x,y}, max: {x,y}}
+ * @returns {boolean} True if line intersects rectangle
  */
-export function selectEdgesByLength(mesh, minLength = 0, maxLength = Infinity) {
-  const selectedEdges = [];
-  
-  for (const [edgeId, edge] of mesh.edges) {
-    const vertexA = mesh.vertices.get(edge.vertexA);
-    const vertexB = mesh.vertices.get(edge.vertexB);
-    
-    const dx = vertexB.position.x - vertexA.position.x;
-    const dy = vertexB.position.y - vertexA.position.y;
-    const dz = vertexB.position.z - vertexA.position.z;
-    const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    
-    if (length >= minLength && length <= maxLength) {
-      selectedEdges.push(edgeId);
-    }
+function lineIntersectsRectangle(p1, p2, bounds) {
+  // Check if either endpoint is inside the rectangle
+  if (pointInRectangle(p1, bounds) || pointInRectangle(p2, bounds)) {
+    return true;
   }
-  
-  return selectedEdges;
+
+  // Check intersection with rectangle edges
+  const edges = [
+    [{ x: bounds.min.x, y: bounds.min.y }, { x: bounds.max.x, y: bounds.min.y }],
+    [{ x: bounds.max.x, y: bounds.min.y }, { x: bounds.max.x, y: bounds.max.y }],
+    [{ x: bounds.max.x, y: bounds.max.y }, { x: bounds.min.x, y: bounds.max.y }],
+    [{ x: bounds.min.x, y: bounds.max.y }, { x: bounds.min.x, y: bounds.min.y }]
+  ];
+
+  return edges.some(edge => linesIntersect(p1, p2, edge[0], edge[1]));
 }
 
 /**
- * Select edges by angle between connected faces
- * @param {EditableMesh} mesh - The mesh to query
- * @param {number} minAngle - Minimum angle in radians
- * @param {number} maxAngle - Maximum angle in radians
- * @returns {Array} Array of edge IDs with angle within range
+ * Check if two lines intersect
+ * @param {Object} a1 - First line start {x, y}
+ * @param {Object} a2 - First line end {x, y}
+ * @param {Object} b1 - Second line start {x, y}
+ * @param {Object} b2 - Second line end {x, y}
+ * @returns {boolean} True if lines intersect
  */
-export function selectEdgesByAngle(mesh, minAngle = 0, maxAngle = Math.PI) {
-  const selectedEdges = [];
+function linesIntersect(a1, a2, b1, b2) {
+  const det = (a2.x - a1.x) * (b2.y - b1.y) - (b2.x - b1.x) * (a2.y - a1.y);
   
-  for (const [edgeId, edge] of mesh.edges) {
-    // Find faces connected to this edge
-    const connectedFaces = [];
-    for (const [faceId, face] of mesh.faces) {
-      if (face.edges.includes(edgeId)) {
-        connectedFaces.push(face);
-      }
-    }
-    
-    if (connectedFaces.length >= 2) {
-      // Calculate face normals
-      const normals = [];
-      for (const face of connectedFaces) {
-        const faceVertices = face.vertices.map(vId => mesh.vertices.get(vId));
-        if (faceVertices.length >= 3) {
-          const v1 = faceVertices[0];
-          const v2 = faceVertices[1];
-          const v3 = faceVertices[2];
-          
-          const ux = v2.position.x - v1.position.x;
-          const uy = v2.position.y - v1.position.y;
-          const uz = v2.position.z - v1.position.z;
-          
-          const vx = v3.position.x - v1.position.x;
-          const vy = v3.position.y - v1.position.y;
-          const vz = v3.position.z - v1.position.z;
-          
-          const normal = {
-            x: uy * vz - uz * vy,
-            y: uz * vx - ux * vz,
-            z: ux * vy - uy * vx
-          };
-          
-          const length = Math.sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-          if (length > 0) {
-            normal.x /= length;
-            normal.y /= length;
-            normal.z /= length;
-            normals.push(normal);
-          }
-        }
-      }
-      
-      if (normals.length >= 2) {
-        // Calculate angle between normals
-        const dot = normals[0].x * normals[1].x + normals[0].y * normals[1].y + normals[0].z * normals[1].z;
-        const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-        
-        if (angle >= minAngle && angle <= maxAngle) {
-          selectedEdges.push(edgeId);
-        }
-      }
-    }
-  }
-  
-  return selectedEdges;
+  if (Math.abs(det) < 1e-6) return false;
+
+  const t = ((b1.x - a1.x) * (b2.y - b1.y) - (b2.x - b1.x) * (b1.y - a1.y)) / det;
+  const u = ((a2.x - a1.x) * (b1.y - a1.y) - (b1.x - a1.x) * (a2.y - a1.y)) / det;
+
+  return t >= 0 && t <= 1 && u >= 0 && u <= 1;
 }
 
 /**
- * Select edges by loop (connected sequence)
- * @param {EditableMesh} mesh - The mesh to query
- * @param {number} startEdgeId - Starting edge ID
- * @param {number} maxLength - Maximum loop length
- * @returns {Array} Array of edge IDs in the loop
+ * Check if point is inside rectangle
+ * @param {Object} point - Point to test {x, y}
+ * @param {Object} bounds - Rectangle bounds {min: {x,y}, max: {x,y}}
+ * @returns {boolean} True if point is inside rectangle
  */
-export function selectEdgeLoop(mesh, startEdgeId, maxLength = 100) {
-  if (!mesh.edges.has(startEdgeId)) {
-    return [];
-  }
-  
-  const selectedEdges = new Set([startEdgeId]);
-  const toProcess = [{ edgeId: startEdgeId, direction: 0 }];
-  
-  while (toProcess.length > 0 && selectedEdges.size < maxLength) {
-    const { edgeId, direction } = toProcess.shift();
-    const edge = mesh.edges.get(edgeId);
-    
-    // Find faces connected to this edge
-    const connectedFaces = [];
-    for (const [faceId, face] of mesh.faces) {
-      if (face.edges.includes(edgeId)) {
-        connectedFaces.push(face);
-      }
-    }
-    
-    // Find next edge in loop
-    for (const face of connectedFaces) {
-      const edgeIndex = face.edges.indexOf(edgeId);
-      if (edgeIndex !== -1) {
-        const nextEdgeId = face.edges[(edgeIndex + 1) % face.edges.length];
-        const prevEdgeId = face.edges[(edgeIndex - 1 + face.edges.length) % face.edges.length];
-        
-        const nextEdge = direction === 0 ? nextEdgeId : prevEdgeId;
-        
-        if (!selectedEdges.has(nextEdge)) {
-          selectedEdges.add(nextEdge);
-          toProcess.push({ edgeId: nextEdge, direction });
-        }
-      }
-    }
-  }
-  
-  return Array.from(selectedEdges);
-}
-
-/**
- * Select edges by ring (parallel sequence)
- * @param {EditableMesh} mesh - The mesh to query
- * @param {number} startEdgeId - Starting edge ID
- * @param {number} maxLength - Maximum ring length
- * @returns {Array} Array of edge IDs in the ring
- */
-export function selectEdgeRing(mesh, startEdgeId, maxLength = 100) {
-  if (!mesh.edges.has(startEdgeId)) {
-    return [];
-  }
-  
-  const selectedEdges = new Set([startEdgeId]);
-  const toProcess = [{ edgeId: startEdgeId }];
-  
-  while (toProcess.length > 0 && selectedEdges.size < maxLength) {
-    const { edgeId } = toProcess.shift();
-    const edge = mesh.edges.get(edgeId);
-    
-    // Find faces connected to this edge
-    for (const [faceId, face] of mesh.faces) {
-      if (face.edges.includes(edgeId)) {
-        // Find opposite edge in face
-        const edgeIndex = face.edges.indexOf(edgeId);
-        const oppositeEdgeId = face.edges[(edgeIndex + 2) % face.edges.length];
-        
-        if (!selectedEdges.has(oppositeEdgeId)) {
-          selectedEdges.add(oppositeEdgeId);
-          toProcess.push({ edgeId: oppositeEdgeId });
-        }
-      }
-    }
-  }
-  
-  return Array.from(selectedEdges);
-}
-
-/**
- * Invert edge selection
- * @param {EditableMesh} mesh - The mesh to query
- * @param {Array} selectedEdges - Currently selected edge IDs
- * @returns {Array} Array of unselected edge IDs
- */
-export function invertEdgeSelection(mesh, selectedEdges) {
-  const allEdges = Array.from(mesh.edges.keys());
-  const selectedSet = new Set(selectedEdges);
-  
-  return allEdges.filter(edgeId => !selectedSet.has(edgeId));
-}
-
-/**
- * Expand edge selection by one level
- * @param {EditableMesh} mesh - The mesh to query
- * @param {Array} selectedEdges - Currently selected edge IDs
- * @returns {Array} Array of expanded edge IDs
- */
-export function expandEdgeSelection(mesh, selectedEdges) {
-  const expandedEdges = new Set(selectedEdges);
-  
-  for (const edgeId of selectedEdges) {
-    const edge = mesh.edges.get(edgeId);
-    if (!edge) {continue;}
-    
-    // Find edges connected to the same vertices
-    for (const [otherEdgeId, otherEdge] of mesh.edges) {
-      if (otherEdgeId === edgeId) {continue;}
-      
-      if (otherEdge.vertexA === edge.vertexA || otherEdge.vertexA === edge.vertexB ||
-          otherEdge.vertexB === edge.vertexA || otherEdge.vertexB === edge.vertexB) {
-        expandedEdges.add(otherEdgeId);
-      }
-    }
-  }
-  
-  return Array.from(expandedEdges);
+function pointInRectangle(point, bounds) {
+  return point.x >= bounds.min.x && point.x <= bounds.max.x &&
+         point.y >= bounds.min.y && point.y <= bounds.max.y;
 } 

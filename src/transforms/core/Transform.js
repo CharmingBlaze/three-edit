@@ -1,5 +1,5 @@
 /**
- * @fileoverview Transform Class
+ * @fileoverview Transform class for 3D transformations
  * Represents a 3D transformation with position, rotation, scale, and pivot
  */
 
@@ -12,11 +12,11 @@ export class Transform {
   /**
    * Create a transform
    * @param {Object} options - Transform options
-   * @param {Object} [options.position={x: 0, y: 0, z: 0}] - Position {x, y, z}
-   * @param {Object} [options.rotation={x: 0, y: 0, z: 0}] - Rotation {x, y, z} in radians
-   * @param {Object} [options.scale={x: 1, y: 1, z: 1}] - Scale {x, y, z}
-   * @param {Object} [options.pivot={x: 0, y: 0, z: 0}] - Pivot point {x, y, z}
-   * @param {string} [options.space='world'] - Transform space ('world', 'local')
+   * @param {Object} options.position - Position {x, y, z}
+   * @param {Object} options.rotation - Rotation {x, y, z} in radians
+   * @param {Object} options.scale - Scale {x, y, z}
+   * @param {Object} options.pivot - Pivot point {x, y, z}
+   * @param {string} options.space - Transform space ('world', 'local')
    */
   constructor(options = {}) {
     const {
@@ -56,14 +56,12 @@ export class Transform {
    * @param {number} x - X coordinate
    * @param {number} y - Y coordinate
    * @param {number} z - Z coordinate
-   * @returns {Transform} This transform (for chaining)
    */
   setPosition(x, y, z) {
     this.position.x = x;
     this.position.y = y;
     this.position.z = z;
     this.dirty = true;
-    return this;
   }
 
   /**
@@ -71,14 +69,12 @@ export class Transform {
    * @param {number} x - X rotation in radians
    * @param {number} y - Y rotation in radians
    * @param {number} z - Z rotation in radians
-   * @returns {Transform} This transform (for chaining)
    */
   setRotation(x, y, z) {
     this.rotation.x = x;
     this.rotation.y = y;
     this.rotation.z = z;
     this.dirty = true;
-    return this;
   }
 
   /**
@@ -86,7 +82,6 @@ export class Transform {
    * @param {number} x - X rotation in degrees
    * @param {number} y - Y rotation in degrees
    * @param {number} z - Z rotation in degrees
-   * @returns {Transform} This transform (for chaining)
    */
   setRotationDegrees(x, y, z) {
     this.setRotation(
@@ -94,7 +89,6 @@ export class Transform {
       MathUtils.degreesToRadians(y),
       MathUtils.degreesToRadians(z)
     );
-    return this;
   }
 
   /**
@@ -102,27 +96,23 @@ export class Transform {
    * @param {number} x - X scale
    * @param {number} y - Y scale
    * @param {number} z - Z scale
-   * @returns {Transform} This transform (for chaining)
    */
   setScale(x, y, z) {
     this.scale.x = x;
     this.scale.y = y;
     this.scale.z = z;
     this.dirty = true;
-    return this;
   }
 
   /**
    * Set uniform scale
    * @param {number} scale - Uniform scale value
-   * @returns {Transform} This transform (for chaining)
    */
   setUniformScale(scale) {
     this.scale.x = scale;
     this.scale.y = scale;
     this.scale.z = scale;
     this.dirty = true;
-    return this;
   }
 
   /**
@@ -130,14 +120,12 @@ export class Transform {
    * @param {number} x - X coordinate
    * @param {number} y - Y coordinate
    * @param {number} z - Z coordinate
-   * @returns {Transform} This transform (for chaining)
    */
   setPivot(x, y, z) {
     this.pivot.x = x;
     this.pivot.y = y;
     this.pivot.z = z;
     this.dirty = true;
-    return this;
   }
 
   /**
@@ -177,7 +165,7 @@ export class Transform {
   }
 
   /**
-   * Get pivot
+   * Get pivot point
    * @returns {Object} Pivot {x, y, z}
    */
   getPivot() {
@@ -186,208 +174,140 @@ export class Transform {
 
   /**
    * Get transformation matrix
-   * @returns {Array<number>} 4x4 transformation matrix as array
+   * @returns {Array<Array<number>>} 4x4 transformation matrix
    */
   getMatrix() {
     if (this.dirty) {
       this.updateMatrix();
     }
-    return [...this.matrix];
+    return this.matrix;
   }
 
   /**
    * Get inverse transformation matrix
-   * @returns {Array<number>} 4x4 inverse transformation matrix as array
+   * @returns {Array<Array<number>>} 4x4 inverse transformation matrix
    */
   getInverseMatrix() {
     if (this.dirty) {
       this.updateMatrix();
     }
-    return [...this.inverseMatrix];
+    return this.inverseMatrix;
   }
 
   /**
-   * Update the transformation matrix
+   * Update transformation matrix
    */
   updateMatrix() {
-    // Create identity matrix
-    this.matrix = [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
+    // Create translation matrix
+    const translationMatrix = [
+      [1, 0, 0, this.position.x],
+      [0, 1, 0, this.position.y],
+      [0, 0, 1, this.position.z],
+      [0, 0, 0, 1]
     ];
 
-    // Apply pivot translation
-    this.translateMatrix(-this.pivot.x, -this.pivot.y, -this.pivot.z);
+    // Create rotation matrices
+    const cosX = Math.cos(this.rotation.x);
+    const sinX = Math.sin(this.rotation.x);
+    const cosY = Math.cos(this.rotation.y);
+    const sinY = Math.sin(this.rotation.y);
+    const cosZ = Math.cos(this.rotation.z);
+    const sinZ = Math.sin(this.rotation.z);
 
-    // Apply scale
-    this.scaleMatrix(this.scale.x, this.scale.y, this.scale.z);
+    const rotationXMatrix = [
+      [1, 0, 0, 0],
+      [0, cosX, -sinX, 0],
+      [0, sinX, cosX, 0],
+      [0, 0, 0, 1]
+    ];
 
-    // Apply rotation (Z, Y, X order)
-    this.rotateMatrix(this.rotation.z, 'z');
-    this.rotateMatrix(this.rotation.y, 'y');
-    this.rotateMatrix(this.rotation.x, 'x');
+    const rotationYMatrix = [
+      [cosY, 0, sinY, 0],
+      [0, 1, 0, 0],
+      [-sinY, 0, cosY, 0],
+      [0, 0, 0, 1]
+    ];
 
-    // Apply position translation
-    this.translateMatrix(this.position.x, this.position.y, this.position.z);
+    const rotationZMatrix = [
+      [cosZ, -sinZ, 0, 0],
+      [sinZ, cosZ, 0, 0],
+      [0, 0, 1, 0],
+      [0, 0, 0, 1]
+    ];
 
-    // Calculate inverse matrix
-    this.calculateInverseMatrix();
+    // Create scale matrix
+    const scaleMatrix = [
+      [this.scale.x, 0, 0, 0],
+      [0, this.scale.y, 0, 0],
+      [0, 0, this.scale.z, 0],
+      [0, 0, 0, 1]
+    ];
 
+    // Create pivot translation matrices
+    const pivotToOriginMatrix = [
+      [1, 0, 0, -this.pivot.x],
+      [0, 1, 0, -this.pivot.y],
+      [0, 0, 1, -this.pivot.z],
+      [0, 0, 0, 1]
+    ];
+
+    const pivotFromOriginMatrix = [
+      [1, 0, 0, this.pivot.x],
+      [0, 1, 0, this.pivot.y],
+      [0, 0, 1, this.pivot.z],
+      [0, 0, 0, 1]
+    ];
+
+    // Combine matrices: pivot -> scale -> rotation -> translation -> pivot
+    const rotationMatrix = MathUtils.multiplyMatrices(
+      MathUtils.multiplyMatrices(rotationZMatrix, rotationYMatrix),
+      rotationXMatrix
+    );
+
+    const transformMatrix = MathUtils.multiplyMatrices(
+      MathUtils.multiplyMatrices(
+        MathUtils.multiplyMatrices(
+          MathUtils.multiplyMatrices(pivotFromOriginMatrix, translationMatrix),
+          rotationMatrix
+        ),
+        scaleMatrix
+      ),
+      pivotToOriginMatrix
+    );
+
+    this.matrix = transformMatrix;
+    this.inverseMatrix = MathUtils.invertMatrix(transformMatrix);
     this.dirty = false;
   }
 
   /**
-   * Apply translation to matrix
-   * @param {number} x - X translation
-   * @param {number} y - Y translation
-   * @param {number} z - Z translation
-   */
-  translateMatrix(x, y, z) {
-    const translationMatrix = [
-      1, 0, 0, x,
-      0, 1, 0, y,
-      0, 0, 1, z,
-      0, 0, 0, 1
-    ];
-    this.matrix = this.multiplyMatrices(this.matrix, translationMatrix);
-  }
-
-  /**
-   * Apply scale to matrix
-   * @param {number} x - X scale
-   * @param {number} y - Y scale
-   * @param {number} z - Z scale
-   */
-  scaleMatrix(x, y, z) {
-    const scaleMatrix = [
-      x, 0, 0, 0,
-      0, y, 0, 0,
-      0, 0, z, 0,
-      0, 0, 0, 1
-    ];
-    this.matrix = this.multiplyMatrices(this.matrix, scaleMatrix);
-  }
-
-  /**
-   * Apply rotation to matrix
-   * @param {number} angle - Rotation angle in radians
-   * @param {string} axis - Rotation axis ('x', 'y', 'z')
-   */
-  rotateMatrix(angle, axis) {
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    let rotationMatrix;
-
-    switch (axis) {
-      case 'x':
-        rotationMatrix = [
-          1, 0, 0, 0,
-          0, cos, -sin, 0,
-          0, sin, cos, 0,
-          0, 0, 0, 1
-        ];
-        break;
-      case 'y':
-        rotationMatrix = [
-          cos, 0, sin, 0,
-          0, 1, 0, 0,
-          -sin, 0, cos, 0,
-          0, 0, 0, 1
-        ];
-        break;
-      case 'z':
-        rotationMatrix = [
-          cos, -sin, 0, 0,
-          sin, cos, 0, 0,
-          0, 0, 1, 0,
-          0, 0, 0, 1
-        ];
-        break;
-      default:
-        return;
-    }
-
-    this.matrix = this.multiplyMatrices(this.matrix, rotationMatrix);
-  }
-
-  /**
-   * Multiply two 4x4 matrices
-   * @param {Array<number>} a - First matrix
-   * @param {Array<number>} b - Second matrix
-   * @returns {Array<number>} Result matrix
-   */
-  multiplyMatrices(a, b) {
-    const result = new Array(16);
-    
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
-        result[i * 4 + j] = 
-          a[i * 4 + 0] * b[0 * 4 + j] +
-          a[i * 4 + 1] * b[1 * 4 + j] +
-          a[i * 4 + 2] * b[2 * 4 + j] +
-          a[i * 4 + 3] * b[3 * 4 + j];
-      }
-    }
-    
-    return result;
-  }
-
-  /**
-   * Calculate inverse matrix
-   */
-  calculateInverseMatrix() {
-    // This is a simplified inverse calculation
-    // For production use, implement proper matrix inversion
-    this.inverseMatrix = [...this.matrix];
-    
-    // For now, just create a basic inverse for translation
-    this.inverseMatrix[3] = -this.matrix[3];
-    this.inverseMatrix[7] = -this.matrix[7];
-    this.inverseMatrix[11] = -this.matrix[11];
-  }
-
-  /**
    * Transform a point
-   * @param {Object} point - Point {x, y, z}
+   * @param {Object} point - Point to transform {x, y, z}
    * @returns {Object} Transformed point {x, y, z}
    */
   transformPoint(point) {
     const matrix = this.getMatrix();
-    return {
-      x: matrix[0] * point.x + matrix[1] * point.y + matrix[2] * point.z + matrix[3],
-      y: matrix[4] * point.x + matrix[5] * point.y + matrix[6] * point.z + matrix[7],
-      z: matrix[8] * point.x + matrix[9] * point.y + matrix[10] * point.z + matrix[11]
-    };
+    return MathUtils.transformPoint(point, matrix);
   }
 
   /**
    * Inverse transform a point
-   * @param {Object} point - Point {x, y, z}
+   * @param {Object} point - Point to inverse transform {x, y, z}
    * @returns {Object} Inverse transformed point {x, y, z}
    */
   inverseTransformPoint(point) {
     const matrix = this.getInverseMatrix();
-    return {
-      x: matrix[0] * point.x + matrix[1] * point.y + matrix[2] * point.z + matrix[3],
-      y: matrix[4] * point.x + matrix[5] * point.y + matrix[6] * point.z + matrix[7],
-      z: matrix[8] * point.x + matrix[9] * point.y + matrix[10] * point.z + matrix[11]
-    };
+    return MathUtils.transformPoint(point, matrix);
   }
 
   /**
    * Transform a vector (ignores translation)
-   * @param {Object} vector - Vector {x, y, z}
+   * @param {Object} vector - Vector to transform {x, y, z}
    * @returns {Object} Transformed vector {x, y, z}
    */
   transformVector(vector) {
     const matrix = this.getMatrix();
-    return {
-      x: matrix[0] * vector.x + matrix[1] * vector.y + matrix[2] * vector.z,
-      y: matrix[4] * vector.x + matrix[5] * vector.y + matrix[6] * vector.z,
-      z: matrix[8] * vector.x + matrix[9] * vector.y + matrix[10] * vector.z
-    };
+    return MathUtils.transformVector(vector, matrix);
   }
 
   /**
@@ -406,7 +326,7 @@ export class Transform {
   }
 
   /**
-   * Validate transform data
+   * Validate transform
    * @returns {Object} Validation result
    */
   validate() {
@@ -431,14 +351,18 @@ export class Transform {
       errors.push('Scale contains NaN values');
     }
 
-    // Check for infinite values
-    if (!isFinite(this.position.x) || !isFinite(this.position.y) || !isFinite(this.position.z)) {
-      errors.push('Position contains infinite values');
+    // Check for extreme values
+    const maxValue = 1e6;
+    if (Math.abs(this.position.x) > maxValue || 
+        Math.abs(this.position.y) > maxValue || 
+        Math.abs(this.position.z) > maxValue) {
+      warnings.push('Position values are very large');
     }
 
-    // Check space value
-    if (this.space !== 'world' && this.space !== 'local') {
-      warnings.push('Space should be "world" or "local"');
+    if (Math.abs(this.scale.x) > maxValue || 
+        Math.abs(this.scale.y) > maxValue || 
+        Math.abs(this.scale.z) > maxValue) {
+      warnings.push('Scale values are very large');
     }
 
     return {

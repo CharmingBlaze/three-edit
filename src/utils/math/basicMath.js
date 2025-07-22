@@ -1,6 +1,6 @@
 /**
- * @fileoverview Basic Math Utilities
- * Basic mathematical utility functions
+ * @fileoverview Basic Math Operations
+ * Basic mathematical utility functions for the 3D editor
  */
 
 /**
@@ -42,7 +42,7 @@ export function smoothLerp(a, b, t) {
  * @param {number} degrees - Degrees
  * @returns {number} Radians
  */
-export function degreesToRadians(degrees) {
+export function degToRad(degrees) {
   return degrees * Math.PI / 180;
 }
 
@@ -51,25 +51,25 @@ export function degreesToRadians(degrees) {
  * @param {number} radians - Radians
  * @returns {number} Degrees
  */
-export function radiansToDegrees(radians) {
+export function radToDeg(radians) {
   return radians * 180 / Math.PI;
 }
 
 /**
- * Check if a number is approximately equal to another
- * @param {number} a - First number
- * @param {number} b - Second number
- * @param {number} [epsilon=1e-6] - Tolerance
- * @returns {boolean} True if numbers are approximately equal
+ * Check if a value is approximately equal to another
+ * @param {number} a - First value
+ * @param {number} b - Second value
+ * @param {number} epsilon - Tolerance for comparison
+ * @returns {boolean} True if values are approximately equal
  */
-export function approximatelyEqual(a, b, epsilon = 1e-6) {
+export function approximately(a, b, epsilon = 0.0001) {
   return Math.abs(a - b) < epsilon;
 }
 
 /**
  * Round to a specific number of decimal places
  * @param {number} value - Value to round
- * @param {number} [decimals=2] - Number of decimal places
+ * @param {number} decimals - Number of decimal places
  * @returns {number} Rounded value
  */
 export function roundTo(value, decimals = 2) {
