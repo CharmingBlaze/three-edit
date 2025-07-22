@@ -97,7 +97,7 @@ export function queryTopology(
   }
   
   // Check for manifold and boundary edges
-  for (const [edgeKey, faces] of edgeToFaces.entries()) {
+  for (const [_edgeKey, faces] of edgeToFaces.entries()) {
     if (faces.length > 2) {
       // Non-manifold edge (more than two faces share this edge)
       result.isManifold = false;
@@ -119,7 +119,7 @@ export function queryTopology(
   
   // Compute boundary loops if requested
   if (opts.computeBoundaryLoops && !result.isClosed) {
-    result.boundaryLoops = computeBoundaryLoops(mesh, edgeToFaces);
+        result.boundaryLoops = computeBoundaryLoops(edgeToFaces);
   }
   
   // Compute genus if requested
@@ -210,7 +210,6 @@ export function computeConnectedComponents(mesh: EditableMesh): number {
  * @returns Array of boundary loops (each loop is an array of vertex indices)
  */
 export function computeBoundaryLoops(
-  mesh: EditableMesh,
   edgeToFaces: Map<string, number[]>
 ): number[][] {
   const boundaryLoops: number[][] = [];
@@ -303,11 +302,11 @@ export function computeBoundaryLoops(
  * @param mesh The mesh to check
  * @returns Whether the mesh is orientable
  */
-export function checkOrientable(mesh: EditableMesh): boolean {
+export function checkOrientable(_mesh: EditableMesh): boolean {
   // A mesh is orientable if we can assign consistent orientations to all faces
   // We'll use a breadth-first traversal to check this
   
-  if (mesh.faces.length === 0) {
+  if (_mesh.faces.length === 0) {
     return true;
   }
   
@@ -315,8 +314,8 @@ export function checkOrientable(mesh: EditableMesh): boolean {
   const edgeToFaces = new Map<string, { faceIndex: number, edgeDirection: boolean }[]>();
   
   // Process all faces
-  for (let faceIndex = 0; faceIndex < mesh.faces.length; faceIndex++) {
-    const face = mesh.faces[faceIndex];
+  for (let faceIndex = 0; faceIndex < _mesh.faces.length; faceIndex++) {
+    const face = _mesh.faces[faceIndex];
     
     // For each edge in the face
     for (let i = 0; i < face.vertices.length; i++) {
@@ -335,13 +334,13 @@ export function checkOrientable(mesh: EditableMesh): boolean {
   }
   
   // Assign orientations to faces (1 or -1)
-  const faceOrientations = new Array(mesh.faces.length).fill(0);
+  const faceOrientations = new Array(_mesh.faces.length).fill(0);
   const queue: number[] = [0]; // Start with the first face
   faceOrientations[0] = 1;
   
   while (queue.length > 0) {
     const faceIndex = queue.shift()!;
-    const face = mesh.faces[faceIndex];
+    const face = _mesh.faces[faceIndex];
     const orientation = faceOrientations[faceIndex];
     
     // For each edge in the face
