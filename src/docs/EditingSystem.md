@@ -15,189 +15,51 @@ The Editing System provides comprehensive editing capabilities for the 3D editor
 7. [API Reference](#api-reference)
 8. [Best Practices](#best-practices)
 9. [Performance Considerations](#performance-considerations)
+10. [Migration Guide](#migration-guide)
 
 ## Core Components
 
-### EditManager
+### Edit Operations (New Modular Style)
 
-The main editing management class that coordinates all editing operations.
+All editing operations are now pure functions, imported directly from their respective files or group index files. Example:
 
 ```javascript
-import { createEditManager } from './editing/index.js';
-
-const editManager = createEditManager({
-  autoSave: true,
-  validation: true,
-  maxHistory: 100,
-  defaultMode: 'object'
-});
+import { mergeVertices } from '../editing/operations/vertex/mergeVertices.js';
+import { extrudeFaces } from '../editing/operations/face/extrudeFaces.js';
+import { splitEdges } from '../editing/operations/edge/splitEdges.js';
 ```
-
-### EditOperations
-
-Specific editing operations for creating, modifying, and manipulating objects.
-
+Or, for grouped imports:
 ```javascript
-import { EditOperations } from './editing/EditOperations.js';
-
-// Create new object
-const object = EditOperations.createObject({
-  name: 'Cube',
-  type: 'mesh'
-}, {
-  type: 'mesh',
-  position: { x: 0, y: 0, z: 0 }
-});
-```
-
-### EditTools
-
-Interactive editing tools for specific operations.
-
-```javascript
-import { createSelectTool, createMoveTool } from './editing/index.js';
-
-const selectTool = createSelectTool({
-  mode: 'object',
-  multiSelect: true
-});
-
-const moveTool = createMoveTool({
-  space: 'world',
-  snap: true,
-  snapDistance: 0.1
-});
-```
-
-### EditHistory
-
-History management for undo/redo functionality.
-
-```javascript
-import { createEditHistory } from './editing/index.js';
-
-const editHistory = createEditHistory({
-  maxEntries: 100,
-  autoSave: true,
-  compression: false
-});
-```
-
-## Edit Management
-
-### Creating Edit Manager
-
-```javascript
-// Create edit manager
-const editManager = createEditManager({
-  autoSave: true,
-  validation: true,
-  maxHistory: 100,
-  defaultMode: 'object'
-});
-
-// Start editing session
-editManager.startEdit('object', {
-  selectionMode: 'single',
-  transformSpace: 'world'
-});
-
-// Add operation to current edit
-editManager.addOperation('create', {
-  type: 'mesh',
-  position: { x: 1, y: 2, z: 3 }
-});
-
-// End editing session
-const result = editManager.endEdit(true);
-console.log('Edit result:', result);
-```
-
-### Managing Edit Sessions
-
-```javascript
-// Check if currently editing
-if (editManager.isCurrentlyEditing()) {
-  console.log('Currently in edit mode');
-}
-
-// Get current edit mode
-const currentMode = editManager.getEditMode();
-console.log('Current mode:', currentMode);
-
-// Set edit mode
-editManager.setEditMode('vertex');
-
-// Get edit statistics
-const stats = editManager.getEditStatistics();
-console.log('Edit stats:', stats);
-```
-
-### Object Selection
-
-```javascript
-// Select objects
-editManager.selectObjects([object1, object2], {
-  clear: true,
-  add: false
-});
-
-// Deselect objects
-editManager.deselectObjects([object1]);
-
-// Clear all selections
-editManager.clearSelection();
-
-// Get selected objects
-const selected = editManager.getSelectedObjects();
-console.log('Selected objects:', selected);
-
-// Get selection count
-const count = editManager.getSelectionCount();
-console.log('Selection count:', count);
+import { mergeVertices, snapVertices } from '../editing/operations/vertex/index.js';
 ```
 
 ## Edit Operations
 
-### Creating Objects
-
+### Merging Vertices
 ```javascript
-import { createObject } from './editing/index.js';
-
-// Create basic object
-const object = createObject({
-  name: 'MyCube',
-  type: 'mesh',
-  geometry: { type: 'box', width: 1, height: 1, depth: 1 }
-}, {
-  type: 'mesh',
-  position: { x: 0, y: 0, z: 0 }
-});
-
-// Create object with material
-const objectWithMaterial = createObject({
-  name: 'Sphere',
-  type: 'mesh',
-  geometry: { type: 'sphere', radius: 0.5 },
-  material: { type: 'standard', color: '#ff0000' }
-}, {
-  type: 'mesh',
-  position: { x: 2, y: 0, z: 0 }
-});
+import { mergeVertices } from '../editing/operations/vertex/mergeVertices.js';
+const result = mergeVertices(geometry, [0, 1]);
+if (result.success) {
+  // Use result.geometry
+}
 ```
 
-### Deleting Objects
-
+### Extruding Faces
 ```javascript
-import { deleteObjects } from './editing/index.js';
+import { extrudeFaces } from '../editing/operations/face/extrudeFaces.js';
+const result = extrudeFaces(geometry, [0, 1], { distance: 1.0 });
+if (result.success) {
+  // Use result.geometry
+}
+```
 
-// Delete objects
-const deletedObjects = deleteObjects([object1, object2], {
-  permanent: false,
-  backup: true
-});
-
-console.log('Deleted objects:', deletedObjects);
+### Splitting Edges
+```javascript
+import { splitEdges } from '../editing/operations/edge/splitEdges.js';
+const result = splitEdges(geometry, [0, 1], { ratio: 0.5 });
+if (result.success) {
+  // Use result.geometry
+}
 ```
 
 ### Duplicating Objects
@@ -671,17 +533,14 @@ const importSuccess = editHistory.importHistory(exportData, {
 
 ## Usage Examples
 
-### Complete Editing Workflow
+### Complete Editing Workflow (Modular Style)
 
 ```javascript
-import { 
-  createEditManager, 
-  createEditHistory,
-  createObject,
-  duplicateObjects,
-  alignObjects,
-  groupObjects 
-} from './editing/index.js';
+import { mergeVertices } from '../editing/operations/vertex/mergeVertices.js';
+import { extrudeFaces } from '../editing/operations/face/extrudeFaces.js';
+import { duplicateObjects } from './editing/index.js';
+import { alignObjects } from './editing/index.js';
+import { groupObjects } from './editing/index.js';
 
 // Create managers
 const editManager = createEditManager({
@@ -1185,3 +1044,20 @@ operations.forEach(op => {
   }
 });
 ``` 
+
+## Migration Guide
+
+**Old Style:**
+```js
+import { VertexOperations } from '../editing/operations/vertexOperations.js';
+const result = VertexOperations.merge(geometry, indices);
+```
+
+**New Modular Style:**
+```js
+import { mergeVertices } from '../editing/operations/vertex/mergeVertices.js';
+const result = mergeVertices(geometry, indices);
+```
+- All operations are now imported as individual functions from their respective files or group index files.
+- There are no more `VertexOperations`, `EdgeOperations`, etc. objects—just pure functions.
+- Update all your imports and usage accordingly for the new modular system. 

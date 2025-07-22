@@ -276,4 +276,35 @@ export function isValidGeometry(geometry) {
   }
 
   return true;
-} 
+}
+
+/**
+ * Remaps vertex indices in the index buffer and removes degenerate faces.
+ * This is used after merging vertices.
+ * @param {THREE.BufferAttribute} originalIndex - The original index buffer attribute.
+ * @param {Map<number, number>} indexMap - A map from old vertex indices to new ones.
+ * @returns {Array<number>} A new, cleaned array of indices.
+ */
+export function remapAndCleanIndices(originalIndex, indexMap) {
+  const newIndices = [];
+  const oldIndices = Array.from(originalIndex.array);
+
+  for (let i = 0; i < oldIndices.length; i += 3) {
+    // Get the original vertex indices for the face
+    let v1 = oldIndices[i];
+    let v2 = oldIndices[i + 1];
+    let v3 = oldIndices[i + 2];
+
+    // Remap them if they are in the map
+    if (indexMap.has(v1)) v1 = indexMap.get(v1);
+    if (indexMap.has(v2)) v2 = indexMap.get(v2);
+    if (indexMap.has(v3)) v3 = indexMap.get(v3);
+
+    // Check for degenerate faces (where two or more vertices are the same)
+    if (v1 !== v2 && v1 !== v3 && v2 !== v3) {
+      newIndices.push(v1, v2, v3);
+    }
+  }
+
+  return newIndices;
+}

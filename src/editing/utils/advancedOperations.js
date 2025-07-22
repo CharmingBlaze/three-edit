@@ -3,7 +3,7 @@
  * A collection of high-level functions for complex geometry manipulations.
  */
 
-import { GeometryOperations } from '../operations/geometryOperations.js';
+import { GeometryOperations } from '../operations/index.js';
 
 /**
  * Extrude geometry elements

@@ -192,9 +192,7 @@ export class VertexOperationValidator extends OperationValidator {
         }
         break;
       case VertexOperationTypes.MERGE:
-        if (params.options && typeof params.options.threshold !== 'number') {
-          result.errors.push('Merge threshold must be a number');
-        }
+        // Merge operation doesn't require any specific options
         break;
     }
 

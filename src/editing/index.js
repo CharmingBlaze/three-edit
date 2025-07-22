@@ -1,32 +1,29 @@
 /**
- * @fileoverview Editing System Index
- * Main entry point for the modular editing system
+ * @fileoverview Modern Editing System Index
+ * Clean, modular exports for the refactored editing system
  */
 
-// --- Operation Modules ---
-export { GeometryOperations } from './geometryOperations.js';
-export { VertexOperations } from './vertexOperations.js';
-export { EdgeOperations } from './edgeOperations.js';
-export { FaceOperations } from './faceOperations.js';
-export { UVOperations } from './uvOperations.js';
-
-// Import all modular components
+// Core types and enums
 export * from './types/index.js';
-export * from './validation/index.js';
-export * from './core/index.js';
-// export * from './operations/index.js'; // Deprecated
-export * from './tools/index.js';
-export { DrawingOperations } from './operations/drawingOperations.js';
-export { SculptingOperations } from './operations/sculptingOperations.js';
-export { ObjectOperations } from './operations/objectOperations.js';
-export { MirrorOperations } from './operations/mirrorOperations.js';
 
-// Factory functions for creating operation instances
-export const createGeometryOperations = () => GeometryOperations;
-export const createVertexOperations = () => VertexOperations;
-export const createEdgeOperations = () => EdgeOperations;
-export const createFaceOperations = () => FaceOperations;
-export const createUVOperations = () => UVOperations;
+// Validation system
+export * from './validation/index.js';
+
+// Core utilities and components
+export * from './core/index.js';
+
+// Operations
+export * from './operations/index.js';
+
+// Tools
+export * from './tools/index.js';
+
+// Legacy compatibility exports
+
+
+
+
+export { UVOperations } from './operations/uvOperations.js';
 
 export { SelectTool } from './tools/selectTool.js';
 export { TransformTool } from './tools/transformTool.js';
@@ -36,7 +33,7 @@ export { EditStateManager } from './core/editState.js';
 export { EditHistoryManager } from './core/editHistory.js';
 export { EditOperationsCoordinator } from './core/editOperations.js';
 
-// Re-export commonly used utilities
+// Re-export core utilities for easy access
 export { 
   getVerticesFromIndices,
   getFaceVertices,
@@ -75,15 +72,11 @@ export {
 // Default export with all components
 export default {
   // Operations
-  GeometryOperations: () => import('./operations/geometryOperations.js'),
-  VertexOperations: () => import('./operations/vertexOperations.js'),
-  EdgeOperations: () => import('./operations/edgeOperations.js'),
-  FaceOperations: () => import('./operations/faceOperations.js'),
+  
+  
+  
+  
   UVOperations: () => import('./operations/uvOperations.js'),
-  DrawingOperations: () => import('./operations/drawingOperations.js'),
-  SculptingOperations: () => import('./operations/sculptingOperations.js'),
-  ObjectOperations: () => import('./operations/objectOperations.js'),
-  MirrorOperations: () => import('./operations/mirrorOperations.js'),
   
   // Tools
   SelectTool: () => import('./tools/selectTool.js'),
@@ -110,12 +103,5 @@ export default {
   UVOperationTypes: () => import('./types/operationTypes.js'),
   EditTypes: () => import('./types/operationTypes.js'),
   EditModes: () => import('./types/operationTypes.js'),
-  EditToolStates: () => import('./types/operationTypes.js'),
-  EditStates: () => import('./types/constants.js'),
-  EditSpaces: () => import('./types/constants.js'),
-  EditSnapModes: () => import('./types/constants.js'),
-  EditBooleanOperations: () => import('./types/constants.js'),
-  EditArrayModes: () => import('./types/constants.js'),
-  DefaultValues: () => import('./types/constants.js'),
-  ValidationLimits: () => import('./types/constants.js')
-};
+  EditToolStates: () => import('./types/operationTypes.js')
+}; 

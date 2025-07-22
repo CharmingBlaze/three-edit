@@ -22,6 +22,12 @@ export * from './materials/index.js';
 // UV system
 export * from './uv/index.js';
 
+// Animation system
+export * from './animation/index.js';
+
+// Rendering system
+export * from './rendering/index.js';
+
 // History and undo/redo
 export * from './history/index.js';
 export * from './undoRedo/index.js';
@@ -46,6 +52,8 @@ import * as SelectionSystem from './selection/index.js';
 import * as TransformSystem from './transforms/index.js';
 import * as MaterialSystem from './materials/index.js';
 import * as UVSystem from './uv/index.js';
+import * as AnimationSystem from './animation/index.js';
+import * as RenderingSystem from './rendering/index.js';
 import * as HistorySystem from './history/index.js';
 import * as UndoRedoSystem from './undoRedo/index.js';
 import * as Utils from './utils/index.js';
@@ -72,6 +80,12 @@ export default {
   
   // UV system
   ...UVSystem,
+  
+  // Animation system
+  ...AnimationSystem,
+  
+  // Rendering system
+  ...RenderingSystem,
   
   // History and undo/redo
   ...HistorySystem,

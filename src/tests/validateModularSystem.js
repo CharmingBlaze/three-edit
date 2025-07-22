@@ -120,7 +120,7 @@ class ModularSystemValidator {
       'src/editing/EdgeOperations.js',
       'src/editing/faceOperations.js',
       'src/editing/uvOperations.js',
-      'src/editing/index.js'
+      'src/editing/index.js',
     ];
 
     editingModules.forEach(module => {

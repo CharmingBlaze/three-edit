@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EditableMesh, Vertex, Face } from '../EditableMesh.js';
 
 
-import { extrudeFaces } from '../editing/faceOperations.js';
+import { extrudeFaces } from '../editing/operations/face/index.js';
 
 describe('extrudeFaces', () => {
   it('should extrude a single face, creating new faces and vertices', () => {

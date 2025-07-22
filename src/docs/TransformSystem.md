@@ -2,291 +2,285 @@
 
 ## Overview
 
-The Transform System provides comprehensive transformation capabilities for the 3D editor. It handles position, rotation, scale, and advanced transformations with support for interactive gizmos and operations.
+The Transform System provides comprehensive transformation capabilities for 3D objects, including position, rotation, scale, and advanced geometric transformations. It supports both object-level and component-level transformations.
 
 ## Table of Contents
 
 1. [Core Components](#core-components)
-2. [Transform Management](#transform-management)
-3. [Transform Operations](#transform-operations)
-4. [Transform Gizmos](#transform-gizmos)
-5. [Advanced Operations](#advanced-operations)
-6. [Usage Examples](#usage-examples)
-7. [API Reference](#api-reference)
+2. [Basic Transforms](#basic-transforms)
+3. [Advanced Transforms](#advanced-transforms)
+4. [Geometric Transforms](#geometric-transforms)
+5. [Transform Utilities](#transform-utilities)
+6. [Transform Gizmos](#transform-gizmos)
+7. [Usage Examples](#usage-examples)
 8. [Best Practices](#best-practices)
 9. [Performance Considerations](#performance-considerations)
+10. [Migration Guide](#migration-guide)
 
-## Core Components
+## Core Components (New Modular Style)
 
-### TransformManager
-
-The main transform management class that handles all transform operations.
+All transform operations are now pure functions, imported directly from their respective files or group index files:
 
 ```javascript
-import { createTransformManager } from './transforms/index.js';
-
-const transformManager = createTransformManager({
-  autoUpdate: true,
-  cacheMatrices: true,
-  maxTransforms: 1000
-});
+import { 
+  setPosition, 
+  setRotation, 
+  setScale, 
+  getTransform,
+  transformVertices,
+  transformFaces
+} from '../transforms/index.js';
 ```
 
-### Transform
+**Example Usage:**
+```javascript
+import { setPosition, setRotation } from '../transforms/index.js';
 
-Individual transform class with position, rotation, scale, and pivot support.
+setPosition(mesh, 1, 2, 3);
+setRotation(mesh, 0, Math.PI / 2, 0);
+```
+
+## Basic Transforms
+
+### Position Transforms
 
 ```javascript
-import { createTransform } from './transforms/index.js';
+import { setPosition, getPosition, translate } from '../transforms/index.js';
 
-const transform = createTransform({
+// Set absolute position
+setPosition(mesh, 1, 2, 3);
+
+// Get current position
+const position = getPosition(mesh);
+console.log('Current position:', position);
+
+// Translate (relative movement)
+translate(mesh, 0.5, 0, 0); // Move 0.5 units in X direction
+```
+
+### Rotation Transforms
+
+```javascript
+import { setRotation, getRotation, rotate } from '../transforms/index.js';
+
+// Set absolute rotation (in radians)
+setRotation(mesh, 0, Math.PI / 2, 0); // 90 degrees around Y axis
+
+// Get current rotation
+const rotation = getRotation(mesh);
+console.log('Current rotation:', rotation);
+
+// Rotate (relative rotation)
+rotate(mesh, 0, Math.PI / 4, 0); // Rotate 45 degrees around Y axis
+```
+
+### Scale Transforms
+
+```javascript
+import { setScale, getScale, scale } from '../transforms/index.js';
+
+// Set absolute scale
+setScale(mesh, 2, 2, 2); // Uniform scale of 2x
+
+// Get current scale
+const currentScale = getScale(mesh);
+console.log('Current scale:', currentScale);
+
+// Scale (relative scaling)
+scale(mesh, 1.5, 1, 1); // Scale 1.5x in X direction only
+```
+
+### Combined Transforms
+
+```javascript
+import { setTransform, getTransform } from '../transforms/index.js';
+
+// Set complete transform
+setTransform(mesh, {
   position: { x: 1, y: 2, z: 3 },
   rotation: { x: 0, y: Math.PI / 2, z: 0 },
-  scale: { x: 2, y: 2, z: 2 },
-  pivot: { x: 0, y: 0, z: 0 },
-  space: 'world'
+  scale: { x: 2, y: 1, z: 1 }
 });
+
+// Get complete transform
+const transform = getTransform(mesh);
+console.log('Complete transform:', transform);
 ```
 
-### TransformOperations
+## Advanced Transforms
 
-Advanced transform operations for alignment, distribution, and manipulation.
+### Matrix Transforms
 
 ```javascript
-import { TransformOperations } from './transforms/TransformOperations.js';
+import { setMatrix, getMatrix, applyMatrix } from '../transforms/index.js';
 
-// Align objects
-const alignedObjects = TransformOperations.alignObjects(objects, target, {
-  axis: 'x',
-  mode: 'center'
-});
+// Set transform matrix directly
+const matrix = new THREE.Matrix4();
+matrix.makeRotationY(Math.PI / 2);
+matrix.setPosition(1, 2, 3);
+setMatrix(mesh, matrix);
+
+// Get current matrix
+const currentMatrix = getMatrix(mesh);
+
+// Apply matrix transformation
+const transformMatrix = new THREE.Matrix4();
+transformMatrix.makeScale(2, 1, 1);
+applyMatrix(mesh, transformMatrix);
 ```
 
-### TransformGizmo
-
-Interactive transform controls for visual manipulation.
+### Quaternion Transforms
 
 ```javascript
-import { createTransformGizmo, GizmoTypes } from './transforms/index.js';
+import { setQuaternion, getQuaternion, rotateByQuaternion } from '../transforms/index.js';
 
-const gizmo = createTransformGizmo({
-  type: GizmoTypes.TRANSLATE,
-  size: 1.0,
-  position: { x: 0, y: 0, z: 0 },
-  visible: true
-});
+// Set rotation using quaternion
+const quaternion = new THREE.Quaternion();
+quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+setQuaternion(mesh, quaternion);
+
+// Get current quaternion
+const currentQuaternion = getQuaternion(mesh);
+
+// Rotate by quaternion
+const rotationQuaternion = new THREE.Quaternion();
+rotationQuaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 4);
+rotateByQuaternion(mesh, rotationQuaternion);
 ```
 
-## Transform Management
-
-### Creating Transforms
+### Look-at Transforms
 
 ```javascript
-// Create transform manager
-const transformManager = createTransformManager({
-  autoUpdate: true,
-  cacheMatrices: true,
-  maxTransforms: 1000
-});
+import { lookAt, lookAtPoint } from '../transforms/index.js';
 
-// Create new transform
-const transform = transformManager.createTransform('transform-1', {
-  position: { x: 1, y: 2, z: 3 },
-  rotation: { x: 0, y: Math.PI / 2, z: 0 },
-  scale: { x: 2, y: 2, z: 2 },
-  pivot: { x: 0, y: 0, z: 0 },
-  space: 'world'
-});
+// Look at another object
+lookAt(mesh, targetObject);
 
-console.log('Transform created:', transform.getSummary());
+// Look at specific point
+lookAtPoint(mesh, { x: 0, y: 5, z: 0 });
+
+// Look at with up vector
+lookAtPoint(mesh, { x: 0, y: 5, z: 0 }, { x: 0, y: 1, z: 0 });
 ```
 
-### Managing Transforms
+## Geometric Transforms
+
+### Vertex Transforms
 
 ```javascript
-// Get transform by ID
-const transform = transformManager.getTransform('transform-1');
+import { transformVertices } from '../transforms/index.js';
 
-// Update transform
-transformManager.updateTransform('transform-1', {
-  position: { x: 5, y: 5, z: 5 },
-  rotation: { x: 0, y: Math.PI, z: 0 },
-  scale: { x: 1, y: 1, z: 1 }
+// Transform specific vertices
+const result = transformVertices(geometry, [0, 1, 2], {
+  translation: { x: 1, y: 0, z: 0 },
+  rotation: { x: 0, y: Math.PI / 4, z: 0 },
+  scale: { x: 1.5, y: 1, z: 1 }
 });
 
-// Remove transform
-transformManager.removeTransform('transform-1');
-
-// Get all transforms
-const allTransforms = transformManager.getAllTransforms();
+if (result.success) {
+  mesh.geometry = result.geometry;
+}
 ```
 
-### Transform Properties
+### Face Transforms
 
 ```javascript
-// Set transform properties
-transform.setPosition(1, 2, 3);
-transform.setRotation(0, Math.PI / 2, 0);
-transform.setScale(2, 2, 2);
-transform.setPivot(0, 0, 0);
+import { transformFaces } from '../transforms/index.js';
 
-// Get transform properties
-const position = transform.getPosition();
-const rotation = transform.getRotation();
-const scale = transform.getScale();
-const pivot = transform.getPivot();
+// Transform specific faces
+const result = transformFaces(geometry, [0, 1, 2], {
+  translation: { x: 0, y: 1, z: 0 },
+  rotation: { x: Math.PI / 6, y: 0, z: 0 },
+  scale: { x: 1, y: 1, z: 2 }
+});
+
+if (result.success) {
+  mesh.geometry = result.geometry;
+}
 ```
 
-### Transform Matrix Operations
+### Edge Transforms
 
 ```javascript
-// Get transformation matrix
-const matrix = transform.getMatrix();
+import { transformEdges } from '../transforms/index.js';
 
-// Get inverse transformation matrix
-const inverseMatrix = transform.getInverseMatrix();
+// Transform specific edges
+const result = transformEdges(geometry, [0, 1, 2], {
+  translation: { x: 0.5, y: 0, z: 0 },
+  rotation: { x: 0, y: 0, z: Math.PI / 3 },
+  scale: { x: 2, y: 1, z: 1 }
+});
 
-// Transform a point
-const point = { x: 1, y: 1, z: 1 };
-const transformedPoint = transform.transformPoint(point);
-
-// Transform a vector
-const vector = { x: 1, y: 0, z: 0 };
-const transformedVector = transform.transformVector(vector);
+if (result.success) {
+  mesh.geometry = result.geometry;
+}
 ```
 
-## Transform Operations
+## Transform Utilities
 
-### Aligning Objects
+### Transform Calculations
 
 ```javascript
-import { alignObjects } from './transforms/index.js';
+import { 
+  calculateCentroid, 
+  calculateBoundingBox, 
+  calculateTransformFromPoints 
+} from '../transforms/index.js';
 
-// Align objects to target
-const alignedObjects = alignObjects(objects, target, {
-  axis: 'x',
-  mode: 'center'
-});
+// Calculate centroid of vertices
+const centroid = calculateCentroid(vertexPositions);
+console.log('Centroid:', centroid);
 
-// Align to minimum
-const minAligned = alignObjects(objects, target, {
-  axis: 'all',
-  mode: 'min'
-});
+// Calculate bounding box
+const boundingBox = calculateBoundingBox(vertexPositions);
+console.log('Bounding box:', boundingBox);
 
-// Align to maximum
-const maxAligned = alignObjects(objects, target, {
-  axis: 'y',
-  mode: 'max'
-});
+// Calculate transform from point sets
+const transform = calculateTransformFromPoints(sourcePoints, targetPoints);
 ```
 
-### Distributing Objects
+### Transform Interpolation
 
 ```javascript
-import { distributeObjects } from './transforms/index.js';
+import { interpolateTransform, interpolatePosition, interpolateRotation } from '../transforms/index.js';
 
-// Distribute objects evenly
-const distributedObjects = distributeObjects(objects, {
-  axis: 'x',
-  spacing: 2,
-  includeBounds: true
-});
+// Interpolate between two transforms
+const interpolatedTransform = interpolateTransform(transform1, transform2, 0.5);
 
-// Distribute in Y axis
-const yDistributed = distributeObjects(objects, {
-  axis: 'y',
-  spacing: 1.5
-});
+// Interpolate position
+const interpolatedPosition = interpolatePosition(position1, position2, 0.3);
+
+// Interpolate rotation
+const interpolatedRotation = interpolateRotation(rotation1, rotation2, 0.7);
 ```
 
-### Arranging in Grid
+### Transform Constraints
 
 ```javascript
-import { arrangeInGrid } from './transforms/index.js';
+import { 
+  constrainPosition, 
+  constrainRotation, 
+  constrainScale 
+} from '../transforms/index.js';
 
-// Arrange objects in 3x3 grid
-const gridObjects = arrangeInGrid(objects, {
-  rows: 3,
-  columns: 3,
-  spacing: 2,
-  axis: 'x'
+// Constrain position to bounds
+const constrainedPosition = constrainPosition(position, {
+  min: { x: -10, y: -10, z: -10 },
+  max: { x: 10, y: 10, z: 10 }
 });
 
-// Arrange in 2x4 grid
-const customGrid = arrangeInGrid(objects, {
-  rows: 2,
-  columns: 4,
-  spacing: 1.5,
-  axis: 'z'
-});
-```
-
-### Mirroring Objects
-
-```javascript
-import { mirrorObjects } from './transforms/index.js';
-
-// Mirror objects on X axis
-const mirroredObjects = mirrorObjects(objects, {
-  axis: 'x',
-  center: { x: 0, y: 0, z: 0 },
-  duplicate: true
+// Constrain rotation to axis
+const constrainedRotation = constrainRotation(rotation, {
+  axis: 'y', // Only allow Y-axis rotation
+  min: -Math.PI,
+  max: Math.PI
 });
 
-// Mirror on Y axis with custom center
-const yMirrored = mirrorObjects(objects, {
-  axis: 'y',
-  center: { x: 5, y: 0, z: 0 },
-  duplicate: false
-});
-```
-
-### Rotating Around Point
-
-```javascript
-import { rotateAroundPoint } from './transforms/index.js';
-
-// Rotate objects around center
-const rotatedObjects = rotateAroundPoint(objects, center, {
-  x: Math.PI / 4,
-  y: Math.PI / 2,
-  z: 0
-}, {
-  space: 'world'
-});
-
-// Rotate in local space
-const localRotated = rotateAroundPoint(objects, center, {
-  x: 0,
-  y: Math.PI,
-  z: 0
-}, {
-  space: 'local'
-});
-```
-
-### Scaling from Point
-
-```javascript
-import { scaleFromPoint } from './transforms/index.js';
-
-// Scale objects from center
-const scaledObjects = scaleFromPoint(objects, center, {
-  x: 2,
-  y: 2,
-  z: 2
-}, {
-  uniform: false
-});
-
-// Uniform scaling
-const uniformScaled = scaleFromPoint(objects, center, {
-  x: 1.5,
-  y: 1.5,
-  z: 1.5
-}, {
-  uniform: true
+// Constrain scale
+const constrainedScale = constrainScale(scale, {
+  min: 0.1,
+  max: 10,
+  uniform: true // Keep uniform scaling
 });
 ```
 
@@ -295,656 +289,361 @@ const uniformScaled = scaleFromPoint(objects, center, {
 ### Creating Gizmos
 
 ```javascript
-import { createTransformGizmo, GizmoTypes } from './transforms/index.js';
+import { 
+  createTransformGizmo, 
+  createPositionGizmo, 
+  createRotationGizmo, 
+  createScaleGizmo 
+} from '../transforms/TransformGizmo.js';
 
-// Create translate gizmo
-const translateGizmo = createTransformGizmo({
-  type: GizmoTypes.TRANSLATE,
+// Create general transform gizmo
+const gizmo = createTransformGizmo(mesh, {
+  mode: 'translate', // 'translate', 'rotate', 'scale'
   size: 1.0,
-  position: { x: 0, y: 0, z: 0 },
-  visible: true
+  showAxes: true
 });
 
-// Create rotate gizmo
-const rotateGizmo = createTransformGizmo({
-  type: GizmoTypes.ROTATE,
-  size: 1.5,
-  position: { x: 0, y: 0, z: 0 }
-});
-
-// Create scale gizmo
-const scaleGizmo = createTransformGizmo({
-  type: GizmoTypes.SCALE,
-  size: 1.0,
-  position: { x: 0, y: 0, z: 0 }
-});
+// Create specific gizmo types
+const positionGizmo = createPositionGizmo(mesh, { size: 1.0 });
+const rotationGizmo = createRotationGizmo(mesh, { size: 1.5 });
+const scaleGizmo = createScaleGizmo(mesh, { size: 1.0 });
 ```
 
 ### Gizmo Interaction
 
 ```javascript
-// Set up event listeners
-gizmo.addEventListener('dragStart', (data) => {
-  console.log('Drag started on axis:', data.axis);
-});
+import { 
+  updateGizmo, 
+  setGizmoMode, 
+  enableGizmo, 
+  disableGizmo 
+} from '../transforms/TransformGizmo.js';
 
-gizmo.addEventListener('dragMove', (data) => {
-  console.log('Dragging:', data.delta);
-});
+// Update gizmo position
+updateGizmo(gizmo, mesh.position);
 
-gizmo.addEventListener('dragEnd', (data) => {
-  console.log('Drag ended:', data.delta);
-});
+// Change gizmo mode
+setGizmoMode(gizmo, 'rotate');
 
-gizmo.addEventListener('hoverChanged', (data) => {
-  console.log('Hover axis:', data.axis);
-});
-
-// Handle mouse events
-gizmo.onMouseDown(event, camera);
-gizmo.onMouseMove(event, camera);
-gizmo.onMouseUp();
-```
-
-### Gizmo Management
-
-```javascript
-// Update gizmo properties
-gizmo.setPosition({ x: 1, y: 2, z: 3 });
-gizmo.setType(GizmoTypes.ROTATE);
-gizmo.setSize(2.0);
-gizmo.setVisible(false);
-
-// Get gizmo state
-const state = gizmo.getState();
-console.log('Gizmo state:', state);
-```
-
-## Advanced Operations
-
-### Snapping to Grid
-
-```javascript
-import { snapToGrid } from './transforms/index.js';
-
-// Snap objects to grid
-const snappedObjects = snapToGrid(objects, {
-  gridSize: 1.0,
-  axis: 'all',
-  snapToCenter: true
-});
-
-// Snap only X axis
-const xSnapped = snapToGrid(objects, {
-  gridSize: 0.5,
-  axis: 'x',
-  snapToCenter: false
-});
-```
-
-### Snapping to Objects
-
-```javascript
-import { snapToObjects } from './transforms/index.js';
-
-// Snap objects to targets
-const snappedObjects = snapToObjects(objects, targets, {
-  threshold: 0.5,
-  mode: 'center'
-});
-
-// Snap to vertices
-const vertexSnapped = snapToObjects(objects, targets, {
-  threshold: 0.1,
-  mode: 'vertex'
-});
-```
-
-### Creating Transforms from Data
-
-```javascript
-import { createTransformFromPoints, createTransformFromBounds } from './transforms/index.js';
-
-// Create transform from two points
-const transform = createTransformFromPoints(
-  { x: 0, y: 0, z: 0 },
-  { x: 5, y: 5, z: 5 }
-);
-
-// Create transform from bounds
-const bounds = {
-  min: { x: -1, y: -1, z: -1 },
-  max: { x: 1, y: 1, z: 1 }
-};
-const boundsTransform = createTransformFromBounds(bounds);
-```
-
-### Transform Validation
-
-```javascript
-import { validateTransformOperation } from './transforms/index.js';
-
-// Validate transform operation
-const operation = {
-  type: 'align',
-  objects: objects,
-  target: target,
-  options: { axis: 'x', mode: 'center' }
-};
-
-const validation = validateTransformOperation(operation);
-if (validation.isValid) {
-  console.log('Operation is valid');
-} else {
-  console.log('Validation errors:', validation.errors);
-}
+// Enable/disable gizmo
+enableGizmo(gizmo);
+disableGizmo(gizmo);
 ```
 
 ## Usage Examples
 
-### Complete Transform Workflow
+### Basic Object Transformation
 
 ```javascript
 import { 
-  createTransformManager, 
-  createTransform,
-  alignObjects,
-  distributeObjects,
-  snapToGrid 
-} from './transforms/index.js';
+  setPosition, 
+  setRotation, 
+  setScale, 
+  getTransform 
+} from '../transforms/index.js';
 
-// Create transform manager
-const transformManager = createTransformManager({
-  autoUpdate: true,
-  cacheMatrices: true
+// Set up object transforms
+setPosition(mesh, 5, 0, 0);
+setRotation(mesh, 0, Math.PI / 2, 0);
+setScale(mesh, 2, 1, 1);
+
+// Get complete transform
+const transform = getTransform(mesh);
+console.log('Object transform:', transform);
+```
+
+### Interactive Transformation
+
+```javascript
+import { translate, rotate, scale } from '../transforms/index.js';
+
+// Handle keyboard input for transformation
+document.addEventListener('keydown', (event) => {
+  switch (event.key) {
+    case 'w':
+      translate(mesh, 0, 0, -0.1); // Move forward
+      break;
+    case 's':
+      translate(mesh, 0, 0, 0.1); // Move backward
+      break;
+    case 'a':
+      translate(mesh, -0.1, 0, 0); // Move left
+      break;
+    case 'd':
+      translate(mesh, 0.1, 0, 0); // Move right
+      break;
+    case 'q':
+      rotate(mesh, 0, -0.1, 0); // Rotate left
+      break;
+    case 'e':
+      rotate(mesh, 0, 0.1, 0); // Rotate right
+      break;
+  }
 });
+```
 
-// Create transforms for objects
-const objects = [
-  { id: 'obj1', position: { x: 0, y: 0, z: 0 } },
-  { id: 'obj2', position: { x: 2, y: 0, z: 0 } },
-  { id: 'obj3', position: { x: 4, y: 0, z: 0 } }
-];
+### Geometric Transformation
 
-// Create transform for each object
-objects.forEach(obj => {
-  transformManager.createTransform(obj.id, {
-    position: obj.position,
-    rotation: { x: 0, y: 0, z: 0 },
-    scale: { x: 1, y: 1, z: 1 }
+```javascript
+import { transformVertices } from '../transforms/index.js';
+
+// Transform selected vertices
+function transformSelectedVertices(translation, rotation, scale) {
+  const selectedVertices = getSelectedVertices(); // Get from selection system
+  
+  const result = transformVertices(mesh.geometry, selectedVertices, {
+    translation,
+    rotation,
+    scale
   });
-});
+  
+  if (result.success) {
+    mesh.geometry = result.geometry;
+    console.log('Vertices transformed successfully');
+  } else {
+    console.error('Vertex transformation failed:', result.errors);
+  }
+}
 
-// Align objects to center
-const alignedObjects = alignObjects(objects, { x: 0, y: 0, z: 0 }, {
-  axis: 'x',
-  mode: 'center'
-});
-
-// Distribute objects evenly
-const distributedObjects = distributeObjects(alignedObjects, {
-  axis: 'x',
-  spacing: 2
-});
-
-// Snap to grid
-const finalObjects = snapToGrid(distributedObjects, {
-  gridSize: 0.5,
-  axis: 'all'
-});
-
-console.log('Transform workflow completed');
-```
-
-### Interactive Gizmo Example
-
-```javascript
-import { createTransformGizmo, GizmoTypes } from './transforms/index.js';
-
-// Create gizmo
-const gizmo = createTransformGizmo({
-  type: GizmoTypes.TRANSLATE,
-  size: 1.0,
-  position: { x: 0, y: 0, z: 0 }
-});
-
-// Set up event listeners
-gizmo.addEventListener('dragStart', (data) => {
-  console.log('Started dragging on axis:', data.axis);
-});
-
-gizmo.addEventListener('dragMove', (data) => {
-  // Update object position based on drag
-  const delta = data.delta;
-  selectedObject.position.x += delta.x;
-  selectedObject.position.y += delta.y;
-  selectedObject.position.z += delta.z;
-});
-
-gizmo.addEventListener('dragEnd', (data) => {
-  console.log('Finished dragging:', data.delta);
-  // Save transform history
-  saveTransformHistory();
-});
-
-// Handle mouse events
-document.addEventListener('mousedown', (event) => {
-  gizmo.onMouseDown(event, camera);
-});
-
-document.addEventListener('mousemove', (event) => {
-  gizmo.onMouseMove(event, camera);
-});
-
-document.addEventListener('mouseup', () => {
-  gizmo.onMouseUp();
-});
-```
-
-### Advanced Transform Operations
-
-```javascript
-import { 
-  mirrorObjects,
-  rotateAroundPoint,
-  scaleFromPoint,
-  TransformUtils 
-} from './transforms/index.js';
-
-// Mirror objects
-const mirroredObjects = mirrorObjects(objects, {
-  axis: 'x',
-  center: { x: 0, y: 0, z: 0 },
-  duplicate: true
-});
-
-// Rotate around custom point
-const rotationCenter = { x: 5, y: 0, z: 0 };
-const rotatedObjects = rotateAroundPoint(objects, rotationCenter, {
-  x: 0,
-  y: Math.PI / 2,
-  z: 0
-}, {
-  space: 'world'
-});
-
-// Scale from point
-const scaleCenter = { x: 0, y: 0, z: 0 };
-const scaledObjects = scaleFromPoint(objects, scaleCenter, {
-  x: 2,
-  y: 1.5,
-  z: 0.5
-}, {
-  uniform: false
-});
-
-// Interpolate between transforms
-const transform1 = createTransform({ position: { x: 0, y: 0, z: 0 } });
-const transform2 = createTransform({ position: { x: 10, y: 10, z: 10 } });
-
-const interpolatedTransform = TransformUtils.interpolateTransforms(
-  transform1, 
-  transform2, 
-  0.5
+// Example usage
+transformSelectedVertices(
+  { x: 1, y: 0, z: 0 },
+  { x: 0, y: Math.PI / 4, z: 0 },
+  { x: 1.5, y: 1, z: 1 }
 );
 ```
 
-## API Reference
-
-### TransformManager
-
-#### Constructor
+### Animation with Transforms
 
 ```javascript
-new TransformManager(options)
+import { 
+  setPosition, 
+  interpolatePosition, 
+  interpolateRotation 
+} from '../transforms/index.js';
+
+// Animate object movement
+function animateObject(startPos, endPos, duration) {
+  const startTime = Date.now();
+  
+  function animate() {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const progress = Math.min(elapsed / duration, 1);
+    
+    const currentPos = interpolatePosition(startPos, endPos, progress);
+    setPosition(mesh, currentPos.x, currentPos.y, currentPos.z);
+    
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+  
+  animate();
+}
+
+// Example animation
+animateObject(
+  { x: 0, y: 0, z: 0 },
+  { x: 10, y: 5, z: 0 },
+  2.0 // 2 seconds
+);
 ```
 
-**Parameters:**
-- `options` (Object, optional)
-  - `autoUpdate` (boolean): Auto-update transforms (default: true)
-  - `cacheMatrices` (boolean): Cache transformation matrices (default: true)
-  - `maxTransforms` (number): Maximum transforms to manage (default: 1000)
-
-#### Methods
-
-##### `createTransform(id, options)`
-Create a new transform.
-
-**Parameters:**
-- `id` (string): Transform ID
-- `options` (Object, optional): Transform options
-
-**Returns:** Transform - Created transform
-
-##### `getTransform(id)`
-Get a transform by ID.
-
-**Parameters:**
-- `id` (string): Transform ID
-
-**Returns:** Transform - Transform or null
-
-##### `updateTransform(id, updates)`
-Update a transform.
-
-**Parameters:**
-- `id` (string): Transform ID
-- `updates` (Object): Transform updates
-
-**Returns:** boolean - Success status
-
-##### `removeTransform(id)`
-Remove a transform.
-
-**Parameters:**
-- `id` (string): Transform ID
-
-**Returns:** boolean - Success status
-
-### Transform
-
-#### Constructor
+### Transform with Constraints
 
 ```javascript
-new Transform(options)
+import { 
+  setPosition, 
+  constrainPosition, 
+  constrainRotation 
+} from '../transforms/index.js';
+
+// Apply constrained transformation
+function applyConstrainedTransform(mesh, newPosition, newRotation) {
+  // Constrain position to bounds
+  const constrainedPos = constrainPosition(newPosition, {
+    min: { x: -10, y: 0, z: -10 },
+    max: { x: 10, y: 20, z: 10 }
+  });
+  
+  // Constrain rotation to Y-axis only
+  const constrainedRot = constrainRotation(newRotation, {
+    axis: 'y',
+    min: -Math.PI,
+    max: Math.PI
+  });
+  
+  // Apply constrained transforms
+  setPosition(mesh, constrainedPos.x, constrainedPos.y, constrainedPos.z);
+  setRotation(mesh, constrainedRot.x, constrainedRot.y, constrainedRot.z);
+}
 ```
-
-**Parameters:**
-- `options` (Object, optional): Transform options
-
-#### Methods
-
-##### `setPosition(x, y, z)`
-Set transform position.
-
-**Parameters:**
-- `x` (number): X coordinate
-- `y` (number): Y coordinate
-- `z` (number): Z coordinate
-
-##### `setRotation(x, y, z)`
-Set transform rotation in radians.
-
-**Parameters:**
-- `x` (number): X rotation in radians
-- `y` (number): Y rotation in radians
-- `z` (number): Z rotation in radians
-
-##### `setScale(x, y, z)`
-Set transform scale.
-
-**Parameters:**
-- `x` (number): X scale
-- `y` (number): Y scale
-- `z` (number): Z scale
-
-##### `getMatrix()`
-Get transformation matrix.
-
-**Returns:** Array - 4x4 transformation matrix
-
-##### `transformPoint(point)`
-Transform a point.
-
-**Parameters:**
-- `point` (Object): Point {x, y, z}
-
-**Returns:** Object - Transformed point
-
-### TransformOperations
-
-#### Methods
-
-##### `alignObjects(objects, target, options)`
-Align objects to target.
-
-**Parameters:**
-- `objects` (Array): Objects to align
-- `target` (Object): Target object or point
-- `options` (Object, optional): Alignment options
-
-**Returns:** Array - Aligned objects
-
-##### `distributeObjects(objects, options)`
-Distribute objects evenly.
-
-**Parameters:**
-- `objects` (Array): Objects to distribute
-- `options` (Object, optional): Distribution options
-
-**Returns:** Array - Distributed objects
-
-##### `mirrorObjects(objects, options)`
-Mirror objects.
-
-**Parameters:**
-- `objects` (Array): Objects to mirror
-- `options` (Object, optional): Mirror options
-
-**Returns:** Array - Mirrored objects
-
-### TransformGizmo
-
-#### Constructor
-
-```javascript
-new TransformGizmo(options)
-```
-
-**Parameters:**
-- `options` (Object, optional): Gizmo options
-
-#### Methods
-
-##### `setPosition(position)`
-Set gizmo position.
-
-**Parameters:**
-- `position` (Object): New position
-
-##### `setType(type)`
-Set gizmo type.
-
-**Parameters:**
-- `type` (string): New gizmo type
-
-##### `onMouseDown(event, camera)`
-Handle mouse down event.
-
-**Parameters:**
-- `event` (Object): Mouse event
-- `camera` (Object): Camera object
-
-**Returns:** boolean - True if gizmo was clicked
 
 ## Best Practices
 
-### 1. Transform Management
+### 1. Use Appropriate Transform Functions
 
 ```javascript
-// Use descriptive transform IDs
-const transform = transformManager.createTransform('player-character-transform', {
-  position: { x: 0, y: 0, z: 0 },
-  description: 'Player character transform'
-});
+import { setPosition, translate } from '../transforms/index.js';
 
-// Validate transforms before use
-const validation = transform.validate();
-if (!validation.isValid) {
-  console.error('Transform validation failed:', validation.errors);
-  return;
+// Use setPosition for absolute positioning
+setPosition(mesh, 5, 0, 0);
+
+// Use translate for relative movement
+translate(mesh, 0.1, 0, 0); // Move 0.1 units in X direction
+```
+
+### 2. Validate Transforms
+
+```javascript
+import { validateTransform } from '../transforms/index.js';
+
+// Validate transform before applying
+const transform = {
+  position: { x: 1, y: 2, z: 3 },
+  rotation: { x: 0, y: Math.PI / 2, z: 0 },
+  scale: { x: 2, y: 1, z: 1 }
+};
+
+const validation = validateTransform(transform);
+if (validation.isValid) {
+  setTransform(mesh, transform);
+} else {
+  console.error('Invalid transform:', validation.errors);
 }
 ```
 
-### 2. Performance Optimization
+### 3. Use Efficient Geometric Transforms
 
 ```javascript
-// Cache frequently used transforms
-const cachedTransforms = new Map();
+import { transformVertices } from '../transforms/index.js';
 
-function getCachedTransform(id) {
-  if (!cachedTransforms.has(id)) {
-    cachedTransforms.set(id, transformManager.getTransform(id));
-  }
-  return cachedTransforms.get(id);
+// Batch vertex transformations for better performance
+const vertexIndices = [0, 1, 2, 3, 4, 5];
+const result = transformVertices(geometry, vertexIndices, {
+  translation: { x: 1, y: 0, z: 0 }
+});
+
+if (result.success) {
+  mesh.geometry = result.geometry;
 }
-
-// Batch transform operations
-const transforms = objects.map(obj => ({
-  id: obj.id,
-  position: obj.position,
-  rotation: obj.rotation,
-  scale: obj.scale
-}));
-
-transformManager.batchUpdate(transforms);
 ```
 
-### 3. Gizmo Interaction
+### 4. Handle Transform Errors
 
 ```javascript
-// Set up proper event handling
-gizmo.addEventListener('dragStart', (data) => {
-  // Store initial state for undo
-  undoManager.saveState();
-});
+import { setPosition, getPosition } from '../transforms/index.js';
 
-gizmo.addEventListener('dragMove', (data) => {
-  // Update object in real-time
-  updateObjectTransform(data);
-});
-
-gizmo.addEventListener('dragEnd', (data) => {
-  // Commit changes
-  commitTransformChanges(data);
-});
+// Always check transform results
+try {
+  setPosition(mesh, 1, 2, 3);
+  const position = getPosition(mesh);
+  console.log('Position set successfully:', position);
+} catch (error) {
+  console.error('Transform error:', error.message);
+}
 ```
 
-### 4. Transform Validation
+### 5. Use Transform Constraints
 
 ```javascript
-// Validate all transform operations
-function safeTransformOperation(operation) {
-  const validation = validateTransformOperation(operation);
-  if (!validation.isValid) {
-    console.error('Transform operation validation failed:', validation.errors);
-    return false;
-  }
-  
-  try {
-    // Perform operation
-    return true;
-  } catch (error) {
-    console.error('Transform operation failed:', error);
-    return false;
-  }
-}
+import { constrainPosition, setPosition } from '../transforms/index.js';
+
+// Apply constraints to prevent invalid transforms
+const newPosition = { x: 15, y: -5, z: 20 };
+const constrainedPosition = constrainPosition(newPosition, {
+  min: { x: -10, y: 0, z: -10 },
+  max: { x: 10, y: 20, z: 10 }
+});
+
+setPosition(mesh, constrainedPosition.x, constrainedPosition.y, constrainedPosition.z);
 ```
 
 ## Performance Considerations
 
-### 1. Matrix Caching
+### 1. Batch Transform Operations
 
 ```javascript
-// Enable matrix caching for better performance
-const transformManager = createTransformManager({
-  cacheMatrices: true,
-  autoUpdate: false // Update manually for better control
-});
+import { setTransform } from '../transforms/index.js';
 
-// Update matrices only when needed
-transformManager.updateMatrices();
+// Set complete transform at once instead of separate calls
+setTransform(mesh, {
+  position: { x: 1, y: 2, z: 3 },
+  rotation: { x: 0, y: Math.PI / 2, z: 0 },
+  scale: { x: 2, y: 1, z: 1 }
+});
 ```
 
-### 2. Batch Operations
+### 2. Use Efficient Geometric Transforms
 
 ```javascript
-// Use batch operations for multiple transforms
-const batchUpdates = objects.map(obj => ({
-  id: obj.id,
-  updates: {
-    position: obj.position,
-    rotation: obj.rotation,
-    scale: obj.scale
+import { transformVertices } from '../transforms/index.js';
+
+// Transform multiple vertices in a single operation
+const result = transformVertices(geometry, vertexIndices, transformOptions);
+```
+
+### 3. Optimize Gizmo Updates
+
+```javascript
+import { updateGizmo } from '../transforms/TransformGizmo.js';
+
+// Only update gizmo when necessary
+let lastPosition = null;
+function updateGizmoIfNeeded(mesh) {
+  const currentPosition = mesh.position;
+  if (!lastPosition || !currentPosition.equals(lastPosition)) {
+    updateGizmo(gizmo, currentPosition);
+    lastPosition = currentPosition.clone();
   }
-}));
-
-transformManager.batchUpdate(batchUpdates);
+}
 ```
 
-### 3. Gizmo Performance
+### 4. Use Transform Caching
 
 ```javascript
-// Optimize gizmo rendering
-const gizmo = createTransformGizmo({
-  type: GizmoTypes.TRANSLATE,
-  size: 1.0,
-  visible: true
-});
+import { getTransform, setTransform } from '../transforms/index.js';
 
-// Only render gizmo when needed
-gizmo.setVisible(selectedObjects.length > 0);
+// Cache transforms for performance
+const transformCache = new Map();
 
-// Use efficient raycasting
-gizmo.setRaycastOptimization(true);
-```
-
-### 4. Memory Management
-
-```javascript
-// Clean up unused transforms
-transformManager.cleanupUnusedTransforms();
-
-// Dispose gizmo resources
-gizmo.dispose();
-
-// Clear transform cache
-transformManager.clearCache();
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Transform not updating**
-   - Check if `autoUpdate` is enabled
-   - Call `updateMatrix()` manually
-   - Verify transform is not marked as dirty
-
-2. **Gizmo not responding**
-   - Check camera reference
-   - Verify gizmo is visible
-   - Ensure proper event handling
-
-3. **Performance issues**
-   - Enable matrix caching
-   - Use batch operations
-   - Limit number of transforms
-
-4. **Incorrect transformations**
-   - Validate transform data
-   - Check coordinate system
-   - Verify pivot points
-
-### Debug Tips
-
-```javascript
-// Enable debug logging
-const transformManager = createTransformManager({
-  debug: true,
-  logLevel: 'verbose'
-});
-
-// Get transform statistics
-const stats = transformManager.getStatistics();
-console.log('Transform stats:', stats);
-
-// Validate all transforms
-const transforms = transformManager.getAllTransforms();
-transforms.forEach(transform => {
-  const validation = transform.validate();
-  if (!validation.isValid) {
-    console.error('Invalid transform:', validation.errors);
+function getCachedTransform(mesh) {
+  if (!transformCache.has(mesh.id)) {
+    transformCache.set(mesh.id, getTransform(mesh));
   }
-});
-``` 
+  return transformCache.get(mesh.id);
+}
+```
+
+## Migration Guide
+
+**Old Style (Legacy):**
+```javascript
+import { TransformManager } from '../transforms/TransformManager.js';
+
+const transformManager = new TransformManager();
+transformManager.setPosition(mesh, 1, 2, 3);
+transformManager.setRotation(mesh, 0, Math.PI / 2, 0);
+```
+
+**New Modular Style:**
+```javascript
+import { setPosition, setRotation } from '../transforms/index.js';
+
+setPosition(mesh, 1, 2, 3);
+setRotation(mesh, 0, Math.PI / 2, 0);
+```
+
+**Key Changes:**
+- All transform operations are now pure functions imported directly from their respective modules
+- No more manager classes or group objects
+- Direct function calls instead of method calls on objects
+- Better tree-shaking and performance
+- Cleaner, more maintainable code structure
+
+**Migration Steps:**
+1. Update all import statements to use the new modular imports
+2. Replace manager object method calls with direct function calls
+3. Update transform parameter structures if needed
+4. Test all transform operations to ensure they work correctly
+5. Remove any unused legacy imports 

@@ -17,106 +17,49 @@ The Scene System provides comprehensive scene management capabilities for the 3D
 9. [API Reference](#api-reference)
 10. [Best Practices](#best-practices)
 11. [Performance Considerations](#performance-considerations)
+12. [Migration Guide](#migration-guide)
 
-## Core Components
+## Core Components (New Modular Style)
 
-### SceneManager
+All scene operations are now pure functions, imported directly from their respective files or group index files. Example:
 
-The main scene management class that handles all scene operations.
-
-```javascript
-import { createSceneManager } from './scene/index.js';
-
-const sceneManager = createSceneManager({
-  maxScenes: 10,
-  autoSave: true,
-  validation: true
-});
+```js
+import { createScene, duplicateMesh, groupMeshes } from '../scene/index.js';
 ```
 
-### Scene
-
-Individual scene class with mesh management and hierarchy support.
-
-```javascript
-import { Scene } from './scene/SceneManager.js';
-
-const scene = new Scene('MyScene', {
-  description: 'A test scene',
-  metadata: { version: '1.0' }
-});
+**Example Usage:**
+```js
+import { createScene } from '../scene/index.js';
+const scene = createScene('MyScene');
 ```
 
-### SceneUtils
+## Migration Guide
 
-Utility functions for scene analysis and optimization.
-
-```javascript
-import { SceneUtils } from './scene/SceneUtils.js';
-
-// Calculate scene bounds
-const bounds = SceneUtils.calculateBounds(meshes);
-
-// Get scene statistics
-const stats = SceneUtils.getStatistics(scene);
+**Old Style:**
+```js
+import { SceneManager } from '../scene/SceneManager.js';
+const manager = new SceneManager();
+manager.createScene('MyScene');
 ```
 
-### SceneOperations
-
-Scene operation functions for common tasks.
-
-```javascript
-import { SceneOperations } from './scene/SceneOperations.js';
-
-// Duplicate mesh
-const duplicatedMesh = SceneOperations.duplicateMesh(mesh);
-
-// Group meshes
-const groupedMesh = SceneOperations.groupMeshes(meshes);
+**New Modular Style:**
+```js
+import { createScene } from '../scene/index.js';
+const scene = createScene('MyScene');
 ```
-
-### SceneValidator
-
-Scene and mesh validation functions.
-
-```javascript
-import { SceneValidator } from './scene/SceneValidator.js';
-
-// Validate scene
-const validation = SceneValidator.validateScene(scene);
-
-// Validate mesh
-const meshValidation = SceneValidator.validateMesh(mesh);
-```
-
-### SceneSerializer
-
-Scene serialization and export functions.
-
-```javascript
-import { SceneSerializer } from './scene/SceneSerializer.js';
-
-// Serialize to JSON
-const json = SceneSerializer.serializeScene(scene);
-
-// Export to GLTF
-const gltf = SceneSerializer.exportToGLTF(scene);
-```
+- All operations are now imported as individual functions from their respective files or group index files.
+- There are no more manager or group objects—just pure functions.
+- Update all your imports and usage accordingly for the new modular system.
 
 ## Scene Management
 
 ### Creating Scenes
 
 ```javascript
-// Create scene manager
-const sceneManager = createSceneManager({
-  maxScenes: 10,
-  autoSave: true,
-  validation: true
-});
+import { createScene } from '../scene/index.js';
 
 // Create new scene
-const scene = sceneManager.addScene('MyScene', {
+const scene = createScene('MyScene', {
   description: 'A test scene',
   metadata: { version: '1.0', author: 'User' }
 });
@@ -127,22 +70,26 @@ console.log('Scene created:', scene.id);
 ### Managing Scenes
 
 ```javascript
+import { getAllScenes, getScene, removeScene, hasScene } from '../scene/index.js';
+
 // Get all scenes
-const allScenes = sceneManager.getAllScenes();
+const allScenes = getAllScenes();
 
 // Get specific scene
-const scene = sceneManager.getScene('scene-1');
+const scene = getScene('scene-1');
 
 // Remove scene
-const removed = sceneManager.removeScene('scene-1');
+const removed = removeScene('scene-1');
 
 // Check if scene exists
-const exists = sceneManager.hasScene('scene-1');
+const exists = hasScene('scene-1');
 ```
 
 ### Scene Properties
 
 ```javascript
+import { Scene } from '../scene/Scene.js';
+
 // Set scene properties
 scene.setName('Updated Scene Name');
 scene.setDescription('Updated description');
@@ -159,6 +106,9 @@ const metadata = scene.getMetadata();
 ### Adding Meshes
 
 ```javascript
+import { EditableMesh } from '../EditableMesh.js';
+import { addMesh } from '../scene/index.js';
+
 // Create mesh
 const mesh = new EditableMesh({
   name: 'Cube',
@@ -167,7 +117,7 @@ const mesh = new EditableMesh({
 });
 
 // Add mesh to scene
-const added = scene.addMesh(mesh);
+const added = addMesh(mesh);
 
 if (added) {
   console.log('Mesh added:', mesh.id);
@@ -177,49 +127,56 @@ if (added) {
 ### Managing Meshes
 
 ```javascript
+import { getAllMeshes, getMesh, removeMesh, hasMesh } from '../scene/index.js';
+
 // Get all meshes in scene
-const meshes = scene.getAllMeshes();
+const meshes = getAllMeshes();
 
 // Get specific mesh
-const mesh = scene.getMesh('mesh-1');
+const mesh = getMesh('mesh-1');
 
 // Remove mesh
-const removed = scene.removeMesh('mesh-1');
+const removed = removeMesh('mesh-1');
 
 // Check if mesh exists
-const exists = scene.hasMesh('mesh-1');
+const exists = hasMesh('mesh-1');
 ```
 
 ### Mesh Hierarchy
 
 ```javascript
+import { setParent, getChildren, getParent, removeParent } from '../scene/index.js';
+
 // Set parent-child relationships
-scene.setParent('child-mesh', 'parent-mesh');
+setParent('child-mesh', 'parent-mesh');
 
 // Get children
-const children = scene.getChildren('parent-mesh');
+const children = getChildren('parent-mesh');
 
 // Get parent
-const parent = scene.getParent('child-mesh');
+const parent = getParent('child-mesh');
 
 // Remove parent
-scene.removeParent('child-mesh');
+removeParent('child-mesh');
 ```
 
 ### Mesh Transformations
 
 ```javascript
+import { EditableMesh } from '../EditableMesh.js';
+import { setPosition, setRotation, setScale, getTransform } from '../scene/index.js';
+
 // Set mesh position
-mesh.setPosition(1, 2, 3);
+setPosition(mesh, 1, 2, 3);
 
 // Set mesh rotation
-mesh.setRotation(0, Math.PI / 2, 0);
+setRotation(mesh, 0, Math.PI / 2, 0);
 
 // Set mesh scale
-mesh.setScale(2, 2, 2);
+setScale(mesh, 2, 2, 2);
 
 // Get mesh transform
-const transform = mesh.getTransform();
+const transform = getTransform(mesh);
 ```
 
 ## Scene Utilities
@@ -227,10 +184,11 @@ const transform = mesh.getTransform();
 ### Bounds Calculation
 
 ```javascript
-import { SceneUtils } from './scene/SceneUtils.js';
+import { SceneUtils } from '../scene/SceneUtils.js';
+import { calculateBounds } from '../scene/index.js';
 
 // Calculate bounds for all meshes
-const bounds = SceneUtils.calculateBounds(scene.getAllMeshes());
+const bounds = calculateBounds(getAllMeshes());
 
 console.log('Scene bounds:', bounds);
 // Output: { min: { x: -1, y: -1, z: -1 }, max: { x: 1, y: 1, z: 1 } }
@@ -239,8 +197,11 @@ console.log('Scene bounds:', bounds);
 ### Center Calculation
 
 ```javascript
+import { SceneUtils } from '../scene/SceneUtils.js';
+import { calculateCenter } from '../scene/index.js';
+
 // Calculate scene center
-const center = SceneUtils.calculateCenter(scene.getAllMeshes());
+const center = calculateCenter(getAllMeshes());
 
 console.log('Scene center:', center);
 // Output: { x: 0, y: 0, z: 0 }
@@ -249,8 +210,11 @@ console.log('Scene center:', center);
 ### Statistics
 
 ```javascript
+import { SceneUtils } from '../scene/SceneUtils.js';
+import { getStatistics } from '../scene/index.js';
+
 // Get scene statistics
-const stats = SceneUtils.getStatistics(scene);
+const stats = getStatistics(scene);
 
 console.log('Scene statistics:', stats);
 // Output: {
@@ -265,8 +229,11 @@ console.log('Scene statistics:', stats);
 ### Optimization
 
 ```javascript
+import { SceneUtils } from '../scene/SceneUtils.js';
+import { optimizeScene } from '../scene/index.js';
+
 // Optimize scene
-const optimization = SceneUtils.optimizeScene(scene, {
+const optimization = optimizeScene(scene, {
   mergeVertices: true,
   removeUnused: true,
   simplifyGeometry: true
@@ -285,16 +252,16 @@ console.log('Optimization results:', optimization);
 ### Duplicating Meshes
 
 ```javascript
-import { SceneOperations } from './scene/SceneOperations.js';
+import { duplicateMesh } from '../scene/index.js';
 
 // Duplicate single mesh
-const duplicatedMesh = SceneOperations.duplicateMesh(mesh, {
+const duplicatedMesh = duplicateMesh(mesh, {
   name: 'Cube_Copy',
   offset: { x: 2, y: 0, z: 0 }
 });
 
 // Duplicate multiple meshes
-const duplicatedMeshes = SceneOperations.duplicateMeshes(meshes, {
+const duplicatedMeshes = duplicateMeshes(meshes, {
   offset: { x: 0, y: 2, z: 0 }
 });
 ```
@@ -302,40 +269,46 @@ const duplicatedMeshes = SceneOperations.duplicateMeshes(meshes, {
 ### Grouping Meshes
 
 ```javascript
+import { groupMeshes, ungroupMesh } from '../scene/index.js';
+
 // Group selected meshes
-const groupedMesh = SceneOperations.groupMeshes(meshes, {
+const groupedMesh = groupMeshes(meshes, {
   name: 'Group',
   keepOriginals: false
 });
 
 // Ungroup mesh
-const ungroupedMeshes = SceneOperations.ungroupMesh(groupedMesh);
+const ungroupedMeshes = ungroupMesh(groupedMesh);
 ```
 
 ### Aligning Meshes
 
 ```javascript
+import { alignMeshes } from '../scene/index.js';
+
 // Align meshes to center
-SceneOperations.alignMeshes(meshes, 'center');
+alignMeshes(meshes, 'center');
 
 // Align meshes to bounds
-SceneOperations.alignMeshes(meshes, 'bounds');
+alignMeshes(meshes, 'bounds');
 
 // Align meshes to specific axis
-SceneOperations.alignMeshes(meshes, 'x-axis');
+alignMeshes(meshes, 'x-axis');
 ```
 
 ### Distributing Meshes
 
 ```javascript
+import { distributeMeshes, arrangeMeshes } from '../scene/index.js';
+
 // Distribute meshes evenly
-SceneOperations.distributeMeshes(meshes, {
+distributeMeshes(meshes, {
   axis: 'x',
   spacing: 2
 });
 
 // Arrange meshes in grid
-SceneOperations.arrangeMeshes(meshes, {
+arrangeMeshes(meshes, {
   rows: 3,
   columns: 3,
   spacing: 2
@@ -347,10 +320,11 @@ SceneOperations.arrangeMeshes(meshes, {
 ### Scene Validation
 
 ```javascript
-import { SceneValidator } from './scene/SceneValidator.js';
+import { SceneValidator } from '../scene/SceneValidator.js';
+import { validateScene } from '../scene/index.js';
 
 // Validate entire scene
-const validation = SceneValidator.validateScene(scene);
+const validation = validateScene(scene);
 
 if (validation.isValid) {
   console.log('Scene is valid');
@@ -362,8 +336,11 @@ if (validation.isValid) {
 ### Mesh Validation
 
 ```javascript
+import { SceneValidator } from '../scene/SceneValidator.js';
+import { validateMesh } from '../scene/index.js';
+
 // Validate specific mesh
-const meshValidation = SceneValidator.validateMesh(mesh);
+const meshValidation = validateMesh(mesh);
 
 if (meshValidation.isValid) {
   console.log('Mesh is valid');
@@ -375,8 +352,11 @@ if (meshValidation.isValid) {
 ### Performance Validation
 
 ```javascript
+import { SceneValidator } from '../scene/SceneValidator.js';
+import { validatePerformance } from '../scene/index.js';
+
 // Check scene performance
-const performance = SceneValidator.validatePerformance(scene, {
+const performance = validatePerformance(scene, {
   maxVertices: 10000,
   maxFaces: 5000,
   maxMeshes: 100
@@ -394,24 +374,28 @@ if (performance.isValid) {
 ### JSON Serialization
 
 ```javascript
-import { SceneSerializer } from './scene/SceneSerializer.js';
+import { SceneSerializer } from '../scene/SceneSerializer.js';
+import { serializeScene, deserializeScene } from '../scene/index.js';
 
 // Serialize scene to JSON
-const json = SceneSerializer.serializeScene(scene);
+const json = serializeScene(scene);
 
 // Save to file
 const fs = require('fs');
 fs.writeFileSync('scene.json', json);
 
 // Deserialize from JSON
-const loadedScene = SceneSerializer.deserializeScene(json);
+const loadedScene = deserializeScene(json);
 ```
 
 ### GLTF Export
 
 ```javascript
+import { SceneSerializer } from '../scene/SceneSerializer.js';
+import { exportToGLTF } from '../scene/index.js';
+
 // Export scene to GLTF
-const gltf = SceneSerializer.exportToGLTF(scene, {
+const gltf = exportToGLTF(scene, {
   binary: false,
   embedTextures: true,
   embedBuffers: true
@@ -424,8 +408,11 @@ fs.writeFileSync('scene.gltf', JSON.stringify(gltf, null, 2));
 ### OBJ Export
 
 ```javascript
+import { SceneSerializer } from '../scene/SceneSerializer.js';
+import { exportToOBJ } from '../scene/index.js';
+
 // Export scene to OBJ
-const obj = SceneSerializer.exportToOBJ(scene, {
+const obj = exportToOBJ(scene, {
   includeMaterials: true,
   includeNormals: true,
   includeUVs: true
@@ -440,11 +427,11 @@ fs.writeFileSync('scene.obj', obj);
 ### Complete Scene Workflow
 
 ```javascript
-import { createSceneManager } from './scene/index.js';
+import { createScene } from '../scene/index.js';
 import { EditableMesh } from '../EditableMesh.js';
 
 // Create scene manager
-const sceneManager = createSceneManager({
+const sceneManager = createScene({
   maxScenes: 10,
   autoSave: true
 });
@@ -496,6 +483,7 @@ console.log('Scene exported:', json);
 
 ```javascript
 import { MaterialManager } from '../materials/index.js';
+import { exportToGLTF } from '../scene/index.js';
 
 // Create material manager
 const materialManager = new MaterialManager();
@@ -533,7 +521,7 @@ scene.addMesh(metalCube);
 scene.addMesh(plasticSphere);
 
 // Export with materials
-const gltf = SceneSerializer.exportToGLTF(scene, {
+const gltf = exportToGLTF(scene, {
   embedMaterials: true,
   embedTextures: true
 });
@@ -542,7 +530,8 @@ const gltf = SceneSerializer.exportToGLTF(scene, {
 ### Scene Optimization
 
 ```javascript
-import { SceneUtils } from './scene/SceneUtils.js';
+import { SceneUtils } from '../scene/SceneUtils.js';
+import { optimizeScene } from '../scene/index.js';
 
 // Create complex scene
 const scene = createComplexScene();
@@ -552,7 +541,7 @@ const beforeStats = SceneUtils.getStatistics(scene);
 console.log('Before optimization:', beforeStats);
 
 // Optimize scene
-const optimization = SceneUtils.optimizeScene(scene, {
+const optimization = optimizeScene(scene, {
   mergeVertices: true,
   removeUnused: true,
   simplifyGeometry: true,
@@ -831,7 +820,7 @@ Export scene to OBJ format.
 
 ```javascript
 // Use descriptive scene names
-const scene = sceneManager.addScene('Kitchen_Scene_v1.2', {
+const scene = createScene('Kitchen_Scene_v1.2', {
   description: 'Kitchen scene with appliances and furniture',
   metadata: { 
     version: '1.2',
@@ -857,16 +846,16 @@ const mesh = new EditableMesh({
 
 ```javascript
 // Organize meshes in logical hierarchy
-scene.setParent('Kitchen_Cabinet_Upper_01', 'Kitchen_Cabinets');
-scene.setParent('Kitchen_Cabinet_Upper_02', 'Kitchen_Cabinets');
-scene.setParent('Kitchen_Cabinet_Lower_01', 'Kitchen_Cabinets');
+setParent('Kitchen_Cabinet_Upper_01', 'Kitchen_Cabinets');
+setParent('Kitchen_Cabinet_Upper_02', 'Kitchen_Cabinets');
+setParent('Kitchen_Cabinet_Lower_01', 'Kitchen_Cabinets');
 ```
 
 ### 4. Performance Optimization
 
 ```javascript
 // Regular scene optimization
-const optimization = SceneUtils.optimizeScene(scene, {
+const optimization = optimizeScene(scene, {
   mergeVertices: true,
   removeUnused: true,
   simplifyGeometry: true,
@@ -874,7 +863,7 @@ const optimization = SceneUtils.optimizeScene(scene, {
 });
 
 // Monitor scene statistics
-const stats = SceneUtils.getStatistics(scene);
+const stats = getStatistics(scene);
 if (stats.meshCount > 100) {
   console.warn('Scene has many meshes, consider optimization');
 }
@@ -884,14 +873,14 @@ if (stats.meshCount > 100) {
 
 ```javascript
 // Validate scenes before saving
-const validation = SceneValidator.validateScene(scene);
+const validation = validateScene(scene);
 if (!validation.isValid) {
   console.error('Scene validation failed:', validation.errors);
   return;
 }
 
 // Check performance limits
-const performance = SceneValidator.validatePerformance(scene, {
+const performance = validatePerformance(scene, {
   maxVertices: 10000,
   maxFaces: 5000,
   maxMeshes: 100

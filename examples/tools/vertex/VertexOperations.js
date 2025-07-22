@@ -1,11 +1,21 @@
 /**
- * VertexOperations - Core operations for vertex manipulation
- * Provides standalone functions for vertex-level operations
+ * Vertex Operations Example - Modular approach
+ * Demonstrates how to use the new modular vertex operations
  */
 
 import * as THREE from 'three';
+import { 
+  mergeVertices, 
+  snapVertices, 
+  splitVertices, 
+  smoothVertices, 
+  connectVertices 
+} from '../../../src/editing/operations/vertex/index.js';
 
-export default class VertexOperations {
+/**
+ * Example: Basic vertex operations using the new modular system
+ */
+export default class VertexOperationsExample {
   constructor() {
     // No editor dependency - pure operations
   }
@@ -96,135 +106,131 @@ export default class VertexOperations {
   }
 
   /**
-   * Weld vertices (merge vertices within threshold distance)
+   * Example: Merge vertices using the new modular system
    * @param {THREE.BufferGeometry} geometry - The geometry
-   * @param {Number} threshold - Distance threshold for welding
-   * @returns {THREE.BufferGeometry} New geometry with welded vertices
+   * @param {Array<Number>} vertexIndices - Indices of vertices to merge
+   * @param {Number} targetVertexIndex - Index of the target vertex
+   * @returns {Object} Result object with success status and new geometry
    */
-  weldVertices(geometry, threshold = 0.0001) {
-    if (!geometry) return null;
+  mergeVerticesExample(geometry, vertexIndices, targetVertexIndex) {
+    const result = mergeVertices(geometry, vertexIndices, {
+      targetVertexIndex: targetVertexIndex
+    });
     
-    // Clone geometry to avoid modifying original
-    const newGeometry = geometry.clone();
-    
-    // Get position attribute
-    const positionAttribute = newGeometry.attributes.position;
-    if (!positionAttribute) return newGeometry;
-    
-    // Create vertex map for welding
-    const vertexMap = new Map();
-    const positions = [];
-    const indices = [];
-    
-    // Process all vertices
-    for (let i = 0; i < positionAttribute.count; i++) {
-      const x = positionAttribute.getX(i);
-      const y = positionAttribute.getY(i);
-      const z = positionAttribute.getZ(i);
-      const position = new THREE.Vector3(x, y, z);
-      
-      // Check if this vertex should be welded to an existing one
-      let weldedIndex = -1;
-      for (const [index, pos] of vertexMap.entries()) {
-        if (position.distanceTo(pos) <= threshold) {
-          weldedIndex = index;
-          break;
-        }
-      }
-      
-      if (weldedIndex === -1) {
-        // New unique vertex
-        weldedIndex = positions.length / 3;
-        positions.push(x, y, z);
-        vertexMap.set(weldedIndex, position);
-      }
-      
-      // Map original vertex to welded vertex
-      indices.push(weldedIndex);
-    }
-    
-    // Create new geometry with welded vertices
-    const result = new THREE.BufferGeometry();
-    result.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    
-    // Update indices
-    if (newGeometry.index) {
-      const oldIndices = newGeometry.index.array;
-      const newIndices = [];
-      
-      for (let i = 0; i < oldIndices.length; i++) {
-        newIndices.push(indices[oldIndices[i]]);
-      }
-      
-      result.setIndex(newIndices);
+    if (result.success) {
+      console.log('Vertices merged successfully');
+      return result.geometry;
     } else {
-      result.setIndex(indices);
+      console.error('Merge failed:', result.errors);
+      return geometry;
     }
-    
-    // Copy other attributes
-    for (const name in newGeometry.attributes) {
-      if (name !== 'position') {
-        // TODO: Handle other attributes properly
-      }
-    }
-    
-    // Compute normals
-    result.computeVertexNormals();
-    
-    return result;
   }
 
   /**
-   * Split a vertex (duplicate it for selected faces)
+   * Example: Snap vertices using the new modular system
    * @param {THREE.BufferGeometry} geometry - The geometry
-   * @param {Number} vertexIndex - Index of the vertex to split
-   * @param {Array<Number>} faceIndices - Indices of faces to use the new vertex
-   * @returns {THREE.BufferGeometry} New geometry with split vertex
+   * @param {Array<Number>} vertexIndices - Indices of vertices to snap
+   * @param {Object} options - Snap options
+   * @returns {Object} Result object with success status and new geometry
    */
-  splitVertex(geometry, vertexIndex, faceIndices = []) {
-    if (!geometry || !geometry.index) return null;
+  snapVerticesExample(geometry, vertexIndices, options = {}) {
+    const result = snapVertices(geometry, vertexIndices, {
+      threshold: options.threshold || 0.1,
+      target: options.target || { x: 0, y: 0, z: 0 }
+    });
     
-    // Clone geometry to avoid modifying original
-    const newGeometry = geometry.clone();
-    
-    // Get position attribute
-    const positionAttribute = newGeometry.attributes.position;
-    if (!positionAttribute || vertexIndex >= positionAttribute.count) return newGeometry;
-    
-    // Get vertex position
-    const position = this.getVertexPosition(newGeometry, vertexIndex);
-    if (!position) return newGeometry;
-    
-    // Create new vertex at same position
-    const newVertexIndex = positionAttribute.count;
-    const positions = Array.from(positionAttribute.array);
-    positions.push(position.x, position.y, position.z);
-    
-    // Update indices
-    const indexAttribute = newGeometry.index;
-    const indices = Array.from(indexAttribute.array);
-    
-    // Update selected faces to use new vertex
-    for (let i = 0; i < indices.length; i += 3) {
-      const faceIndex = Math.floor(i / 3);
-      
-      if (faceIndices.includes(faceIndex)) {
-        for (let j = 0; j < 3; j++) {
-          if (indices[i + j] === vertexIndex) {
-            indices[i + j] = newVertexIndex;
-          }
-        }
-      }
+    if (result.success) {
+      console.log('Vertices snapped successfully');
+      return result.geometry;
+    } else {
+      console.error('Snap failed:', result.errors);
+      return geometry;
     }
+  }
+
+  /**
+   * Example: Split vertices using the new modular system
+   * @param {THREE.BufferGeometry} geometry - The geometry
+   * @param {Array<Number>} vertexIndices - Indices of vertices to split
+   * @returns {Object} Result object with success status and new geometry
+   */
+  splitVerticesExample(geometry, vertexIndices) {
+    const result = splitVertices(geometry, vertexIndices);
     
-    // Create new geometry with split vertex
-    const result = new THREE.BufferGeometry();
-    result.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    result.setIndex(indices);
+    if (result.success) {
+      console.log('Vertices split successfully');
+      return result.geometry;
+    } else {
+      console.error('Split failed:', result.errors);
+      return geometry;
+    }
+  }
+
+  /**
+   * Example: Smooth vertices using the new modular system
+   * @param {THREE.BufferGeometry} geometry - The geometry
+   * @param {Array<Number>} vertexIndices - Indices of vertices to smooth
+   * @param {Object} options - Smooth options
+   * @returns {Object} Result object with success status and new geometry
+   */
+  smoothVerticesExample(geometry, vertexIndices, options = {}) {
+    const result = smoothVertices(geometry, vertexIndices, {
+      iterations: options.iterations || 3,
+      strength: options.strength || 0.5
+    });
     
-    // Compute normals
-    result.computeVertexNormals();
+    if (result.success) {
+      console.log('Vertices smoothed successfully');
+      return result.geometry;
+    } else {
+      console.error('Smooth failed:', result.errors);
+      return geometry;
+    }
+  }
+
+  /**
+   * Example: Connect vertices using the new modular system
+   * @param {THREE.BufferGeometry} geometry - The geometry
+   * @param {Array<Number>} vertexGroup1 - First group of vertices
+   * @param {Array<Number>} vertexGroup2 - Second group of vertices
+   * @returns {Object} Result object with success status and new geometry
+   */
+  connectVerticesExample(geometry, vertexGroup1, vertexGroup2) {
+    const result = connectVertices(geometry, vertexGroup1, vertexGroup2);
     
-    return result;
+    if (result.success) {
+      console.log('Vertices connected successfully');
+      return result.geometry;
+    } else {
+      console.error('Connect failed:', result.errors);
+      return geometry;
+    }
+  }
+
+  /**
+   * Example: Complete vertex editing workflow
+   * @param {THREE.BufferGeometry} geometry - The geometry to edit
+   * @returns {THREE.BufferGeometry} Modified geometry
+   */
+  completeWorkflowExample(geometry) {
+    console.log('Starting vertex editing workflow...');
+    
+    // Step 1: Merge some vertices
+    let modifiedGeometry = this.mergeVerticesExample(geometry, [0, 1, 2], 0);
+    
+    // Step 2: Snap vertices to a target point
+    modifiedGeometry = this.snapVerticesExample(modifiedGeometry, [3, 4], {
+      threshold: 0.05,
+      target: { x: 1, y: 1, z: 0 }
+    });
+    
+    // Step 3: Smooth the result
+    modifiedGeometry = this.smoothVerticesExample(modifiedGeometry, [0, 1, 2], {
+      iterations: 2,
+      strength: 0.3
+    });
+    
+    console.log('Vertex editing workflow completed');
+    return modifiedGeometry;
   }
 }

@@ -3,16 +3,67 @@
  * A collection of utility functions for edge operations.
  */
 
-import { EdgeOperations } from '../operations/edgeOperations.js';
+import { 
+  splitEdges as splitEdgesOp,
+  collapseEdges as collapseEdgesOp,
+  dissolveEdges as dissolveEdgesOp,
+  bevelEdges as bevelEdgesOp,
+  extrudeEdges as extrudeEdgesOp
+} from '../operations/edge/index.js';
+
+/**
+ * Split edges
+ * @param {THREE.BufferGeometry} geometry - The geometry
+ * @param {Array<Number>} edgeIndices - Indices of edges to split
+ * @param {Object} options - Split options
+ * @returns {Object} Split result
+ */
+export function splitEdges(geometry, edgeIndices, options = {}) {
+  return splitEdgesOp(geometry, edgeIndices, options);
+}
+
+/**
+ * Collapse edges
+ * @param {THREE.BufferGeometry} geometry - The geometry
+ * @param {Array<Number>} edgeIndices - Indices of edges to collapse
+ * @param {Object} options - Collapse options
+ * @returns {Object} Collapse result
+ */
+export function collapseEdges(geometry, edgeIndices, options = {}) {
+  return collapseEdgesOp(geometry, edgeIndices, options);
+}
+
+/**
+ * Dissolve edges
+ * @param {THREE.BufferGeometry} geometry - The geometry
+ * @param {Array<Number>} edgeIndices - Indices of edges to dissolve
+ * @param {Object} options - Dissolve options
+ * @returns {Object} Dissolve result
+ */
+export function dissolveEdges(geometry, edgeIndices, options = {}) {
+  return dissolveEdgesOp(geometry, edgeIndices, options);
+}
+
+/**
+ * Bevel edges
+ * @param {THREE.BufferGeometry} geometry - The geometry
+ * @param {Array<Number>} edgeIndices - Indices of edges to bevel
+ * @param {Object} options - Bevel options
+ * @returns {Object} Bevel result
+ */
+export function bevelEdges(geometry, edgeIndices, options = {}) {
+  return bevelEdgesOp(geometry, edgeIndices, options);
+}
 
 /**
  * Extrude edges
- * @param {Array} edges - Edges to extrude
+ * @param {THREE.BufferGeometry} geometry - The geometry
+ * @param {Array<Number>} edgeIndices - Indices of edges to extrude
  * @param {Object} options - Extrude options
  * @returns {Object} Extrude result
  */
-export function extrudeEdges(edges, options = {}) {
-  return EdgeOperations.extrudeEdges(edges, options);
+export function extrudeEdges(geometry, edgeIndices, options = {}) {
+  return extrudeEdgesOp(geometry, edgeIndices, options);
 }
 
 /**

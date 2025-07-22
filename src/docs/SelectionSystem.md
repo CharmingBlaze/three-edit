@@ -2,556 +2,588 @@
 
 ## Overview
 
-The Selection System provides comprehensive object and mesh selection capabilities for the 3D editor. It supports multiple selection types, visualization, and advanced selection methods.
+The Selection System provides comprehensive selection management capabilities for vertices, edges, faces, and objects in the 3D editor. It supports multiple selection modes, raycasting, and visual feedback.
 
 ## Table of Contents
 
 1. [Core Components](#core-components)
-2. [Selection Types](#selection-types)
-3. [Selection Modes](#selection-modes)
-4. [Usage Examples](#usage-examples)
-5. [API Reference](#api-reference)
-6. [Best Practices](#best-practices)
-7. [Performance Considerations](#performance-considerations)
+2. [Selection Modes](#selection-modes)
+3. [Selection Operations](#selection-operations)
+4. [Raycasting](#raycasting)
+5. [Visual Feedback](#visual-feedback)
+6. [Selection Utilities](#selection-utilities)
+7. [Usage Examples](#usage-examples)
+8. [Best Practices](#best-practices)
+9. [Performance Considerations](#performance-considerations)
+10. [Migration Guide](#migration-guide)
 
-## Core Components
+## Core Components (New Modular Style)
 
-### SelectionManager
-
-The main selection management class that handles all selection operations.
+All selection operations are now pure functions, imported directly from their respective files or group index files:
 
 ```javascript
-import { createSelectionManager } from './selection/index.js';
-
-const selectionManager = createSelectionManager({
-  multiSelect: true,
-  autoHighlight: true,
-  maxSelections: 1000
-});
+import { 
+  setSelectionMode, 
+  addSelection, 
+  removeSelection, 
+  isSelected, 
+  getAllSelections,
+  getSelectionsByType,
+  clearSelection,
+  toggleSelection
+} from '../selection/index.js';
 ```
 
-### ObjectSelector
-
-Handles object-specific selection operations like raycasting and area selection.
-
+**Example Usage:**
 ```javascript
-import { ObjectSelector } from './selection/ObjectSelector.js';
+import { setSelectionMode, addSelection } from '../selection/index.js';
 
-// Select object by raycasting
-const selectedObject = ObjectSelector.selectByRay(ray, objects);
-```
-
-### MeshSelector
-
-Handles mesh-specific selection operations for vertices, edges, and faces.
-
-```javascript
-import { MeshSelector } from './selection/MeshSelector.js';
-
-// Select vertices by raycasting
-const selectedVertices = MeshSelector.selectVerticesByRay(ray, mesh);
-```
-
-### SelectionVisualizer
-
-Creates visual representations for selections and transform gizmos.
-
-```javascript
-import { SelectionVisualizer } from './selection/SelectionVisualizer.js';
-
-// Create highlight material
-const highlightMaterial = SelectionVisualizer.createHighlightMaterial({
-  color: { r: 1, g: 1, b: 0 },
-  opacity: 0.8
-});
-```
-
-## Selection Types
-
-### Object Selection
-
-Select entire 3D objects with transforms and properties.
-
-```javascript
-// Add object selection
-selectionManager.addSelection('object', 'cube-1', {
-  name: 'Cube',
-  transform: { position: { x: 0, y: 0, z: 0 } }
-});
-
-// Check if object is selected
-const isSelected = selectionManager.isSelected('object', 'cube-1');
-
-// Get all selected objects
-const selectedObjects = selectionManager.getSelectionsByType('object');
-```
-
-### Mesh Selection
-
-Select mesh geometry for editing operations.
-
-```javascript
-// Add mesh selection
-selectionManager.addSelection('mesh', 'mesh-1', {
-  name: 'MyMesh',
-  vertexCount: 100,
-  faceCount: 50
-});
-```
-
-### Vertex Selection
-
-Select individual mesh vertices for detailed editing.
-
-```javascript
-// Add vertex selection
-selectionManager.addSelection('vertex', 'vertex-1', {
-  position: { x: 1, y: 2, z: 3 },
-  meshId: 'mesh-1'
-});
-
-// Select multiple vertices
-const vertexIds = ['vertex-1', 'vertex-2', 'vertex-3'];
-vertexIds.forEach(id => {
-  selectionManager.addSelection('vertex', id);
-});
-```
-
-### Edge Selection
-
-Select mesh edges for modeling operations.
-
-```javascript
-// Add edge selection
-selectionManager.addSelection('edge', 'edge-1', {
-  vertexIds: ['vertex-1', 'vertex-2'],
-  meshId: 'mesh-1'
-});
-```
-
-### Face Selection
-
-Select mesh faces for material and texture work.
-
-```javascript
-// Add face selection
-selectionManager.addSelection('face', 'face-1', {
-  vertexIds: ['vertex-1', 'vertex-2', 'vertex-3'],
-  meshId: 'mesh-1',
-  material: 'material-1'
-});
+setSelectionMode('vertex');
+addSelection('vertex', 'v1');
 ```
 
 ## Selection Modes
 
-### Object Mode
+### Available Modes
 
-Select entire objects with full transform support.
+The selection system supports four main modes:
+
+- **'vertex'**: Select individual vertices
+- **'edge'**: Select edges (connections between vertices)
+- **'face'**: Select triangular faces
+- **'object'**: Select entire mesh objects
+
+### Setting Selection Mode
 
 ```javascript
-selectionManager.setSelectionMode('object');
+import { setSelectionMode, getSelectionMode } from '../selection/index.js';
 
-// Object selection supports:
-// - Transform operations (move, rotate, scale)
-// - Material assignment
-// - Visibility toggle
-// - Duplication
+// Set selection mode
+setSelectionMode('vertex');
+
+// Get current selection mode
+const currentMode = getSelectionMode();
+console.log('Current selection mode:', currentMode);
 ```
 
-### Vertex Mode
+## Selection Operations
 
-Select individual vertices for precise editing.
+### Adding Selections
 
 ```javascript
-selectionManager.setSelectionMode('vertex');
+import { addSelection } from '../selection/index.js';
 
-// Vertex selection supports:
-// - Move vertices
-// - Merge vertices
-// - Split vertices
-// - Vertex weight painting
+// Add single selection
+addSelection('vertex', 'v1');
+
+// Add multiple selections
+addSelection('vertex', 'v2');
+addSelection('vertex', 'v3');
+addSelection('edge', 'e1');
+addSelection('face', 'f1');
 ```
 
-### Edge Mode
-
-Select mesh edges for modeling operations.
+### Removing Selections
 
 ```javascript
-selectionManager.setSelectionMode('edge');
+import { removeSelection } from '../selection/index.js';
 
-// Edge selection supports:
-// - Extrude edges
-// - Bevel edges
-// - Split edges
-// - Edge loops
+// Remove single selection
+removeSelection('vertex', 'v1');
+
+// Remove multiple selections
+removeSelection('edge', 'e1');
+removeSelection('face', 'f1');
 ```
 
-### Face Mode
-
-Select mesh faces for material and texture work.
+### Checking Selections
 
 ```javascript
-selectionManager.setSelectionMode('face');
+import { isSelected, getSelection } from '../selection/index.js';
 
-// Face selection supports:
-// - Extrude faces
-// - Bevel faces
-// - Material assignment
-// - UV mapping
+// Check if item is selected
+if (isSelected('vertex', 'v1')) {
+  console.log('Vertex v1 is selected');
+}
+
+// Get selection data
+const selection = getSelection('vertex', 'v1');
+if (selection) {
+  console.log('Selection data:', selection);
+}
+```
+
+### Getting All Selections
+
+```javascript
+import { getAllSelections, getSelectionsByType } from '../selection/index.js';
+
+// Get all selections
+const allSelections = getAllSelections();
+console.log('All selections:', allSelections);
+
+// Get selections by type
+const vertexSelections = getSelectionsByType('vertex');
+const edgeSelections = getSelectionsByType('edge');
+const faceSelections = getSelectionsByType('face');
+const objectSelections = getSelectionsByType('object');
+
+console.log('Vertex selections:', vertexSelections);
+console.log('Edge selections:', edgeSelections);
+console.log('Face selections:', faceSelections);
+console.log('Object selections:', objectSelections);
+```
+
+### Clearing Selections
+
+```javascript
+import { clearSelection } from '../selection/index.js';
+
+// Clear all selections
+clearSelection();
+
+// Clear selections by type
+clearSelection('vertex');
+clearSelection('edge');
+clearSelection('face');
+clearSelection('object');
+```
+
+### Toggling Selections
+
+```javascript
+import { toggleSelection } from '../selection/index.js';
+
+// Toggle selection
+const wasAdded = toggleSelection('vertex', 'v1');
+if (wasAdded) {
+  console.log('Vertex v1 was added to selection');
+} else {
+  console.log('Vertex v1 was removed from selection');
+}
+```
+
+## Raycasting
+
+### Vertex Raycasting
+
+```javascript
+import { selectVerticesByRay } from '../selection/raycasting/vertexRaycaster.js';
+
+const ray = {
+  origin: { x: 0, y: 0, z: 0 },
+  direction: { x: 0, y: 0, z: 1 }
+};
+
+const selectedVertices = selectVerticesByRay(ray, mesh, {
+  threshold: 0.1,
+  maxDistance: 10
+});
+
+console.log('Selected vertices:', selectedVertices);
+```
+
+### Edge Raycasting
+
+```javascript
+import { selectEdgesByRay } from '../selection/raycasting/edgeRaycaster.js';
+
+const ray = {
+  origin: { x: 0, y: 0, z: 0 },
+  direction: { x: 0, y: 0, z: 1 }
+};
+
+const selectedEdges = selectEdgesByRay(ray, mesh, {
+  threshold: 0.1,
+  maxDistance: 10
+});
+
+console.log('Selected edges:', selectedEdges);
+```
+
+### Object Raycasting
+
+```javascript
+import { selectByRay } from '../selection/ObjectSelector.js';
+
+const ray = {
+  origin: { x: 0, y: 0, z: 0 },
+  direction: { x: 0, y: 0, z: 1 }
+};
+
+const selectedObject = selectByRay(ray, sceneObjects, {
+  recursive: true,
+  sort: true
+});
+
+if (selectedObject) {
+  console.log('Selected object:', selectedObject);
+}
+```
+
+## Visual Feedback
+
+### Creating Highlight Materials
+
+```javascript
+import { createHighlightMaterial } from '../selection/SelectionVisualizer.js';
+
+const highlightMaterial = createHighlightMaterial({
+  color: 0x00ff00,
+  opacity: 0.8,
+  transparent: true
+});
+```
+
+### Creating Selection Geometries
+
+```javascript
+import { 
+  createVertexHighlightGeometry,
+  createSelectionBoxGeometry,
+  createTransformGizmoGeometry
+} from '../selection/SelectionVisualizer.js';
+
+// Vertex highlight geometry
+const vertexGeometry = createVertexHighlightGeometry(vertexPositions, {
+  size: 0.1,
+  color: 0x00ff00
+});
+
+// Selection box geometry
+const boxGeometry = createSelectionBoxGeometry(bounds, {
+  color: 0x00ff00,
+  lineWidth: 2
+});
+
+// Transform gizmo geometry
+const gizmoGeometry = createTransformGizmoGeometry(position, {
+  size: 1.0,
+  showAxes: true
+});
+```
+
+## Selection Utilities
+
+### Rectangle Selection
+
+```javascript
+import { selectByRectangle } from '../selection/ObjectSelector.js';
+
+const bounds = {
+  min: { x: 0, y: 0 },
+  max: { x: 100, y: 100 }
+};
+
+const selectedObjects = selectByRectangle(bounds, sceneObjects, {
+  recursive: true
+});
+
+console.log('Objects in rectangle:', selectedObjects);
+```
+
+### Lasso Selection
+
+```javascript
+import { selectByLasso } from '../selection/ObjectSelector.js';
+
+const lassoPoints = [
+  { x: 0, y: 0 },
+  { x: 50, y: 0 },
+  { x: 50, y: 50 },
+  { x: 0, y: 50 }
+];
+
+const selectedObjects = selectByLasso(lassoPoints, sceneObjects, {
+  recursive: true
+});
+
+console.log('Objects in lasso:', selectedObjects);
+```
+
+### Name-based Selection
+
+```javascript
+import { selectByName, selectByType } from '../selection/ObjectSelector.js';
+
+// Select by name pattern
+const objectsByName = selectByName('Cube*', sceneObjects);
+console.log('Objects matching pattern:', objectsByName);
+
+// Select by type
+const meshes = selectByType('Mesh', sceneObjects);
+console.log('All meshes:', meshes);
 ```
 
 ## Usage Examples
 
-### Basic Selection
+### Basic Selection Workflow
 
 ```javascript
-import { createSelectionManager, SelectionTypes } from './selection/index.js';
+import { 
+  setSelectionMode, 
+  addSelection, 
+  removeSelection, 
+  clearSelection,
+  getAllSelections 
+} from '../selection/index.js';
 
-// Create selection manager
-const selectionManager = createSelectionManager({
-  multiSelect: true,
-  autoHighlight: true
-});
+// Set selection mode to vertices
+setSelectionMode('vertex');
 
-// Set selection mode
-selectionManager.setSelectionMode('object');
+// Add some vertices to selection
+addSelection('vertex', 'v1');
+addSelection('vertex', 'v2');
+addSelection('vertex', 'v3');
 
-// Add selections
-selectionManager.addSelection('object', 'cube-1', { name: 'Cube' });
-selectionManager.addSelection('object', 'sphere-1', { name: 'Sphere' });
+// Check what's selected
+const selections = getAllSelections();
+console.log('Current selections:', selections);
 
-// Get all selections
-const allSelections = selectionManager.getAllSelections();
-console.log(`Selected ${allSelections.length} items`);
+// Remove one vertex
+removeSelection('vertex', 'v2');
 
-// Clear selections
-selectionManager.clearSelection();
+// Clear all selections
+clearSelection();
 ```
 
-### Raycasting Selection
+### Multi-mode Selection
 
 ```javascript
-import { ObjectSelector } from './selection/ObjectSelector.js';
+import { 
+  setSelectionMode, 
+  addSelection, 
+  getSelectionsByType 
+} from '../selection/index.js';
 
-// Create ray for mouse position
-const ray = {
-  origin: { x: 0, y: 0, z: 0 },
-  direction: { x: 0, y: 0, z: -1 }
-};
+// Select vertices
+setSelectionMode('vertex');
+addSelection('vertex', 'v1');
+addSelection('vertex', 'v2');
 
-// Select object by raycasting
-const selectedObject = ObjectSelector.selectByRay(ray, objects, {
-  includeChildren: true,
-  maxDistance: 100
-});
+// Switch to edge mode and select edges
+setSelectionMode('edge');
+addSelection('edge', 'e1');
+addSelection('edge', 'e2');
 
-if (selectedObject) {
-  selectionManager.addSelection('object', selectedObject.id);
+// Switch to face mode and select faces
+setSelectionMode('face');
+addSelection('face', 'f1');
+
+// Get all selections by type
+const vertexSelections = getSelectionsByType('vertex');
+const edgeSelections = getSelectionsByType('edge');
+const faceSelections = getSelectionsByType('face');
+
+console.log('Vertex selections:', vertexSelections);
+console.log('Edge selections:', edgeSelections);
+console.log('Face selections:', faceSelections);
+```
+
+### Interactive Selection with Raycasting
+
+```javascript
+import { setSelectionMode, addSelection } from '../selection/index.js';
+import { selectVerticesByRay } from '../selection/raycasting/vertexRaycaster.js';
+
+// Set up raycasting for vertex selection
+setSelectionMode('vertex');
+
+function onMouseClick(event) {
+  // Convert mouse position to ray
+  const ray = convertMouseToRay(event);
+  
+  // Select vertices by ray
+  const selectedVertices = selectVerticesByRay(ray, mesh, {
+    threshold: 0.1
+  });
+  
+  // Add selected vertices to selection
+  selectedVertices.forEach(vertexId => {
+    addSelection('vertex', vertexId);
+  });
+}
+
+function convertMouseToRay(event) {
+  // Implementation depends on your rendering setup
+  // This is a placeholder for the actual conversion
+  return {
+    origin: { x: 0, y: 0, z: 0 },
+    direction: { x: 0, y: 0, z: 1 }
+  };
 }
 ```
 
-### Area Selection
+### Selection with Visual Feedback
 
 ```javascript
-import { ObjectSelector } from './selection/ObjectSelector.js';
+import { setSelectionMode, addSelection, getAllSelections } from '../selection/index.js';
+import { createHighlightMaterial, createVertexHighlightGeometry } from '../selection/SelectionVisualizer.js';
 
-// Rectangle bounds
-const bounds = {
-  min: { x: 100, y: 100 },
-  max: { x: 300, y: 300 }
-};
-
-// Select objects in rectangle
-const selectedObjects = ObjectSelector.selectByRectangle(bounds, objects, {
-  partial: true
-});
-
-// Add all selected objects to selection manager
-selectedObjects.forEach(obj => {
-  selectionManager.addSelection('object', obj.id);
-});
-```
-
-### Mesh Selection
-
-```javascript
-import { MeshSelector } from './selection/MeshSelector.js';
-
-// Select vertices by raycasting
-const selectedVertices = MeshSelector.selectVerticesByRay(ray, mesh, {
-  threshold: 0.1,
-  selectNearest: true
-});
-
-// Add vertex selections
-selectedVertices.forEach(vertexId => {
-  selectionManager.addSelection('vertex', vertexId, {
-    meshId: mesh.id
-  });
-});
-
-// Select faces by rectangle
-const selectedFaces = MeshSelector.selectFacesByRectangle(bounds, mesh, camera);
-
-selectedFaces.forEach(faceId => {
-  selectionManager.addSelection('face', faceId, {
-    meshId: mesh.id
-  });
-});
-```
-
-### Selection Visualization
-
-```javascript
-import { SelectionVisualizer } from './selection/SelectionVisualizer.js';
+// Set up selection with visual feedback
+setSelectionMode('vertex');
 
 // Create highlight material
-const highlightMaterial = SelectionVisualizer.createHighlightMaterial({
-  color: { r: 1, g: 1, b: 0 },
-  opacity: 0.8,
-  wireframe: false
-});
-
-// Create selection box
-const bounds = { min: { x: 0, y: 0, z: 0 }, max: { x: 1, y: 1, z: 1 } };
-const selectionBox = SelectionVisualizer.createSelectionBoxGeometry(bounds, {
-  thickness: 0.01
-});
-
-// Create transform gizmo
-const gizmo = SelectionVisualizer.createTransformGizmoGeometry(position, {
-  mode: 'translate',
-  size: 1.0
-});
-```
-
-### Event Handling
-
-```javascript
-// Listen for selection events
-selectionManager.addEventListener('selectionAdded', (data) => {
-  console.log('Selection added:', data.item);
-  updateVisualization(data.item);
-});
-
-selectionManager.addEventListener('selectionRemoved', (data) => {
-  console.log('Selection removed:', data.item);
-  removeVisualization(data.item);
-});
-
-selectionManager.addEventListener('selectionModeChanged', (data) => {
-  console.log('Mode changed from', data.previousMode, 'to', data.currentMode);
-  updateUI(data.currentMode);
-});
-```
-
-## API Reference
-
-### SelectionManager
-
-#### Constructor Options
-
-```javascript
-{
-  multiSelect: boolean,        // Enable multi-selection (default: true)
-  autoHighlight: boolean,      // Auto-highlight selections (default: true)
-  maxSelections: number        // Maximum selections allowed (default: 1000)
-}
-```
-
-#### Methods
-
-- `setSelectionMode(mode)` - Set selection mode
-- `getSelectionMode()` - Get current selection mode
-- `addSelection(type, id, data, options)` - Add selection
-- `removeSelection(type, id)` - Remove selection
-- `isSelected(type, id)` - Check if item is selected
-- `getSelection(type, id)` - Get selection item
-- `getAllSelections()` - Get all selections
-- `getSelectionsByType(type)` - Get selections by type
-- `clearSelection()` - Clear all selections
-- `toggleSelection(type, id, data, options)` - Toggle selection
-
-### ObjectSelector
-
-#### Methods
-
-- `selectByRay(ray, objects, options)` - Select by raycasting
-- `selectByRectangle(bounds, objects, options)` - Select by rectangle
-- `selectByLasso(points, objects, options)` - Select by lasso
-- `selectByName(pattern, objects)` - Select by name pattern
-- `selectByType(type, objects)` - Select by type
-- `selectByMaterial(materialId, objects)` - Select by material
-- `selectByLayer(layer, objects)` - Select by layer
-
-### MeshSelector
-
-#### Methods
-
-- `selectVerticesByRay(ray, mesh, options)` - Select vertices by ray
-- `selectEdgesByRay(ray, mesh, options)` - Select edges by ray
-- `selectFacesByRay(ray, mesh, options)` - Select faces by ray
-- `selectVerticesByRectangle(bounds, mesh, camera)` - Select vertices by rectangle
-- `selectEdgesByRectangle(bounds, mesh, camera)` - Select edges by rectangle
-- `selectFacesByRectangle(bounds, mesh, camera)` - Select faces by rectangle
-
-### SelectionVisualizer
-
-#### Methods
-
-- `createHighlightMaterial(options)` - Create highlight material
-- `createVertexHighlightGeometry(vertices, options)` - Create vertex highlight geometry
-- `createEdgeHighlightGeometry(edges, vertices, options)` - Create edge highlight geometry
-- `createFaceHighlightGeometry(faces, vertices, options)` - Create face highlight geometry
-- `createSelectionBoxGeometry(bounds, options)` - Create selection box
-- `createTransformGizmoGeometry(position, options)` - Create transform gizmo
-
-## Best Practices
-
-### 1. Selection Mode Management
-
-```javascript
-// Always set the appropriate selection mode before operations
-selectionManager.setSelectionMode('vertex');
-
-// Check current mode before performing operations
-if (selectionManager.getSelectionMode() === 'vertex') {
-  // Perform vertex-specific operations
-}
-```
-
-### 2. Event Handling
-
-```javascript
-// Use event listeners for UI updates
-selectionManager.addEventListener('selectionChanged', updateUI);
-selectionManager.addEventListener('selectionModeChanged', updateToolbar);
-
-// Clean up listeners when done
-const listener = (data) => console.log(data);
-selectionManager.addEventListener('selectionAdded', listener);
-// Later...
-selectionManager.removeEventListener('selectionAdded', listener);
-```
-
-### 3. Performance Optimization
-
-```javascript
-// Use appropriate thresholds for raycasting
-const options = {
-  threshold: 0.1,        // Smaller for precise selection
-  maxDistance: 100,      // Limit ray distance
-  selectNearest: true    // Only select closest item
-};
-
-// Batch selection operations
-const itemsToSelect = ['item1', 'item2', 'item3'];
-selectionManager.selectMultiple(itemsToSelect.map(id => ({
-  type: 'object',
-  id,
-  data: { name: `Item ${id}` }
-})));
-```
-
-### 4. Visualization
-
-```javascript
-// Create reusable visualization materials
-const vertexHighlightMaterial = SelectionVisualizer.createHighlightMaterial({
-  color: { r: 1, g: 0, b: 0 },
+const highlightMaterial = createHighlightMaterial({
+  color: 0x00ff00,
   opacity: 0.8
 });
 
-const edgeHighlightMaterial = SelectionVisualizer.createHighlightMaterial({
-  color: { r: 0, g: 1, b: 0 },
-  opacity: 0.6
+// Add selection and create visual feedback
+addSelection('vertex', 'v1');
+addSelection('vertex', 'v2');
+
+// Get selected vertices and create highlight geometry
+const selections = getAllSelections();
+const vertexPositions = selections
+  .filter(s => s.type === 'vertex')
+  .map(s => getVertexPosition(s.id));
+
+const highlightGeometry = createVertexHighlightGeometry(vertexPositions, {
+  size: 0.1,
+  color: 0x00ff00
 });
 
-// Use appropriate gizmo for transform mode
-const gizmo = SelectionVisualizer.createTransformGizmoGeometry(position, {
-  mode: transformMode, // 'translate', 'rotate', 'scale'
-  size: 1.0
+// Add highlight mesh to scene
+const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMaterial);
+scene.add(highlightMesh);
+```
+
+## Best Practices
+
+### 1. Use Appropriate Selection Modes
+
+```javascript
+import { setSelectionMode } from '../selection/index.js';
+
+// Set the correct mode before performing operations
+setSelectionMode('vertex');
+// Perform vertex operations
+
+setSelectionMode('edge');
+// Perform edge operations
+
+setSelectionMode('face');
+// Perform face operations
+```
+
+### 2. Clear Selections When Switching Modes
+
+```javascript
+import { setSelectionMode, clearSelection } from '../selection/index.js';
+
+// Clear selections when switching modes
+clearSelection();
+setSelectionMode('vertex');
+```
+
+### 3. Validate Selections Before Operations
+
+```javascript
+import { getSelectionsByType } from '../selection/index.js';
+
+// Check if you have the right type of selections
+const vertexSelections = getSelectionsByType('vertex');
+if (vertexSelections.length === 0) {
+  console.warn('No vertices selected for vertex operation');
+  return;
+}
+```
+
+### 4. Use Efficient Raycasting
+
+```javascript
+import { selectVerticesByRay } from '../selection/raycasting/vertexRaycaster.js';
+
+// Use appropriate thresholds for raycasting
+const selectedVertices = selectVerticesByRay(ray, mesh, {
+  threshold: 0.1, // Small threshold for precise selection
+  maxDistance: 10 // Limit search distance for performance
+});
+```
+
+### 5. Batch Selection Operations
+
+```javascript
+import { addSelection, clearSelection } from '../selection/index.js';
+
+// Clear existing selections first
+clearSelection();
+
+// Add multiple selections at once
+const verticesToSelect = ['v1', 'v2', 'v3', 'v4'];
+verticesToSelect.forEach(vertexId => {
+  addSelection('vertex', vertexId);
 });
 ```
 
 ## Performance Considerations
 
-### 1. Selection Limits
-
-- Set appropriate `maxSelections` to prevent memory issues
-- Use `selectNearest: true` for raycasting to limit results
-- Implement spatial indexing for large scenes
-
-### 2. Raycasting Optimization
+### 1. Limit Selection Count
 
 ```javascript
-// Use bounding box checks before detailed raycasting
-const bounds = ObjectSelector.getObjectBounds(object);
-if (ObjectSelector.raycastObject(ray, bounds) !== null) {
-  // Perform detailed raycasting
+import { getAllSelections } from '../selection/index.js';
+
+// Check selection count for performance
+const selections = getAllSelections();
+if (selections.length > 1000) {
+  console.warn('Large number of selections may impact performance');
 }
 ```
 
-### 3. Visualization Performance
+### 2. Use Efficient Raycasting
 
 ```javascript
-// Use instanced rendering for multiple selections
-const geometry = SelectionVisualizer.createVertexHighlightGeometry(vertices, {
-  size: 0.05
-});
+import { selectVerticesByRay } from '../selection/raycasting/vertexRaycaster.js';
 
-// Batch material updates
-const materials = selections.map(selection => 
-  SelectionVisualizer.createHighlightMaterial({
-    color: getSelectionColor(selection.type)
-  })
-);
+// Use spatial indexing for large meshes
+const selectedVertices = selectVerticesByRay(ray, mesh, {
+  useSpatialIndex: true, // Enable spatial indexing
+  maxDistance: 10 // Limit search distance
+});
 ```
 
-### 4. Memory Management
+### 3. Optimize Visual Feedback
 
 ```javascript
-// Clear selections when switching modes
-selectionManager.setSelectionMode('object');
-selectionManager.clearSelection();
+import { createVertexHighlightGeometry } from '../selection/SelectionVisualizer.js';
 
-// Remove event listeners
-selectionManager.removeEventListener('selectionAdded', listener);
-
-// Dispose of visualization objects
-visualizationObjects.forEach(obj => obj.dispose());
+// Use instanced rendering for many highlights
+const highlightGeometry = createVertexHighlightGeometry(vertexPositions, {
+  useInstancing: true, // Enable instanced rendering
+  maxInstances: 1000
+});
 ```
 
-## Troubleshooting
+## Migration Guide
 
-### Common Issues
-
-1. **Selections not appearing**
-   - Check if selection mode is correct
-   - Verify event listeners are attached
-   - Ensure visualization is enabled
-
-2. **Performance issues**
-   - Reduce `maxSelections` limit
-   - Use spatial indexing for large scenes
-   - Implement selection culling
-
-3. **Raycasting not working**
-   - Check ray direction is normalized
-   - Verify object bounds are correct
-   - Adjust threshold values
-
-### Debug Tips
-
+**Old Style (Legacy):**
 ```javascript
-// Enable debug logging
-const selectionManager = createSelectionManager({
-  debug: true
-});
+import { SelectionManager } from '../selection/SelectionManager.js';
 
-// Log selection statistics
-console.log(selectionManager.getStatistics());
+const selectionManager = new SelectionManager();
+selectionManager.setSelectionMode('vertex');
+selectionManager.addSelection('vertex', 'v1');
+```
 
-// Check selection history
-console.log(selectionManager.getHistory());
-``` 
+**New Modular Style:**
+```javascript
+import { setSelectionMode, addSelection } from '../selection/index.js';
+
+setSelectionMode('vertex');
+addSelection('vertex', 'v1');
+```
+
+**Key Changes:**
+- All selection operations are now pure functions imported directly from their respective modules
+- No more manager classes or group objects
+- Direct function calls instead of method calls on objects
+- Better tree-shaking and performance
+- Cleaner, more maintainable code structure
+
+**Migration Steps:**
+1. Update all import statements to use the new modular imports
+2. Replace manager object method calls with direct function calls
+3. Update selection parameter structures if needed
+4. Test all selection operations to ensure they work correctly
+5. Remove any unused legacy imports 

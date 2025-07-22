@@ -1,5 +1,113 @@
 # Contributing to the Three.js Advanced Editing Library
 
+First off, thank you for considering contributing! This project is a modular, extensible library for advanced mesh editing in Three.js, and we welcome any contributions, from bug fixes to new features.
+
+This document provides guidelines for contributing to the project to ensure a smooth and consistent development process.
+
+## Core Architectural Principles
+
+Our library is built on a few core principles to ensure it remains clean, maintainable, and easy to extend:
+
+1.  **Modularity:** Every piece of functionality should be in its own small, focused file. For example, each vertex operation (merge, snap, connect) has its own dedicated file. This makes the code easier to understand, test, and debug.
+
+2.  **Clear Entry Points:** The system uses clear `index.js` files at each level of the directory structure to aggregate and export functionality. This creates a clean, hierarchical API.
+
+3.  **Static, Functional Operations:** All geometry operations are implemented as static methods within a class that acts as a namespace (e.g., `VertexOperations.merge(...)`). These operations are pure functions: they take a geometry and an options object as input and return a result object, modifying the input geometry directly. They do not rely on an internal state.
+
+4.  **Validation:** We use a centralized `Validator` class (`src/editing/core/validation.js`) to ensure that all inputs to our operations are valid. This helps prevent common errors and ensures the stability of the library.
+
+## Project Structure
+
+The core logic of the library is located in the `src/editing` directory. Here is a breakdown of the key subdirectories:
+
+-   `src/editing/operations/`: Contains all the geometry editing operations, organized into subdirectories by type.
+    -   `operations/vertex/`: All vertex-specific operations (e.g., `mergeVertices.js`).
+    -   `operations/edge/`: All edge-specific operations.
+    -   `operations/face/`: All face-specific operations.
+    -   `operations/geometry/`: High-level geometry-wide operations.
+-   `src/editing/core/`: Contains the core, foundational logic of the library, such as the `validation.js` module.
+-   `src/editing/utils/`: Contains helper functions that support the main operations but are not operations themselves.
+-   `src/editing/factories/`: Contains factory functions for creating complex objects like the `EditManager` or `Tool` instances.
+-   `src/tests/`: Contains all the tests for the library.
+
+## How to Add a New Operation
+
+Adding a new editing operation is the most common way to contribute. Here is a step-by-step guide:
+
+1.  **Create the Operation File:**
+    -   Identify the type of operation you are adding (e.g., vertex, edge, face).
+    -   Create a new JavaScript file in the corresponding subdirectory. For example, a new vertex operation called `chamfer` would be created at `src/editing/operations/vertex/chamferVertices.js`.
+
+2.  **Implement the Operation:**
+    -   Your file should export a single function that performs the operation.
+    -   The function should accept the `geometry` object and an `options` object as parameters.
+    -   Use the `Validator` class to validate any inputs from the `options` object (e.g., vertex indices).
+    -   Perform the geometry manipulation directly on the input `geometry` object.
+    -   Return an object describing the result, including which elements were impacted.
+
+    ```javascript
+    // src/editing/operations/vertex/chamferVertices.js
+    import { Validator } from '../../core/validation.js';
+
+    export function chamfer(geometry, options) {
+      const { vertexIndex, distance } = options;
+
+      // 1. Validate inputs
+      Validator.validateVertexIndices(geometry, [vertexIndex]);
+      if (distance <= 0) {
+        throw new Error('Chamfer distance must be positive.');
+      }
+
+      // 2. Perform the operation (your logic here)
+      // ... modify geometry.attributes.position ...
+
+      // 3. Return the result
+      return {
+        impacted: [vertexIndex],
+        // ... other relevant result data
+      };
+    }
+    ```
+
+3.  **Export the New Operation:**
+    -   Open the `index.js` file in the same directory (e.g., `src/editing/operations/vertex/index.js`).
+    -   Import and export your new operation function.
+    -   Add the function to the main `VertexOperations` class as a static method.
+
+    ```javascript
+    // src/editing/operations/vertex/index.js
+    import { merge } from './mergeVertices.js';
+    import { chamfer } from './chamferVertices.js'; // Import your new function
+
+    export class VertexOperations {
+      static merge = merge;
+      static chamfer = chamfer; // Add your new function here
+    }
+    ```
+
+4.  **Add a Test:**
+    -   Create a new test case in the relevant test file (e.g., `src/tests/vertexOperations.test.js`).
+    -   Write a test that creates a sample geometry, runs your new operation, and asserts that the result is correct.
+
+## Running Tests
+
+Our test suite uses a simple, custom test runner. To run the tests, execute the following command from the root of the project:
+
+```bash
+node src/tests/runSimpleTests.js
+```
+
+Before submitting a pull request, please ensure that all tests are passing.
+
+## Code Style and Conventions
+
+-   We use modern JavaScript (ES6+).
+-   All code should be formatted using Prettier with the default settings.
+-   Use JSDoc to document all public functions and classes.
+-   Follow the existing file and naming conventions.
+
+Thank you for contributing to our project!
+
 First, thank you for considering contributing! We welcome all contributions that help improve the library. This document provides guidelines to ensure a smooth and consistent development process.
 
 ## Core Philosophy
