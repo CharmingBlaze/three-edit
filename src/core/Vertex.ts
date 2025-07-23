@@ -1,144 +1,140 @@
 import { Vector3 } from 'three';
+import { UVCoord } from '../uv/types';
 
 /**
- * @class Vertex
- * @description Represents a single point in 3D space. It stores its position (x, y, z)
- * and can optionally hold attributes like normals and UV coordinates.
+ * Vertex data structure
+ */
+export interface VertexData {
+  /** Vertex position */
+  x: number;
+  y: number;
+  z: number;
+  /** Vertex normal */
+  normal?: Vector3;
+  /** UV coordinates */
+  uv?: UVCoord;
+  /** Vertex color */
+  color?: Vector3;
+  /** Custom user data */
+  userData?: Record<string, any>;
+}
+
+/**
+ * Vertex class representing a 3D point in space
  */
 export class Vertex {
-  /** 
-   * @property {number} x - The x-coordinate of the vertex.
-   */
-  x: number;
-  
-  /** 
-   * @property {number} y - The y-coordinate of the vertex.
-   */
-  y: number;
-  
-  /** 
-   * @property {number} z - The z-coordinate of the vertex.
-   */
-  z: number;
-  
-  /** 
-   * @property {Vector3} [normal] - The normal vector of the vertex, used for lighting calculations.
-   */
-  normal?: Vector3;
-  
-  /** 
-   * @property {{u: number, v: number}} [uv] - The UV coordinates for texture mapping.
-   */
-  uv?: { u: number; v: number };
-  
-  /** 
-   * @property {Record<string, any>} userData - A flexible object for storing custom data.
-   */
-  userData: Record<string, any>;
-  
-  /**
-   * Creates a new Vertex instance.
-   * @param {number} [x=0] - The x-coordinate.
-   * @param {number} [y=0] - The y-coordinate.
-   * @param {number} [z=0] - The z-coordinate.
-   * @param {object} [options={}] - Optional attributes for the vertex.
-   * @param {Vector3} [options.normal] - The normal vector.
-   * @param {{u: number, v: number}} [options.uv] - The UV coordinates.
-   * @param {Record<string, any>} [options.userData] - Custom data.
-   */
-  constructor(
-    x = 0,
-    y = 0,
-    z = 0,
-    options: {
-      normal?: Vector3;
-      uv?: { u: number; v: number };
-      userData?: Record<string, any>;
-    } = {}
-  ) {
+  public x: number;
+  public y: number;
+  public z: number;
+  public normal?: Vector3;
+  public uv?: UVCoord;
+  public color?: Vector3;
+  public userData: Record<string, any>;
+
+  constructor(x: number, y: number, z: number, data?: Partial<VertexData>) {
     this.x = x;
     this.y = y;
     this.z = z;
-    this.normal = options.normal;
-    this.uv = options.uv;
-    this.userData = options.userData || {};
+    this.normal = data?.normal;
+    this.uv = data?.uv;
+    this.color = data?.color;
+    this.userData = data?.userData || {};
   }
-  
+
   /**
-   * Creates a deep clone of this vertex.
-   * @returns {Vertex} A new Vertex instance with the same properties.
+   * Creates a Vertex from data object
+   */
+  static fromData(data: VertexData): Vertex {
+    return new Vertex(data.x, data.y, data.z, data);
+  }
+
+  /**
+   * Creates a copy of this vertex
    */
   clone(): Vertex {
     return new Vertex(this.x, this.y, this.z, {
-      normal: this.normal ? this.normal.clone() : undefined,
-      uv: this.uv ? { ...this.uv } : undefined,
-      userData: { ...this.userData },
+      normal: this.normal?.clone(),
+      uv: this.uv ? { u: this.uv.u, v: this.uv.v } : undefined,
+      color: this.color?.clone(),
+      userData: { ...this.userData }
     });
   }
-  
+
   /**
-   * Sets the position of the vertex.
-   * @param {number} x - The new x-coordinate.
-   * @param {number} y - The new y-coordinate.
-   * @param {number} z - The new z-coordinate.
-   * @returns {Vertex} The vertex instance for method chaining.
+   * Sets the position of this vertex
    */
-  setPosition(x: number, y: number, z: number): Vertex {
+  setPosition(x: number, y: number, z: number): void {
     this.x = x;
     this.y = y;
     this.z = z;
-    return this;
   }
-  
+
   /**
-   * Sets the normal of the vertex.
-   * @param {number} x - The x-component of the normal.
-   * @param {number} y - The y-component of the normal.
-   * @param {number} z - The z-component of the normal.
-   * @returns {Vertex} The vertex instance for method chaining.
+   * Sets the UV coordinates
    */
-  setNormal(x: number, y: number, z: number): Vertex {
-    if (!this.normal) {
-      this.normal = new Vector3(x, y, z);
-    } else {
-      this.normal.set(x, y, z);
-    }
-    return this;
-  }
-  
-  /**
-   * Sets the UV coordinates of the vertex.
-   * @param {number} u - The u-coordinate.
-   * @param {number} v - The v-coordinate.
-   * @returns {Vertex} The vertex instance for method chaining.
-   */
-  setUV(u: number, v: number): Vertex {
+  setUV(u: number, v: number): void {
     this.uv = { u, v };
-    return this;
   }
-  
+
   /**
-   * Converts the vertex's position to a `Vector3`.
-   * @returns {Vector3} A new `Vector3` instance with the vertex's position.
+   * Sets the normal vector
    */
-  toVector3(): Vector3 {
+  setNormal(normal: Vector3): void {
+    this.normal = normal.clone();
+  }
+
+  /**
+   * Sets the color
+   */
+  setColor(color: Vector3): void {
+    this.color = color.clone();
+  }
+
+  /**
+   * Gets the position as a Vector3
+   */
+  getPosition(): Vector3 {
     return new Vector3(this.x, this.y, this.z);
   }
-  
+
   /**
-   * Creates a `Vertex` from a `Vector3`.
-   * @param {Vector3} vector - The `Vector3` to create the vertex from.
-   * @param {object} [options={}] - Optional attributes for the new vertex.
-   * @returns {Vertex} A new `Vertex` instance.
+   * Calculates distance to another vertex
    */
-  static fromVector3(
-    vector: Vector3,
-    options: {
-      normal?: Vector3;
-      uv?: { u: number; v: number };
-      userData?: Record<string, any>;
-    } = {}
-  ): Vertex {
-    return new Vertex(vector.x, vector.y, vector.z, options);
+  distanceTo(other: Vertex): number {
+    const dx = this.x - other.x;
+    const dy = this.y - other.y;
+    const dz = this.z - other.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+
+  /**
+   * Interpolates between this vertex and another
+   */
+  interpolate(other: Vertex, t: number): Vertex {
+    const x = this.x + (other.x - this.x) * t;
+    const y = this.y + (other.y - this.y) * t;
+    const z = this.z + (other.z - this.z) * t;
+    
+    const result = new Vertex(x, y, z);
+    
+    // Interpolate UVs if both have them
+    if (this.uv && other.uv) {
+      result.uv = {
+        u: this.uv.u + (other.uv.u - this.uv.u) * t,
+        v: this.uv.v + (other.uv.v - this.uv.v) * t
+      };
+    }
+    
+    // Interpolate normals if both have them
+    if (this.normal && other.normal) {
+      result.normal = new Vector3().lerpVectors(this.normal, other.normal, t).normalize();
+    }
+    
+    // Interpolate colors if both have them
+    if (this.color && other.color) {
+      result.color = new Vector3().lerpVectors(this.color, other.color, t);
+    }
+    
+    return result;
   }
 }

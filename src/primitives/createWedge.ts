@@ -55,13 +55,10 @@ export function createWedge(options: CreateWedgeOptions = {}): EditableMesh {
       for (let w = 0; w <= widthSegments; w++) {
         const x = (w / widthSegments - 0.5) * width;
         
-        const vertex = new Vertex(x, y, z);
-        
-        // Generate UVs
         const u = w / widthSegments;
         const v = h / heightSegments;
-        vertex.uv = { u, v };
         
+        const vertex = new Vertex(x, y, z, { uv: { u, v } });
         const vertexIndex = mesh.addVertex(vertex);
         row.push(vertexIndex);
       }

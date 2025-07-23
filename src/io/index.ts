@@ -5,7 +5,7 @@
 // OBJ format support
 export * from './obj';
 
-// GLTF format support
+// GLTF format support (legacy)
 export * from './gltf';
 
 // PLY format support
@@ -21,4 +21,7 @@ export * from './collada';
 export * from './stl';
 
 // 3DS format support
-export * from './3ds'; 
+export * from './3ds';
+
+// New modular GLTF system
+export * from '../exporters/gltf'; 

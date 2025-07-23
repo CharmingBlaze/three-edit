@@ -65,9 +65,10 @@ export function createStairs(options: CreateStairsOptions = {}): EditableMesh {
         const x = (w / widthSegments - 0.5) * width;
         const z = stepZ;
         
-        const vertex = new Vertex(x, y, z);
-        vertex.uv = { u: w / widthSegments, v: step / steps };
+        const u = w / widthSegments;
+        const v = step / steps;
         
+        const vertex = new Vertex(x, y, z, { uv: { u, v } });
         const vertexIndex = mesh.addVertex(vertex);
         heightRow.push(vertexIndex);
       }

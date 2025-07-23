@@ -1,153 +1,152 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Edge } from '../core/Edge.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { CreateCylinderOptions } from './types';
+import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { validatePrimitive } from './validation';
 
 /**
- * Options for creating a cylinder
- */
-export interface CreateCylinderOptions {
-  /** Radius of the cylinder */
-  radius?: number;
-  /** Height of the cylinder */
-  height?: number;
-  /** Number of radial segments (around the circumference) */
-  radialSegments?: number;
-  /** Number of height segments */
-  heightSegments?: number;
-  /** Whether the cylinder is open-ended (no caps) */
-  openEnded?: boolean;
-  /** Starting angle in radians */
-  thetaStart?: number;
-  /** Ending angle in radians */
-  thetaLength?: number;
-  /** Name of the mesh */
-  name?: string;
-}
-
-/**
- * Creates a cylinder as an EditableMesh
- * @param options Options for creating the cylinder
- * @returns A new EditableMesh instance representing a cylinder
+ * Creates a cylinder as an EditableMesh.
+ * @param options - Options for creating the cylinder.
+ * @returns A new EditableMesh instance representing a cylinder.
  */
 export function createCylinder(options: CreateCylinderOptions = {}): EditableMesh {
-  const radius = options.radius ?? 1;
-  const height = options.height ?? 2;
-  const radialSegments = Math.max(3, Math.floor(options.radialSegments ?? 8));
-  const heightSegments = Math.max(1, Math.floor(options.heightSegments ?? 1));
-  const openEnded = options.openEnded ?? false;
-  const thetaStart = options.thetaStart ?? 0;
-  const thetaLength = options.thetaLength ?? Math.PI * 2;
-  const name = options.name ?? 'Cylinder';
-  
-  const mesh = new EditableMesh({ name });
-  
-  // Calculate half height for positioning
-  const halfHeight = height / 2;
-  
-  // Create vertices for the cylinder
-  const vertices: number[][] = [];
-  
-  // Create vertices for each height segment
-  for (let h = 0; h <= heightSegments; h++) {
-    const y = (h / heightSegments - 0.5) * height;
+  // Normalize options with defaults
+  const normalizedOptions = normalizeOptions(options, {
+    radiusTop: 1,
+    radiusBottom: 1,
+    height: 2,
+    radialSegments: 8,
+    heightSegments: 1,
+    openEnded: false,
+    thetaStart: 0,
+    thetaLength: Math.PI * 2,
+    name: 'Cylinder',
+    materialId: 0,
+    centered: true,
+    uvLayout: 'cylindrical',
+    smoothNormals: false,
+    validate: true
+  }) as Required<CreateCylinderOptions>;
+
+  // Validate parameters
+  if (normalizedOptions.radiusTop < 0) {
+    throw new Error('Cylinder radiusTop must be non-negative');
+  }
+  if (normalizedOptions.radiusBottom < 0) {
+    throw new Error('Cylinder radiusBottom must be non-negative');
+  }
+  if (normalizedOptions.height <= 0) {
+    throw new Error('Cylinder height must be positive');
+  }
+  if (normalizedOptions.radialSegments < 3) {
+    throw new Error('Cylinder radialSegments must be at least 3');
+  }
+  if (normalizedOptions.heightSegments < 1) {
+    throw new Error('Cylinder heightSegments must be at least 1');
+  }
+
+  // Create mesh and context
+  const mesh = new EditableMesh({ name: normalizedOptions.name });
+  const context = createPrimitiveContext(mesh, normalizedOptions);
+
+  // Calculate offsets for centered positioning
+  const offsetY = normalizedOptions.centered ? 0 : normalizedOptions.height / 2;
+
+  const grid: number[][] = [];
+
+  // Create vertices with UVs
+  for (let h = 0; h <= normalizedOptions.heightSegments; h++) {
+    const y = offsetY + (h / normalizedOptions.heightSegments - 0.5) * normalizedOptions.height;
     const row: number[] = [];
     
-    // Create vertices around the circumference
-    for (let r = 0; r <= radialSegments; r++) {
-      const theta = thetaStart + (r / radialSegments) * thetaLength;
+    for (let r = 0; r <= normalizedOptions.radialSegments; r++) {
+      const theta = normalizedOptions.thetaStart + (r / normalizedOptions.radialSegments) * normalizedOptions.thetaLength;
+      
+      // Interpolate radius between top and bottom
+      const radius = normalizedOptions.radiusTop + (h / normalizedOptions.heightSegments) * (normalizedOptions.radiusBottom - normalizedOptions.radiusTop);
+      
       const x = Math.cos(theta) * radius;
       const z = Math.sin(theta) * radius;
+      const u = r / normalizedOptions.radialSegments;
+      const v = h / normalizedOptions.heightSegments;
       
-      const vertex = new Vertex(x, y, z);
+      const uv = { u, v };
       
-      // Generate UVs
-      const u = r / radialSegments;
-      const v = h / heightSegments;
-      vertex.uv = { u, v };
-      
-      const vertexIndex = mesh.addVertex(vertex);
-      row.push(vertexIndex);
+      const result = createVertex(mesh, {
+        x,
+        y,
+        z,
+        uv
+      }, context);
+      row.push(result.id);
     }
-    
-    vertices.push(row);
+    grid.push(row);
   }
-  
-  const edgeMap: { [key: string]: number } = {};
-  const addEdge = (v1: number, v2: number): number => {
-    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
-    if (edgeMap[key] === undefined) {
-      const newEdge = new Edge(v1, v2);
-      edgeMap[key] = mesh.addEdge(newEdge);
-    }
-    return edgeMap[key];
-  };
 
-  // Create edges and faces for the side walls
-  for (let h = 0; h < heightSegments; h++) {
-    for (let r = 0; r < radialSegments; r++) {
-      const v1 = vertices[h][r];
-      const v2 = vertices[h][r + 1];
-      const v3 = vertices[h + 1][r + 1];
-      const v4 = vertices[h + 1][r];
-
-      const edge1 = addEdge(v1, v2);
-      const edge2 = addEdge(v2, v3);
-      const edge3 = addEdge(v3, v4);
-      const edge4 = addEdge(v4, v1);
-
-      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
+  // Create side faces
+  for (let h = 0; h < normalizedOptions.heightSegments; h++) {
+    for (let r = 0; r < normalizedOptions.radialSegments; r++) {
+      const v1 = grid[h][r];
+      const v2 = grid[h + 1][r];
+      const v3 = grid[h + 1][r + 1];
+      const v4 = grid[h][r + 1];
+      
+      createFace(mesh, {
+        vertexIds: [v1, v2, v3, v4],
+        materialId: normalizedOptions.materialId
+      }, context);
     }
   }
 
   // Create caps if not open-ended
-  if (!openEnded) {
-    const createCap = (isTop: boolean) => {
-      const y = isTop ? halfHeight : -halfHeight;
-      const vertexRow = isTop ? vertices[heightSegments] : vertices[0];
-      const materialIndex = isTop ? 2 : 1;
+  if (!normalizedOptions.openEnded) {
+    // Bottom cap
+    if (normalizedOptions.radiusBottom > 0) {
+      const bottomCenterVertex = createVertex(mesh, {
+        x: 0,
+        y: offsetY - normalizedOptions.height / 2,
+        z: 0,
+        uv: { u: 0.5, v: 0.5 }
+      }, context);
 
-      if (thetaLength >= Math.PI * 2) {
-        const capVertexIndices = [];
-        for (let r = 0; r < radialSegments; r++) {
-          capVertexIndices.push(vertexRow[r]);
-        }
-
-        const capEdgeIndices = [];
-        for (let r = 0; r < radialSegments; r++) {
-          const v1 = vertexRow[r];
-          const v2 = vertexRow[(r + 1) % radialSegments];
-          capEdgeIndices.push(addEdge(v1, v2));
-        }
-
-        if (isTop) {
-          mesh.addFace(new Face(capVertexIndices.slice().reverse(), capEdgeIndices.slice().reverse(), { materialIndex }));
-        } else {
-          mesh.addFace(new Face(capVertexIndices, capEdgeIndices, { materialIndex }));
-        }
-      } else {
-        const centerVertex = new Vertex(0, y, 0);
-        centerVertex.uv = { u: 0.5, v: 0.5 };
-        const centerIndex = mesh.addVertex(centerVertex);
-
-        for (let r = 0; r < radialSegments; r++) {
-          const v1 = vertexRow[r];
-          const v2 = vertexRow[r + 1];
-          const edge1 = addEdge(centerIndex, v1);
-          const edge2 = addEdge(v1, v2);
-          const edge3 = addEdge(v2, centerIndex);
-          if (isTop) {
-            mesh.addFace(new Face([centerIndex, v2, v1], [edge3, edge2, edge1], { materialIndex }));
-          } else {
-            mesh.addFace(new Face([centerIndex, v1, v2], [edge1, edge2, edge3], { materialIndex }));
-          }
-        }
+      for (let r = 0; r < normalizedOptions.radialSegments; r++) {
+        const v1 = grid[0][r];
+        const v2 = grid[0][r + 1];
+        
+        createFace(mesh, {
+          vertexIds: [bottomCenterVertex.id, v2, v1],
+          materialId: normalizedOptions.materialId
+        }, context);
       }
-    };
+    }
 
-    createCap(false); // Bottom cap
-    createCap(true);  // Top cap
+    // Top cap
+    if (normalizedOptions.radiusTop > 0) {
+      const topCenterVertex = createVertex(mesh, {
+        x: 0,
+        y: offsetY + normalizedOptions.height / 2,
+        z: 0,
+        uv: { u: 0.5, v: 0.5 }
+      }, context);
+
+      for (let r = 0; r < normalizedOptions.radialSegments; r++) {
+        const v1 = grid[normalizedOptions.heightSegments][r];
+        const v2 = grid[normalizedOptions.heightSegments][r + 1];
+        
+        createFace(mesh, {
+          vertexIds: [topCenterVertex.id, v1, v2],
+          materialId: normalizedOptions.materialId
+        }, context);
+      }
+    }
   }
-  
+
+  // Validate if requested
+  if (normalizedOptions.validate) {
+    const validation = validatePrimitive(mesh, 'Cylinder');
+    if (!validation.isValid) {
+      console.warn('Cylinder validation warnings:', validation.warnings);
+    }
+  }
+
   return mesh;
 }

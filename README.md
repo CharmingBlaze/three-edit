@@ -4,13 +4,13 @@
 
 ## ✨ Features
 
-- **🎯 JavaScript & TypeScript Support**: Works seamlessly with both JavaScript and TypeScript - no TypeScript knowledge required!
-- **Modular Architecture**: The library is designed to be modular, allowing you to use only the parts you need.
-- **Headless by Design**: three-edit is completely headless, meaning it doesn't rely on any specific rendering or UI framework.
-- **Rich Set of Operations**: It provides a wide range of editing operations, including extrusion, beveling, and more.
-- **Advanced Selection System**: A powerful selection system that allows for complex queries and manipulations.
-- **Scene Graph System**: Full hierarchical object system with transform inheritance.
-- **Built with TypeScript**: The library is written in TypeScript, providing strong typing and improved developer experience.
+* **🎯 JavaScript & TypeScript Support**: Works seamlessly with both JavaScript and TypeScript - no TypeScript knowledge required!
+* **Modular Architecture**: The library is designed to be modular, allowing you to use only the parts you need.
+* **Headless by Design**: three-edit is completely headless, meaning it doesn't rely on any specific rendering or UI framework.
+* **Rich Set of Operations**: It provides a wide range of editing operations, including extrusion, beveling, and more.
+* **Advanced Selection System**: A powerful selection system that allows for complex queries and manipulations.
+* **Scene Graph System**: Full hierarchical object system with transform inheritance.
+* **Built with TypeScript**: The library is written in TypeScript, providing strong typing and improved developer experience.
 
 ## 📦 Installation
 
@@ -53,8 +53,7 @@ You can use three-edit directly in the browser without any build step:
 Here's a simple example of how to create a cube and convert it to a Three.js BufferGeometry:
 
 ```typescript
-import { createCube } from 'three-edit';
-import { toBufferGeometry } from 'three-edit';
+import { createCube, toBufferGeometry } from 'three-edit';
 import * as THREE from 'three';
 
 // Create a new cube
@@ -109,26 +108,27 @@ const extrudedGeometry = ThreeEditJS.applyOperation(
 
 ## 📚 Documentation
 
-For more detailed information and examples, please refer to the [documentation](docs/getting-started.md).
+For more detailed information and examples, please refer to the documentation.
 
 ### Examples
 
-- [Basic Usage](examples/basic-cube.html) - Simple cube creation and manipulation
-- [Mesh Editing](examples/mesh-editing.html) - Advanced mesh editing operations
-- [Scene Graph](examples/scene-graph-demo.html) - Scene graph system usage
-- [JavaScript Usage](examples/javascript-usage.html) - JavaScript-specific examples
+* [Basic Usage](./examples/basic-cube.html) - Simple cube creation and manipulation
+* [Mesh Editing](./examples/mesh-editing.html) - Advanced mesh editing operations
+* [Scene Graph](./examples/scene-graph-demo.html) - Scene graph system usage
+* [JavaScript Usage](./examples/javascript-usage.html) - JavaScript-specific examples
 
 ### Documentation
 
-- [Getting Started](docs/getting-started.md) - Quick start guide
-- [JavaScript Usage](docs/javascript-usage.md) - Complete JavaScript guide
-- [API Reference](docs/api-reference.md) - Full API documentation
-- [Scene Graph](docs/scene-graph.md) - Scene graph system guide
+* [Getting Started](./docs/getting-started.md) - Quick start guide
+* [JavaScript Usage](./docs/javascript-usage.md) - Complete JavaScript guide
+* [API Reference](./docs/api-reference.md) - Full API documentation
+* [Scene Graph](./docs/core.md) - Scene graph system guide
+* [Primitives](./PRIMITIVES.md) - Primitive creation and standards
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [contributing guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our contributing guide for details.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.

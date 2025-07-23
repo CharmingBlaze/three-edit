@@ -61,19 +61,21 @@ export function createPipe(options: CreatePipeOptions = {}): EditableMesh {
     for (let r = 0; r <= radialSegments; r++) {
       const theta = thetaStart + (r / radialSegments) * thetaLength;
       
-      // Outer vertices
+      // Outer vertices with UVs
       const outerX = Math.cos(theta) * outerRadius;
       const outerZ = Math.sin(theta) * outerRadius;
-      const outerVertex = new Vertex(outerX, y, outerZ);
-      outerVertex.uv = { u: r / radialSegments, v: h / heightSegments };
+      const u = r / radialSegments;
+      const v = h / heightSegments;
+      
+      const outerVertex = new Vertex(outerX, y, outerZ, { uv: { u, v } });
       const outerVertexIndex = mesh.addVertex(outerVertex);
       outerRow.push(outerVertexIndex);
       
-      // Inner vertices
+      // Inner vertices with UVs
       const innerX = Math.cos(theta) * innerRadius;
       const innerZ = Math.sin(theta) * innerRadius;
-      const innerVertex = new Vertex(innerX, y, innerZ);
-      innerVertex.uv = { u: r / radialSegments, v: h / heightSegments };
+      
+      const innerVertex = new Vertex(innerX, y, innerZ, { uv: { u, v } });
       const innerVertexIndex = mesh.addVertex(innerVertex);
       innerRow.push(innerVertexIndex);
     }

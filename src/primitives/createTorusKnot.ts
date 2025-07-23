@@ -1,151 +1,118 @@
+import { EditableMesh } from '../core/EditableMesh';
+import { Vertex } from '../core/Vertex';
+import { Edge } from '../core/Edge';
+import { Face } from '../core/Face';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/index.ts';
-import { Vertex } from '../core/index.ts';
-import { Edge } from '../core/index.ts';
-import { Face } from '../core/index.ts';
+import { calculateFaceNormal } from '../utils/mathUtils';
 
 /**
- * Options for creating a torus knot
+ * Options for creating a torus knot.
  */
-export interface TorusKnotOptions {
-  /** Radius of the torus (default: 1.0) */
+export interface CreateTorusKnotOptions {
   radius?: number;
-  /** Radius of the tube (default: 0.3) */
   tubeRadius?: number;
-  /** Number of tubular segments (default: 64) */
   tubularSegments?: number;
-  /** Number of radial segments (default: 8) */
   radialSegments?: number;
-  /** P parameter for the knot (default: 2) */
   p?: number;
-  /** Q parameter for the knot (default: 3) */
   q?: number;
-  /** Material index for the faces (default: 0) */
-  materialIndex?: number;
-  /** Whether to generate UV coordinates (default: true) */
-  generateUVs?: boolean;
-  /** Whether to generate vertex normals (default: true) */
-  generateNormals?: boolean;
-  /** Center point of the torus knot (default: origin) */
-  center?: Vector3;
+  name?: string;
 }
 
+// Helper function to calculate TorusKnot point
+const getPoint = (u: number, p: number, q: number, radius: number): Vector3 => {
+  const cu = Math.cos(u);
+  const su = Math.sin(u);
+  const quOverP = q / p * u;
+  const cs = Math.cos(quOverP);
+
+  const x = (2 + cs) * 0.5 * cu;
+  const y = (2 + cs) * 0.5 * su;
+  const z = Math.sin(quOverP) * 0.5;
+
+  return new Vector3(x, y, z).multiplyScalar(radius);
+};
+
 /**
- * Creates a torus knot primitive
- * @param options Options for creating the torus knot
- * @returns The created EditableMesh
+ * Creates a torus knot as an EditableMesh.
+ * @param options - Options for creating the torus knot.
+ * @returns A new EditableMesh instance representing a torus knot.
  */
-export function createTorusKnot(options: TorusKnotOptions = {}): EditableMesh {
-  const radius = options.radius ?? 1;
-  const tubeRadius = options.tubeRadius ?? 0.3;
-  const tubularSegments = Math.max(3, Math.floor(options.tubularSegments ?? 64));
-  const radialSegments = Math.max(3, Math.floor(options.radialSegments ?? 8));
-  const p = options.p ?? 2;
-  const q = options.q ?? 3;
-  // const _center = options.center ?? new Vector3(0, 0, 0);
-  const materialIndex = options.materialIndex ?? 0;
-  const generateUVs = options.generateUVs ?? true;
-  const generateNormals = options.generateNormals ?? true;
+export function createTorusKnot(options: CreateTorusKnotOptions = {}): EditableMesh {
+  const {
+    radius = 1,
+    tubeRadius = 0.1,
+    tubularSegments = 64,
+    radialSegments = 8,
+    p = 2,
+    q = 3,
+    name = 'TorusKnot',
+  } = options;
 
-  const mesh = new EditableMesh();
+  const mesh = new EditableMesh({ name });
+  const grid: number[][] = [];
+  const edgeMap: { [key: string]: number } = {};
 
-  // Generate vertices
-  const vertices: Vector3[] = [];
-  const uvs: { u: number; v: number }[] = [];
-  const normals: Vector3[] = [];
-
+  // Create vertices with UVs
   for (let i = 0; i <= tubularSegments; i++) {
-    const u = i / tubularSegments * p * Math.PI * 2;
-    const p1 = new Vector3(
-      (2 + Math.cos(q * u)) * Math.cos(p * u),
-      (2 + Math.cos(q * u)) * Math.sin(p * u),
-      Math.sin(q * u)
-    );
+    const u = i / tubularSegments * 2 * Math.PI;
+    const p1 = getPoint(u, p, q, radius);
+    const p2 = getPoint(u + 0.01, p, q, radius);
+    const tangent = p2.clone().sub(p1);
+    const normal = getPoint(u + 0.01, p, q, radius).sub(p1).cross(new Vector3(0, 0, 1)).normalize();
+    const binormal = tangent.clone().cross(normal).normalize();
 
+    const row: number[] = [];
     for (let j = 0; j <= radialSegments; j++) {
-      const v = j / radialSegments * Math.PI * 2;
-      const cx = -Math.tan(q * u) * Math.cos(p * u);
-      const cy = -Math.tan(q * u) * Math.sin(p * u);
-      const cz = Math.cos(p * u);
-
-      const x = p1.x + tubeRadius * (Math.cos(v) * cx + Math.sin(v) * Math.cos(p * u));
-      const y = p1.y + tubeRadius * (Math.cos(v) * cy + Math.sin(v) * Math.sin(p * u));
-      const z = p1.z + tubeRadius * Math.sin(v);
-
-      vertices.push(new Vector3(x * radius, y * radius, z * radius));
-      uvs.push({ u: i / tubularSegments, v: j / radialSegments });
+      const v = j / radialSegments * 2 * Math.PI;
+      const cx = -tubeRadius * Math.cos(v); // around the tube
+      const cy = tubeRadius * Math.sin(v);
+      const pos = p1.clone();
+      pos.x += cx * normal.x + cy * binormal.x;
+      pos.y += cx * normal.y + cy * binormal.y;
+      pos.z += cx * normal.z + cy * binormal.z;
       
-      // Calculate normal
-      const normal = new Vector3(cx, cy, cz).normalize();
-      normals.push(normal);
+      const u_uv = i / tubularSegments;
+      const v_uv = j / radialSegments;
+      
+      const vertex = new Vertex(pos.x, pos.y, pos.z, { uv: { u: u_uv, v: v_uv } });
+      row.push(mesh.addVertex(vertex));
     }
+    grid.push(row);
   }
 
-  // Add vertices to mesh
-  const vertexIndices: number[] = [];
-  for (const vertex of vertices) {
-    const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, {
-      uv: generateUVs ? { u: 0, v: 0 } : undefined,
-      normal: generateNormals ? normals[0] : undefined // Assuming a default normal or that normals are not generated per vertex
-    });
-    const vertexIndex = mesh.addVertex(newVertex);
-    vertexIndices.push(vertexIndex);
-  }
-
-  // Generate faces
+  // Create faces
   for (let i = 0; i < tubularSegments; i++) {
     for (let j = 0; j < radialSegments; j++) {
-      const a = i * (radialSegments + 1) + j;
-      const b = (i + 1) * (radialSegments + 1) + j;
-      const c = (i + 1) * (radialSegments + 1) + j + 1;
-      const d = i * (radialSegments + 1) + j + 1;
+      const v1 = grid[i][j];
+      const v2 = grid[i + 1][j];
+      const v3 = grid[i + 1][j + 1];
+      const v4 = grid[i][j + 1];
+      const faceVertexIds = [v1, v2, v3, v4];
 
-      // Create edges for the face
-      const edgeIndices: number[] = [];
-      const faceVertices = [a, b, c, d];
-      
-      for (let k = 0; k < faceVertices.length; k++) {
-        const v1 = vertexIndices[faceVertices[k]];
-        const v2 = vertexIndices[faceVertices[(k + 1) % faceVertices.length]];
-        const edge = new Edge(v1, v2);
-        const edgeIndex = mesh.addEdge(edge);
-        edgeIndices.push(edgeIndex);
+      const edgeIds: number[] = [];
+      for (let k = 0; k < faceVertexIds.length; k++) {
+        const id1 = faceVertexIds[k];
+        const id2 = faceVertexIds[(k + 1) % faceVertexIds.length];
+        const key = id1 < id2 ? `${id1}-${id2}` : `${id2}-${id1}`;
+        if (edgeMap[key] === undefined) {
+          edgeMap[key] = mesh.addEdge(new Edge(id1, id2));
+        }
+        edgeIds.push(edgeMap[key]);
       }
 
-      // Create face
-      const meshFaceVertices = faceVertices.map(index => vertexIndices[index]);
-      const face = new Face(meshFaceVertices, edgeIndices, {
-        materialIndex: materialIndex
+      const u1 = i / tubularSegments;
+      const u2 = (i + 1) / tubularSegments;
+      const v1_uv = j / radialSegments;
+      const v2_uv = (j + 1) / radialSegments;
+
+      const face = new Face(faceVertexIds, edgeIds, {
+        faceVertexUvs: [{ u: u1, v: v1_uv }, { u: u2, v: v1_uv }, { u: u2, v: v2_uv }, { u: u1, v: v2_uv }],
+        materialIndex: 0,
       });
+      face.normal = calculateFaceNormal(mesh, face);
       mesh.addFace(face);
     }
   }
 
-  // Generate proper normals if requested
-  if (generateNormals) {
-    for (let i = 0; i < mesh.getFaceCount(); i++) {
-      const face = mesh.getFace(i);
-      if (face && face.vertices.length >= 3) {
-        const v1 = mesh.getVertex(face.vertices[0]);
-        const v2 = mesh.getVertex(face.vertices[1]);
-        const v3 = mesh.getVertex(face.vertices[2]);
-        
-        if (v1 && v2 && v3) {
-          const vec1 = new Vector3().subVectors(
-            new Vector3(v2.x, v2.y, v2.z),
-            new Vector3(v1.x, v1.y, v1.z)
-          );
-          const vec2 = new Vector3().subVectors(
-            new Vector3(v3.x, v3.y, v3.z),
-            new Vector3(v1.x, v1.y, v1.z)
-          );
-          const normal = new Vector3();
-          normal.crossVectors(vec1, vec2).normalize();
-          face.normal = normal;
-        }
-      }
-    }
-  }
-
   return mesh;
-} 
+}

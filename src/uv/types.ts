@@ -1,49 +1,30 @@
-import { UVCoord } from './UVCoord';
-
 /**
- * UV mapping projection types
+ * UV Coordinate type for texture mapping
  */
-export enum UVProjectionType {
-  /** Projects UVs based on planar projection along an axis */
-  PLANAR = 'planar',
-  /** Projects UVs based on cubic projection (6 faces) */
-  CUBIC = 'cubic',
-  /** Projects UVs based on spherical coordinates */
-  SPHERICAL = 'spherical',
-  /** Projects UVs based on cylindrical coordinates */
-  CYLINDRICAL = 'cylindrical'
+export interface UVCoord {
+  u: number;
+  v: number;
 }
 
 /**
- * Options for UV generation
+ * UV mapping options
  */
-export interface GenerateUVsOptions {
-  /** Projection type */
-  projectionType?: UVProjectionType;
-  /** Projection axis for planar projection */
-  projectionAxis?: 'x' | 'y' | 'z';
-  /** Scale factor for UV coordinates */
-  scale?: number;
-  /** Offset for UV coordinates */
-  offset?: UVCoord;
-  /** Whether to normalize UVs to [0,1] range */
-  normalize?: boolean;
-  /** Whether to flip U coordinates */
-  flipU?: boolean;
-  /** Whether to flip V coordinates */
-  flipV?: boolean;
-  /** Whether to rotate UVs (in degrees) */
+export interface UVMappingOptions {
+  /** Whether to generate UVs */
+  generateUVs?: boolean;
+  /** UV mapping method */
+  method?: 'planar' | 'cylindrical' | 'spherical' | 'cubic';
+  /** UV scale factors */
+  scale?: { u: number; v: number };
+  /** UV offset */
+  offset?: { u: number; v: number };
+  /** UV rotation in radians */
   rotation?: number;
 }
 
 /**
- * Internal UV generation parameters
+ * Face-vertex UV data
  */
-export interface UVGenerationParams {
-  scale: number;
-  offset: UVCoord;
-  normalize: boolean;
-  flipU: boolean;
-  flipV: boolean;
-  rotation: number;
+export interface FaceVertexUVs {
+  [faceIndex: number]: UVCoord[];
 } 

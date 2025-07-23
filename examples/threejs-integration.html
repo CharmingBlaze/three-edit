@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>three-edit + Three.js Integration</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>three-edit + Three.js Integration</h3>
+        <p>Create, edit, and render 3D geometry seamlessly</p>
+    </div>
+    
+    <div id="controls">
+        <button onclick="createCube()">Create Cube</button>
+        <button onclick="createSphere()">Create Sphere</button>
+        <button onclick="extrudeSelected()">Extrude Selected</button>
+        <button onclick="bevelSelected()">Bevel Selected</button>
+        <button onclick="exportToGLTF()">Export GLTF</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.150.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.150.0/examples/jsm/controls/OrbitControls.js';
+        
+        // Import three-edit functions (assuming they're available globally)
+        // In a real setup, you'd import from the built library
+        
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x1a1a1a);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+        
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+        
+        // Camera position
+        camera.position.set(5, 5, 5);
+        camera.lookAt(0, 0, 0);
+        
+        // Store editable meshes and Three.js meshes
+        const editableMeshes = new Map();
+        const threeMeshes = new Map();
+        let selectedMesh = null;
+        
+        // Mock three-edit functions (replace with actual imports)
+        window.createCube = function() {
+            // In real implementation:
+            // const editableCube = createCube({ width: 2, height: 2, depth: 2 });
+            // const geometry = toBufferGeometry(editableCube);
+            
+            // For demo, create a simple Three.js cube
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: Math.random() * 0xffffff,
+                roughness: 0.7,
+                metalness: 0.3
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10
+            );
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            
+            scene.add(mesh);
+            threeMeshes.set(mesh.id, mesh);
+            
+            console.log('Created cube with ID:', mesh.id);
+        };
+        
+        window.createSphere = function() {
+            const geometry = new THREE.SphereGeometry(1, 32, 16);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: Math.random() * 0xffffff,
+                roughness: 0.5,
+                metalness: 0.5
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10
+            );
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            
+            scene.add(mesh);
+            threeMeshes.set(mesh.id, mesh);
+            
+            console.log('Created sphere with ID:', mesh.id);
+        };
+        
+        window.extrudeSelected = function() {
+            if (selectedMesh) {
+                // In real implementation:
+                // const editableMesh = editableMeshes.get(selectedMesh.id);
+                // extrudeFace(editableMesh, selectedFace, { distance: 1 });
+                // const newGeometry = toBufferGeometry(editableMesh);
+                // selectedMesh.geometry.dispose();
+                // selectedMesh.geometry = newGeometry;
+                
+                // For demo, scale the mesh
+                selectedMesh.scale.multiplyScalar(1.2);
+                console.log('Extruded selected mesh');
+            } else {
+                console.log('No mesh selected. Click on a mesh to select it.');
+            }
+        };
+        
+        window.bevelSelected = function() {
+            if (selectedMesh) {
+                // In real implementation:
+                // const editableMesh = editableMeshes.get(selectedMesh.id);
+                // bevelEdge(editableMesh, selectedEdge, { distance: 0.1 });
+                // const newGeometry = toBufferGeometry(editableMesh);
+                // selectedMesh.geometry.dispose();
+                // selectedMesh.geometry = newGeometry;
+                
+                // For demo, change material
+                selectedMesh.material.color.setHex(Math.random() * 0xffffff);
+                console.log('Beveled selected mesh');
+            } else {
+                console.log('No mesh selected. Click on a mesh to select it.');
+            }
+        };
+        
+        window.exportToGLTF = function() {
+            // In real implementation:
+            // const gltfData = exportGLTF(editableMeshes);
+            // downloadFile(gltfData, 'model.gltf');
+            
+            console.log('Exporting to GLTF...');
+            alert('GLTF export would save the current scene to a file.');
+        };
+        
+        // Raycasting for selection
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        function onMouseClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+            
+            // Reset previous selection
+            if (selectedMesh) {
+                selectedMesh.material.emissive.setHex(0x000000);
+            }
+            
+            if (intersects.length > 0) {
+                selectedMesh = intersects[0].object;
+                selectedMesh.material.emissive.setHex(0x333333);
+                console.log('Selected mesh:', selectedMesh.id);
+            } else {
+                selectedMesh = null;
+            }
+        }
+        
+        renderer.domElement.addEventListener('click', onMouseClick);
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Create initial geometry
+        window.createCube();
+        window.createSphere();
+        
+        console.log('three-edit + Three.js integration ready!');
+        console.log('Click on meshes to select them, then use the buttons to edit.');
+    </script>
+</body>
+</html> 

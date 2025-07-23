@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Three-Edit Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 8px;
+            margin: 20px 0;
+            position: relative;
+            border: 2px solid #333;
+        }
+        
+        .info {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.8);
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Basic Three-Edit Demo</h1>
+        
+        <div class="controls">
+            <button onclick="createCube()">🧱 Create Cube</button>
+            <button onclick="createSphere()">🔵 Create Sphere</button>
+            <button onclick="clearScene()">🗑️ Clear Scene</button>
+        </div>
+        
+        <div class="canvas-container" id="canvas">
+            <div class="status">Ready</div>
+        </div>
+        
+        <div class="info" id="info">
+            <strong>Three-Edit Basic Demo</strong><br><br>
+            This demo shows the basic functionality of three-edit in the browser.<br><br>
+            
+            <strong>What you can do:</strong><br>
+            🧱 Create a cube - Basic cube primitive<br>
+            🔵 Create a sphere - Sphere with segments<br>
+            🗑️ Clear scene - Remove all objects<br><br>
+            
+            <strong>Features demonstrated:</strong><br>
+            ✅ EditableMesh creation<br>
+            ✅ Three.js conversion<br>
+            ✅ Real-time 3D rendering<br>
+            ✅ Basic geometry system<br><br>
+            
+            Click the buttons above to see the primitives in action!
+        </div>
+    </div>
+
+    <!-- Load Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"></script>
+    
+    <!-- Load three-edit browser version -->
+    <script src="../browser/three-edit.js"></script>
+    
+    <script>
+        // Global variables
+        let scene, camera, renderer;
+        let meshes = [];
+        
+        // Initialize Three.js scene
+        function initScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, 800 / 400, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 400);
+            renderer.setClearColor(0x000000);
+            
+            const container = document.getElementById('canvas');
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+            
+            // Add status back
+            const status = document.createElement('div');
+            status.className = 'status';
+            status.textContent = 'Ready';
+            container.appendChild(status);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+            
+            camera.position.set(0, 5, 15);
+            camera.lookAt(0, 0, 0);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate all meshes
+            meshes.forEach((mesh, index) => {
+                mesh.rotation.x += 0.01;
+                mesh.rotation.y += 0.01;
+            });
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Update status
+        function updateStatus(message) {
+            const status = document.querySelector('.status');
+            if (status) {
+                status.textContent = message;
+            }
+        }
+        
+        // Update info
+        function updateInfo(message) {
+            const info = document.getElementById('info');
+            info.innerHTML = message;
+        }
+        
+        // Create cube
+        function createCube() {
+            try {
+                updateStatus('Creating cube...');
+                
+                const editableMesh = ThreeEdit.createCube({
+                    size: 1.5
+                });
+                
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x4CAF50,
+                    wireframe: false
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(-3, 0, 0);
+                scene.add(mesh);
+                meshes.push(mesh);
+                
+                updateStatus(`Cube created (${editableMesh.vertices.length} vertices)`);
+                updateInfo(`
+                    <strong>✅ Cube Created Successfully!</strong><br><br>
+                    <strong>Mesh Statistics:</strong><br>
+                    📊 Vertices: ${editableMesh.vertices.length}<br>
+                    📊 Faces: ${editableMesh.faces.length}<br>
+                    📊 Edges: ${editableMesh.edges.length}<br><br>
+                    
+                    <strong>Features Demonstrated:</strong><br>
+                    ✅ EditableMesh creation<br>
+                    ✅ Three.js BufferGeometry conversion<br>
+                    ✅ Real-time 3D rendering<br>
+                    ✅ Automatic rotation<br>
+                    ✅ Proper lighting and materials<br><br>
+                    
+                    <strong>What this proves:</strong><br>
+                    The core three-edit system is working! The EditableMesh class, 
+                    primitive creation, and Three.js conversion are all functional.
+                `);
+                
+            } catch (error) {
+                updateStatus('Error creating cube');
+                updateInfo(`
+                    <strong>❌ Error Creating Cube</strong><br><br>
+                    Error: ${error.message}<br><br>
+                    This might be due to:<br>
+                    • Three.js version compatibility<br>
+                    • Browser version limitations<br>
+                    • Missing dependencies
+                `);
+                console.error('Error creating cube:', error);
+            }
+        }
+        
+        // Create sphere
+        function createSphere() {
+            try {
+                updateStatus('Creating sphere...');
+                
+                const editableMesh = ThreeEdit.createSphere({
+                    radius: 0.8,
+                    segments: 16
+                });
+                
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x2196F3,
+                    wireframe: false
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(3, 0, 0);
+                scene.add(mesh);
+                meshes.push(mesh);
+                
+                updateStatus(`Sphere created (${editableMesh.vertices.length} vertices)`);
+                updateInfo(`
+                    <strong>✅ Sphere Created Successfully!</strong><br><br>
+                    <strong>Mesh Statistics:</strong><br>
+                    📊 Vertices: ${editableMesh.vertices.length}<br>
+                    📊 Faces: ${editableMesh.faces.length}<br>
+                    📊 Edges: ${editableMesh.edges.length}<br><br>
+                    
+                    <strong>Features Demonstrated:</strong><br>
+                    ✅ EditableMesh creation<br>
+                    ✅ Three.js BufferGeometry conversion<br>
+                    ✅ Real-time 3D rendering<br>
+                    ✅ Automatic rotation<br>
+                    ✅ Proper lighting and materials<br><br>
+                    
+                    <strong>What this proves:</strong><br>
+                    The core three-edit system is working! The EditableMesh class, 
+                    primitive creation, and Three.js conversion are all functional.
+                `);
+                
+            } catch (error) {
+                updateStatus('Error creating sphere');
+                updateInfo(`
+                    <strong>❌ Error Creating Sphere</strong><br><br>
+                    Error: ${error.message}<br><br>
+                    This might be due to:<br>
+                    • Three.js version compatibility<br>
+                    • Browser version limitations<br>
+                    • Missing dependencies
+                `);
+                console.error('Error creating sphere:', error);
+            }
+        }
+        
+        // Clear scene
+        function clearScene() {
+            meshes.forEach(mesh => {
+                scene.remove(mesh);
+            });
+            meshes = [];
+            
+            updateStatus('Scene cleared');
+            updateInfo(`
+                <strong>🗑️ Scene Cleared</strong><br><br>
+                All objects have been removed from the scene.<br><br>
+                
+                <strong>Three-Edit Basic Demo</strong><br><br>
+                This demo shows the basic functionality of three-edit in the browser.<br><br>
+                
+                <strong>What you can do:</strong><br>
+                🧱 Create a cube - Basic cube primitive<br>
+                🔵 Create a sphere - Sphere with segments<br>
+                🗑️ Clear scene - Remove all objects<br><br>
+                
+                <strong>Features demonstrated:</strong><br>
+                ✅ EditableMesh creation<br>
+                ✅ Three.js conversion<br>
+                ✅ Real-time 3D rendering<br>
+                ✅ Basic geometry system<br><br>
+                
+                Click the buttons above to see the primitives in action!
+            `);
+        }
+        
+        // Initialize the demo
+        window.addEventListener('load', () => {
+            initScene();
+            updateStatus('Demo ready - click buttons to create primitives');
+        });
+    </script>
+</body>
+</html> 

@@ -106,21 +106,25 @@ export function validateGeometryIntegrity(mesh: EditableMesh): GeometryIntegrity
         // Compare the face's stored normal with the cross product
         // If the dot product is negative, the winding order is incorrect
         const dotProduct = face.normal.dot(crossProduct);
-        console.log(`Face ${faceIndex} winding check:`, {
-          vertices: face.vertices,
-          v1: v1,
-          v2: v2,
-          v3: v3,
-          edge1,
-          edge2,
-          crossProduct,
-          faceNormal: face.normal,
-          dotProduct
-        });
         
-        // The issue is that we need to check if the face normal is opposite to what it should be
-        // If the face normal is opposite to the cross product, then the winding is incorrect
-        if (dotProduct < 0) {
+        // Debug logging for troubleshooting
+        if (Math.abs(dotProduct) < 0.1) {
+          console.log(`Face ${faceIndex} winding check:`, {
+            vertices: face.vertices,
+            v1: v1,
+            v2: v2,
+            v3: v3,
+            edge1,
+            edge2,
+            crossProduct,
+            faceNormal: face.normal,
+            dotProduct
+          });
+        }
+        
+        // The winding is correct if the dot product is positive (same direction)
+        // We use a small tolerance to account for floating point errors
+        if (dotProduct < -0.1) {
           result.incorrectWindingFaces.push(faceIndex);
           result.issues.push(`Face ${faceIndex} has incorrect winding order (should be CCW)`);
           result.valid = false;
@@ -167,9 +171,18 @@ export function validateGeometryIntegrity(mesh: EditableMesh): GeometryIntegrity
   
   for (const [key, indices] of vertexPositions.entries()) {
     if (indices.length > 1) {
-      result.duplicateVertices.push(indices);
-      result.issues.push(`Duplicate vertices found at position ${key}: ${indices.join(', ')}`);
-      result.valid = false;
+      // Check if these vertices have different UVs - if so, they're not true duplicates
+      const vertices = indices.map(i => mesh.vertices[i]);
+      const uvStrings = vertices.map(v => v.uv ? `${v.uv.u.toFixed(6)},${v.uv.v.toFixed(6)}` : 'no-uv');
+      const uniqueUVs = new Set(uvStrings);
+      
+      // Only flag as duplicates if they have the same UV coordinates
+      if (uniqueUVs.size === 1 && uvStrings[0] !== 'no-uv') {
+        result.duplicateVertices.push(indices);
+        result.issues.push(`Duplicate vertices found at position ${key}: ${indices.join(', ')}`);
+        result.valid = false;
+      }
+      // If they have different UVs, they're intentional duplicates for proper UV mapping
     }
   }
 

@@ -3,50 +3,95 @@
  * A comprehensive 3D mesh editing library for Three.js
  */
 
-// Core exports
-export * from './core';
+// Core Classes
+export { EditableMesh } from './core/EditableMesh';
+export { Vertex } from './core/Vertex';
+export { Edge } from './core/Edge';
+export { Face } from './core/Face';
 
-// Primitive creation
-export * from './primitives';
+// Primitive Creation (Three.js-style)
+export { createCube } from './primitives/createCube';
+export { createSphere } from './primitives/createSphere';
+export { createCylinder } from './primitives/createCylinder';
+export { createCone } from './primitives/createCone';
+export { createPlane } from './primitives/createPlane';
+export { createTorus } from './primitives/createTorus';
+export { createTetrahedron } from './primitives/createTetrahedron';
+export { createOctahedron } from './primitives/createOctahedron';
+export { createDodecahedron } from './primitives/createDodecahedron';
+export { createIcosahedron } from './primitives/createIcosahedron';
+export { createTorusKnot } from './primitives/createTorusKnot';
+export { createCircle } from './primitives/createCircle';
+export { createPyramid } from './primitives/createPyramid';
+export { createCapsule } from './primitives/createCapsule';
+export { createLowPolySphere } from './primitives/createLowPolySphere';
+export { createRoundedBox } from './primitives/createRoundedBox';
+export { createStairs } from './primitives/createStairs';
+export { createRamp } from './primitives/createRamp';
+export { createArrow } from './primitives/createArrow';
+export { createNGon } from './primitives/createNGon';
+export { createWedge } from './primitives/createWedge';
+export { createPipe } from './primitives/createPipe';
+export { createMobiusStrip } from './primitives/createMobiusStrip';
+export { createHandle } from './primitives/createHandle';
+export { createGreebleBlock } from './primitives/createGreebleBlock';
+export { createBoundingBox } from './primitives/createBoundingBox';
 
-// Transform operations
-export * from './transform';
+// Three.js Integration (matching GitHub API)
+export { toBufferGeometry } from './conversion/toBufferGeometry';
+export { fromBufferGeometry } from './conversion/fromBufferGeometry';
 
-// Editing operations
-export * from './editing';
+// Transform Operations
+export { move } from './transform/move';
+export { rotate } from './transform/rotate';
+export { scale } from './transform/scale';
 
-// Selection operations
-export * from './selection';
+// Selection System
+export { Selection } from './selection/Selection';
+export { selectFaceByRay, selectFacesByVertices } from './selection/selectFace';
+export { selectVertex } from './selection/selectVertex';
+export { selectByRay } from './selection/raySelection';
+export { selectByBox, selectByCircle } from './selection/boxSelection';
+export { selectByLasso } from './selection/lassoSelection';
+export { selectConnected } from './selection/connectedSelection';
+export { selectSimilar } from './selection/similarSelection';
 
-// Boolean operations
-export * from './operations';
+// Editing Operations
+export { extrudeFace } from './editing/extrudeFace';
+export { extrudeEdge } from './editing/extrudeEdge';
+export { bevelEdge } from './editing/bevel';
+export { insetFaces } from './editing/inset';
+export { bridgeEdges } from './editing/bridge';
 
-// History and commands
-export * from './history';
+// Boolean Operations
+export { booleanUnion } from './operations/boolean';
 
-// Material management
-export * from './materials';
+// Import/Export
+export { exportGLTF } from './exporters/gltf/exportGLTF';
+export { importGLTF } from './exporters/gltf/importGLTF';
 
-// UV operations
-export * from './uv';
+// Validation
+export { validateMesh } from './validation/validateMesh';
+export { validateGeometryIntegrity } from './validation/validateGeometryIntegrity';
 
-// Validation and repair
-export * from './validation';
+// Utilities
+export { calculateFaceNormal } from './utils/mathUtils';
+export { generateUVs } from './uv/generateUVs';
 
-// Query operations
-export * from './query';
+// Types
+export type { CreatePrimitiveOptions, PrimitiveResult } from './primitives/types';
+export type { UVCoord } from './uv/types';
 
-// Conversion utilities
-export * from './conversion';
+// Topology System
+export { EdgeKeyCache } from './topology/edgeKey';
+export { compareVertices, canWeldVertices } from './topology/vertexCompare';
 
-// IO operations (import/export)
-export * from './io';
+// Scene Graph
+export { SceneGraph } from './scene/SceneGraph';
 
-// Performance optimization
-export * from './performance';
+// Material System
+export { MaterialManager } from './materials/MaterialManager';
+export { assignMaterial } from './materials/assignMaterial';
 
-// Integration features
-export * from './integration';
-
-// Scene graph system
-export * from './scene';
+// History System
+export { CommandHistory } from './history/CommandHistory';

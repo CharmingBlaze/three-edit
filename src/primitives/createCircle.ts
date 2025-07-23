@@ -1,82 +1,93 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Edge } from '../core/Edge.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { CreateCircleOptions } from './types';
+import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { validatePrimitive } from './validation';
 
 /**
- * Options for creating a circle
- */
-export interface CreateCircleOptions {
-  /** Radius of the circle */
-  radius?: number;
-  /** Number of segments */
-  segments?: number;
-  /** Starting angle in radians */
-  thetaStart?: number;
-  /** Ending angle in radians */
-  thetaLength?: number;
-  /** Name of the mesh */
-  name?: string;
-}
-
-/**
- * Creates a circle as an EditableMesh
- * @param options Options for creating the circle
- * @returns A new EditableMesh instance representing a circle
+ * Creates a circle as an EditableMesh.
+ * @param options - Options for creating the circle.
+ * @returns A new EditableMesh instance representing a circle.
  */
 export function createCircle(options: CreateCircleOptions = {}): EditableMesh {
-  const radius = options.radius ?? 1;
-  const segments = Math.max(3, Math.floor(options.segments ?? 8));
-  const thetaStart = options.thetaStart ?? 0;
-  const thetaLength = options.thetaLength ?? Math.PI * 2;
-  const name = options.name ?? 'Circle';
-  
-  const mesh = new EditableMesh({ name });
-  
-  // Create center vertex
-  const centerVertex = new Vertex(0, 0, 0);
-  centerVertex.uv = { u: 0.5, v: 0.5 };
-  const centerIndex = mesh.addVertex(centerVertex);
-  
-  // Create vertices around the circle
+  // Normalize options with defaults
+  const normalizedOptions = normalizeOptions(options, {
+    radius: 1,
+    segments: 32,
+    thetaStart: 0,
+    thetaLength: Math.PI * 2,
+    name: 'Circle',
+    materialId: 0,
+    centered: true,
+    uvLayout: 'planar',
+    smoothNormals: false,
+    validate: true
+  }) as Required<CreateCircleOptions>;
+
+  // Validate parameters
+  if (normalizedOptions.radius <= 0) {
+    throw new Error('Circle radius must be positive');
+  }
+  if (normalizedOptions.segments < 3) {
+    throw new Error('Circle segments must be at least 3');
+  }
+
+  // Create mesh and context
+  const mesh = new EditableMesh({ name: normalizedOptions.name });
+  const context = createPrimitiveContext(mesh, normalizedOptions);
+
+  // Calculate offsets for centered positioning
+  const offsetX = normalizedOptions.centered ? 0 : normalizedOptions.radius;
+  const offsetZ = normalizedOptions.centered ? 0 : normalizedOptions.radius;
+
   const vertices: number[] = [];
-  
-  for (let i = 0; i <= segments; i++) {
-    const theta = thetaStart + (i / segments) * thetaLength;
-    const x = Math.cos(theta) * radius;
-    const y = Math.sin(theta) * radius;
-    const z = 0;
+
+  // Create center vertex
+  const centerVertex = createVertex(mesh, {
+    x: offsetX,
+    y: 0,
+    z: offsetZ,
+    uv: { u: 0.5, v: 0.5 }
+  }, context);
+  vertices.push(centerVertex.id);
+
+  // Create perimeter vertices
+  for (let i = 0; i <= normalizedOptions.segments; i++) {
+    const theta = normalizedOptions.thetaStart + (i / normalizedOptions.segments) * normalizedOptions.thetaLength;
+    const x = offsetX + normalizedOptions.radius * Math.cos(theta);
+    const z = offsetZ + normalizedOptions.radius * Math.sin(theta);
+    const u = 0.5 + 0.5 * Math.cos(theta);
+    const v = 0.5 + 0.5 * Math.sin(theta);
     
-    const vertex = new Vertex(x, y, z);
+    const uv = { u, v };
     
-    // Generate UVs
-    const u = (Math.cos(theta) + 1) / 2;
-    const v = (Math.sin(theta) + 1) / 2;
-    vertex.uv = { u, v };
-    
-    const vertexIndex = mesh.addVertex(vertex);
-    vertices.push(vertexIndex);
+    const result = createVertex(mesh, {
+      x,
+      y: 0,
+      z,
+      uv
+    }, context);
+    vertices.push(result.id);
   }
-  
-  // Create edges and faces
-  for (let i = 0; i < segments; i++) {
-    const v1 = vertices[i];
+
+  // Create triangular faces
+  for (let i = 0; i < normalizedOptions.segments; i++) {
+    const v1 = vertices[0]; // center
     const v2 = vertices[i + 1];
+    const v3 = vertices[i + 2];
     
-    // Create edges
-    const edge1 = mesh.addEdge(new Edge(centerIndex, v1));
-    const edge2 = mesh.addEdge(new Edge(v1, v2));
-    const edge3 = mesh.addEdge(new Edge(v2, centerIndex));
-    
-    // Create face (material index 0)
-    mesh.addFace(
-      new Face(
-        [centerIndex, v1, v2],
-        [edge1, edge2, edge3],
-        { materialIndex: 0 }
-      )
-    );
+    createFace(mesh, {
+      vertexIds: [v1, v2, v3],
+      materialId: normalizedOptions.materialId
+    }, context);
   }
-  
+
+  // Validate if requested
+  if (normalizedOptions.validate) {
+    const validation = validatePrimitive(mesh, 'Circle');
+    if (!validation.isValid) {
+      console.warn('Circle validation warnings:', validation.warnings);
+    }
+  }
+
   return mesh;
-} 
+}

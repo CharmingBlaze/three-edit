@@ -222,35 +222,32 @@ function processCutLine(
 
   console.log('Found intersections:', intersections.length);
 
-  if (intersections.length === 0) {
-    console.log('No intersections found, returning early');
-    return {
-      success: true,
-      verticesCreated: 0,
-      edgesCreated: 0,
-      facesSplit: 0
-    };
-  }
-
-  // Sort intersections by parameter along the cut line
-  intersections.sort((a, b) => a.parameter - b.parameter);
-
   // Create vertices at intersection points only if requested
   const newVertexIndices: number[] = [];
   if (createVertices) {
-    console.log('Creating vertices at', intersections.length, 'intersection points');
-    for (const intersection of intersections) {
-      const vertexIndex = createVertexAtPosition(mesh, intersection.position);
-      newVertexIndices.push(vertexIndex);
-      verticesCreated++;
-      console.log('Created vertex at', intersection.position, 'with index', vertexIndex);
+    if (intersections.length > 0) {
+      console.log('Creating vertices at', intersections.length, 'intersection points');
+      for (const intersection of intersections) {
+        const vertexIndex = createVertexAtPosition(mesh, intersection.position);
+        newVertexIndices.push(vertexIndex);
+        verticesCreated++;
+        console.log('Created vertex at', intersection.position, 'with index', vertexIndex);
+      }
+    } else {
+      // For circular cuts or when no intersections are found, create vertices at start and end points
+      console.log('No intersections found, creating vertices at start and end points');
+      const startVertexIndex = createVertexAtPosition(mesh, cutLine.start);
+      const endVertexIndex = createVertexAtPosition(mesh, cutLine.end);
+      newVertexIndices.push(startVertexIndex, endVertexIndex);
+      verticesCreated += 2;
+      console.log('Created vertices at start', cutLine.start, 'and end', cutLine.end);
     }
   } else {
     console.log('createVertices is false, skipping vertex creation');
   }
 
   // Split faces that intersect with the cut line only if requested
-  if (splitFaces && createVertices) {
+  if (splitFaces && createVertices && intersections.length > 0) {
     console.log('Splitting faces at', intersections.length, 'intersection points');
     for (let i = 0; i < intersections.length; i++) {
       const intersection = intersections[i];
@@ -277,7 +274,7 @@ function processCutLine(
       }
     }
   } else {
-    console.log('splitFaces or createVertices is false, skipping face splitting');
+    console.log('splitFaces or createVertices is false, or no intersections, skipping face splitting');
   }
 
   // Create edges along the cut line only if requested
@@ -773,5 +770,8 @@ export function knifeCutCircle(
     points.push(points[0].clone());
   }
 
-  return knifeCutPath(mesh, points, options);
+  // For circular cuts, we want to create vertices even if they don't intersect
+  const circleOptions = { ...options, createVertices: true, createEdges: true };
+  
+  return knifeCutPath(mesh, points, circleOptions);
 }

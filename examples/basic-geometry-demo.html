@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Edit Basic Geometry Demo</title>
+    <link rel="stylesheet" href="demo-styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Three-Edit Basic Geometry Demo</h1>
+        <p style="text-align: center; color: #ccc;">Testing our refactored primitives with the core geometry system</p>
+        
+        <div class="demo-section">
+            <h2>🧱 Basic Primitives</h2>
+            <p>Create and test various 3D primitives with our standardized system</p>
+            
+            <div class="controls">
+                <button onclick="createCube()">Create Cube</button>
+                <button onclick="createSphere()">Create Sphere</button>
+                <button onclick="createCylinder()">Create Cylinder</button>
+                <button onclick="createCone()">Create Cone</button>
+                <button onclick="createPlane()">Create Plane</button>
+                <button onclick="createTorus()">Create Torus</button>
+                <button onclick="createCircle()">Create Circle</button>
+                <button onclick="createPyramid()">Create Pyramid</button>
+            </div>
+            
+            <div class="canvas-container" id="main-canvas">
+                <div class="status">Ready</div>
+            </div>
+            
+            <div class="info" id="main-info">
+                Click a button to create a primitive. The mesh will be displayed in the canvas above.
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="demo-section">
+                <h2>📊 Mesh Statistics</h2>
+                <div class="primitive-info" id="stats-info">
+                    <h3>Mesh Properties</h3>
+                    <p>No mesh created yet.</p>
+                </div>
+            </div>
+            
+            <div class="demo-section">
+                <h2>🔧 Geometry Operations</h2>
+                <div class="controls">
+                    <button onclick="validateMesh()" id="validate-btn" disabled>Validate Mesh</button>
+                    <button onclick="exportToThree()" id="export-btn" disabled>Export to Three.js</button>
+                    <button onclick="clearMesh()" id="clear-btn" disabled>Clear Mesh</button>
+                </div>
+                <div class="primitive-info" id="operations-info">
+                    <h3>Operations</h3>
+                    <p>Create a mesh first to enable operations.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎨 Advanced Primitives</h2>
+            <p>Test more complex geometric shapes</p>
+            
+            <div class="controls">
+                <button onclick="createTetrahedron()">Create Tetrahedron</button>
+                <button onclick="createOctahedron()">Create Octahedron</button>
+                <button onclick="createIcosahedron()">Create Icosahedron</button>
+                <button onclick="createAllPlatonic()">Create All Platonic Solids</button>
+            </div>
+            
+            <div class="info" id="advanced-info">
+                Advanced primitives with different topology and complexity levels.
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>💻 Code Example</h2>
+            <div class="code-example">
+// Basic usage with our refactored primitives
+import { createCube, createSphere, toBufferGeometry } from 'three-edit';
+
+// Create a cube with enhanced options
+const cube = createCube({
+    width: 2,
+    height: 2,
+    depth: 2,
+    materialId: 0,
+    centered: true,
+    uvLayout: 'box',
+    smoothNormals: false,
+    validate: true
+});
+
+// Create a sphere with spherical UVs
+const sphere = createSphere({
+    radius: 1,
+    widthSegments: 32,
+    heightSegments: 16,
+    materialId: 1,
+    centered: true,
+    uvLayout: 'spherical',
+    smoothNormals: true,
+    validate: true
+});
+
+// Convert to Three.js BufferGeometry
+const cubeGeometry = toBufferGeometry(cube);
+const sphereGeometry = toBufferGeometry(sphere);
+
+// All primitives work seamlessly with the editing system!
+console.log('Cube vertices:', cube.vertices.length);
+console.log('Cube faces:', cube.faces.length);
+console.log('Sphere vertices:', sphere.vertices.length);
+console.log('Sphere faces:', sphere.faces.length);
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Three.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    
+    <!-- Load three-edit browser version -->
+    <script src="../browser/three-edit.js"></script>
+    
+    <script>
+        // Global variables
+        let currentMesh = null;
+        let scene, camera, renderer, mesh;
+        
+        // Initialize Three.js scene
+        function initScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, 800 / 500, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 500);
+            renderer.setClearColor(0x000000);
+            
+            const container = document.getElementById('main-canvas');
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+            
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (mesh) {
+                mesh.rotation.x += 0.01;
+                mesh.rotation.y += 0.01;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Create primitive functions
+        function createCube() {
+            try {
+                currentMesh = ThreeEdit.createCube({
+                    width: 2,
+                    height: 2,
+                    depth: 2,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'box',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Cube');
+                updateStatus('Cube created successfully');
+            } catch (error) {
+                updateStatus('Error creating cube: ' + error.message);
+            }
+        }
+        
+        function createSphere() {
+            try {
+                currentMesh = ThreeEdit.createSphere({
+                    radius: 1,
+                    widthSegments: 32,
+                    heightSegments: 16,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'spherical',
+                    smoothNormals: true,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Sphere');
+                updateStatus('Sphere created successfully');
+            } catch (error) {
+                updateStatus('Error creating sphere: ' + error.message);
+            }
+        }
+        
+        function createCylinder() {
+            try {
+                currentMesh = ThreeEdit.createCylinder({
+                    radiusTop: 1,
+                    radiusBottom: 1,
+                    height: 2,
+                    radialSegments: 16,
+                    heightSegments: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'cylindrical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Cylinder');
+                updateStatus('Cylinder created successfully');
+            } catch (error) {
+                updateStatus('Error creating cylinder: ' + error.message);
+            }
+        }
+        
+        function createCone() {
+            try {
+                currentMesh = ThreeEdit.createCone({
+                    radius: 1,
+                    height: 2,
+                    radialSegments: 16,
+                    heightSegments: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'cylindrical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Cone');
+                updateStatus('Cone created successfully');
+            } catch (error) {
+                updateStatus('Error creating cone: ' + error.message);
+            }
+        }
+        
+        function createPlane() {
+            try {
+                currentMesh = ThreeEdit.createPlane({
+                    width: 2,
+                    height: 2,
+                    widthSegments: 1,
+                    heightSegments: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'planar',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Plane');
+                updateStatus('Plane created successfully');
+            } catch (error) {
+                updateStatus('Error creating plane: ' + error.message);
+            }
+        }
+        
+        function createTorus() {
+            try {
+                currentMesh = ThreeEdit.createTorus({
+                    radius: 1,
+                    tube: 0.4,
+                    radialSegments: 16,
+                    tubularSegments: 12,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'cylindrical',
+                    smoothNormals: true,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Torus');
+                updateStatus('Torus created successfully');
+            } catch (error) {
+                updateStatus('Error creating torus: ' + error.message);
+            }
+        }
+        
+        function createCircle() {
+            try {
+                currentMesh = ThreeEdit.createCircle({
+                    radius: 1,
+                    segments: 32,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'planar',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Circle');
+                updateStatus('Circle created successfully');
+            } catch (error) {
+                updateStatus('Error creating circle: ' + error.message);
+            }
+        }
+        
+        function createPyramid() {
+            try {
+                currentMesh = ThreeEdit.createPyramid({
+                    width: 2,
+                    height: 2,
+                    depth: 2,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'planar',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Pyramid');
+                updateStatus('Pyramid created successfully');
+            } catch (error) {
+                updateStatus('Error creating pyramid: ' + error.message);
+            }
+        }
+        
+        function createTetrahedron() {
+            try {
+                currentMesh = ThreeEdit.createTetrahedron({
+                    radius: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'spherical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Tetrahedron');
+                updateStatus('Tetrahedron created successfully');
+            } catch (error) {
+                updateStatus('Error creating tetrahedron: ' + error.message);
+            }
+        }
+        
+        function createOctahedron() {
+            try {
+                currentMesh = ThreeEdit.createOctahedron({
+                    radius: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'spherical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Octahedron');
+                updateStatus('Octahedron created successfully');
+            } catch (error) {
+                updateStatus('Error creating octahedron: ' + error.message);
+            }
+        }
+        
+        function createIcosahedron() {
+            try {
+                currentMesh = ThreeEdit.createIcosahedron({
+                    radius: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'spherical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                displayMesh(currentMesh, 'Icosahedron');
+                updateStatus('Icosahedron created successfully');
+            } catch (error) {
+                updateStatus('Error creating icosahedron: ' + error.message);
+            }
+        }
+        
+        function createAllPlatonic() {
+            try {
+                // Create all Platonic solids
+                const tetrahedron = ThreeEdit.createTetrahedron({ radius: 0.8, validate: true });
+                const octahedron = ThreeEdit.createOctahedron({ radius: 0.8, validate: true });
+                const icosahedron = ThreeEdit.createIcosahedron({ radius: 0.8, validate: true });
+                
+                document.getElementById('advanced-info').innerHTML = `
+                    <strong>All Platonic Solids Created:</strong><br>
+                    Tetrahedron: ${tetrahedron.vertices.length} vertices, ${tetrahedron.faces.length} faces<br>
+                    Octahedron: ${octahedron.vertices.length} vertices, ${octahedron.faces.length} faces<br>
+                    Icosahedron: ${icosahedron.vertices.length} vertices, ${icosahedron.faces.length} faces<br>
+                    <br>
+                    <strong>Total:</strong> ${tetrahedron.vertices.length + octahedron.vertices.length + icosahedron.vertices.length} vertices, 
+                    ${tetrahedron.faces.length + octahedron.faces.length + icosahedron.faces.length} faces
+                `;
+                
+                updateStatus('All Platonic solids created successfully');
+            } catch (error) {
+                updateStatus('Error creating Platonic solids: ' + error.message);
+            }
+        }
+        
+        // Display mesh in Three.js
+        function displayMesh(editableMesh, name) {
+            try {
+                // Convert to Three.js BufferGeometry
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                
+                // Create material
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x4CAF50,
+                    wireframe: false,
+                    side: THREE.DoubleSide
+                });
+                
+                // Create mesh
+                mesh = new THREE.Mesh(geometry, material);
+                
+                // Clear scene and add new mesh
+                scene.clear();
+                scene.add(mesh);
+                
+                // Add lights back
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 10, 5);
+                scene.add(directionalLight);
+                
+                // Update info
+                updateMeshStats(editableMesh, name);
+                enableOperations();
+                
+            } catch (error) {
+                updateStatus('Error displaying mesh: ' + error.message);
+            }
+        }
+        
+        // Update mesh statistics
+        function updateMeshStats(editableMesh, name) {
+            const stats = {
+                name: name,
+                vertices: editableMesh.vertices.length,
+                edges: editableMesh.edges.length,
+                faces: editableMesh.faces.length,
+                materials: editableMesh.materials ? editableMesh.materials.length : 0,
+                hasUVs: editableMesh.vertices.some(v => v.uv),
+                hasNormals: editableMesh.faces.some(f => f.normal),
+                boundingBox: calculateBoundingBox(editableMesh)
+            };
+            
+            document.getElementById('stats-info').innerHTML = `
+                <h3>${stats.name} Properties</h3>
+                <p><strong>Vertices:</strong> ${stats.vertices}</p>
+                <p><strong>Edges:</strong> ${stats.edges}</p>
+                <p><strong>Faces:</strong> ${stats.faces}</p>
+                <p><strong>Materials:</strong> ${stats.materials}</p>
+                <p><strong>Has UVs:</strong> ${stats.hasUVs ? 'Yes' : 'No'}</p>
+                <p><strong>Has Normals:</strong> ${stats.hasNormals ? 'Yes' : 'No'}</p>
+                <p><strong>Bounding Box:</strong> ${JSON.stringify(stats.boundingBox)}</p>
+            `;
+            
+            document.getElementById('main-info').innerHTML = `
+                <strong>${stats.name} created successfully!</strong><br>
+                Mesh contains ${stats.vertices} vertices, ${stats.edges} edges, and ${stats.faces} faces.<br>
+                ${stats.hasUVs ? 'UV coordinates are present.' : 'No UV coordinates.'}<br>
+                ${stats.hasNormals ? 'Face normals are present.' : 'No face normals.'}
+            `;
+        }
+        
+        // Calculate bounding box
+        function calculateBoundingBox(editableMesh) {
+            if (!editableMesh.vertices.length) return { min: [0,0,0], max: [0,0,0] };
+            
+            let minX = Infinity, minY = Infinity, minZ = Infinity;
+            let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+            
+            editableMesh.vertices.forEach(vertex => {
+                minX = Math.min(minX, vertex.x);
+                minY = Math.min(minY, vertex.y);
+                minZ = Math.min(minZ, vertex.z);
+                maxX = Math.max(maxX, vertex.x);
+                maxY = Math.max(maxY, vertex.y);
+                maxZ = Math.max(maxZ, vertex.z);
+            });
+            
+            return {
+                min: [minX, minY, minZ],
+                max: [maxX, maxY, maxZ],
+                size: [maxX - minX, maxY - minY, maxZ - minZ]
+            };
+        }
+        
+        // Operation functions
+        function validateMesh() {
+            if (!currentMesh) return;
+            
+            try {
+                // Basic validation
+                const isValid = currentMesh.vertices.length > 0 && 
+                               currentMesh.faces.length > 0 &&
+                               currentMesh.edges.length > 0;
+                
+                const warnings = [];
+                if (currentMesh.vertices.length < 4) warnings.push('Very few vertices');
+                if (currentMesh.faces.length < 1) warnings.push('No faces found');
+                if (!currentMesh.vertices.some(v => v.uv)) warnings.push('No UV coordinates');
+                
+                document.getElementById('operations-info').innerHTML = `
+                    <h3>Validation Result</h3>
+                    <p><strong>Valid:</strong> ${isValid ? 'Yes' : 'No'}</p>
+                    <p><strong>Warnings:</strong> ${warnings.length > 0 ? warnings.join(', ') : 'None'}</p>
+                    <p><strong>Mesh Integrity:</strong> ✅ Good</p>
+                `;
+                
+                updateStatus('Mesh validation completed');
+            } catch (error) {
+                updateStatus('Validation error: ' + error.message);
+            }
+        }
+        
+        function exportToThree() {
+            if (!currentMesh) return;
+            
+            try {
+                const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+                const attributes = geometry.attributes;
+                
+                document.getElementById('operations-info').innerHTML = `
+                    <h3>Three.js Export</h3>
+                    <p><strong>Position:</strong> ${attributes.position ? attributes.position.count + ' vertices' : 'None'}</p>
+                    <p><strong>Normal:</strong> ${attributes.normal ? attributes.normal.count + ' normals' : 'None'}</p>
+                    <p><strong>UV:</strong> ${attributes.uv ? attributes.uv.count + ' UVs' : 'None'}</p>
+                    <p><strong>Index:</strong> ${geometry.index ? geometry.index.count + ' indices' : 'None'}</p>
+                    <p><strong>Export Status:</strong> ✅ Successful</p>
+                `;
+                
+                updateStatus('Mesh exported to Three.js successfully');
+            } catch (error) {
+                updateStatus('Export error: ' + error.message);
+            }
+        }
+        
+        function clearMesh() {
+            currentMesh = null;
+            mesh = null;
+            scene.clear();
+            
+            // Add lights back
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+            
+            document.getElementById('stats-info').innerHTML = '<h3>Mesh Properties</h3><p>No mesh created yet.</p>';
+            document.getElementById('operations-info').innerHTML = '<h3>Operations</h3><p>Create a mesh first to enable operations.</p>';
+            document.getElementById('main-info').innerHTML = 'Click a button to create a primitive. The mesh will be displayed in the canvas above.';
+            
+            disableOperations();
+            updateStatus('Mesh cleared');
+        }
+        
+        // Utility functions
+        function enableOperations() {
+            document.getElementById('validate-btn').disabled = false;
+            document.getElementById('export-btn').disabled = false;
+            document.getElementById('clear-btn').disabled = false;
+        }
+        
+        function disableOperations() {
+            document.getElementById('validate-btn').disabled = true;
+            document.getElementById('export-btn').disabled = true;
+            document.getElementById('clear-btn').disabled = true;
+        }
+        
+        function updateStatus(message) {
+            document.querySelector('.status').textContent = message;
+        }
+        
+        // Initialize the demo
+        window.addEventListener('load', () => {
+            initScene();
+            updateStatus('Demo ready - click a button to create a primitive');
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Edit Primitives Demo</title>
+    <link rel="stylesheet" href="demo-styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Three-Edit Refactored Primitives Demo</h1>
+        <p style="text-align: center; color: #ccc; margin-bottom: 30px;">
+            See our standardized primitives in action! All primitives now use the same helper functions and validation system.
+        </p>
+        
+        <div class="controls">
+            <button onclick="createCube()">🧱 Cube</button>
+            <button onclick="createSphere()">🔵 Sphere</button>
+            <button onclick="createCylinder()">🔘 Cylinder</button>
+            <button onclick="createCone()">🔺 Cone</button>
+            <button onclick="createPlane()">📄 Plane</button>
+            <button onclick="createTorus()">🍩 Torus</button>
+            <button onclick="createCircle()">⭕ Circle</button>
+            <button onclick="createPyramid()">🔺 Pyramid</button>
+            <button onclick="createTetrahedron()">🔺 Tetrahedron</button>
+            <button onclick="createOctahedron()">🔺 Octahedron</button>
+            <button onclick="createIcosahedron()">🔺 Icosahedron</button>
+        </div>
+        
+        <div class="canvas-container" id="canvas">
+            <div class="status">Ready - Click a button to create a primitive</div>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Vertices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Edges</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Faces</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0ms</div>
+                <div class="stat-label">Creation Time</div>
+            </div>
+        </div>
+        
+        <div class="info" id="info">
+            <strong>Welcome to the Three-Edit Primitives Demo!</strong><br><br>
+            This demo showcases our refactored primitives that now use standardized helper functions, 
+            proper validation, and consistent UV mapping. All primitives follow the same pattern and 
+            work seamlessly with the editing system.<br><br>
+            
+            <strong>Features:</strong><br>
+            ✅ Standardized creation pattern<br>
+            ✅ Automatic validation<br>
+            ✅ Proper UV mapping<br>
+            ✅ Material assignment<br>
+            ✅ Three.js conversion<br>
+            ✅ Performance optimized<br><br>
+            
+            Click any button above to create a primitive and see it in action!
+        </div>
+        
+        <div class="code-example">
+// Example of our refactored primitive usage:
+
+// Create a cube with enhanced options
+const cube = createCube({
+    width: 2,
+    height: 2,
+    depth: 2,
+    materialId: 0,
+    centered: true,
+    uvLayout: 'box',
+    smoothNormals: false,
+    validate: true
+});
+
+// Create a sphere with spherical UVs
+const sphere = createSphere({
+    radius: 1,
+    widthSegments: 32,
+    heightSegments: 16,
+    materialId: 1,
+    centered: true,
+    uvLayout: 'spherical',
+    smoothNormals: true,
+    validate: true
+});
+
+// Convert to Three.js BufferGeometry
+const geometry = toBufferGeometry(cube);
+const mesh = new THREE.Mesh(geometry, material);
+
+// All primitives work with the editing system!
+console.log('Vertices:', cube.vertices.length);
+console.log('Faces:', cube.faces.length);
+console.log('Edges:', cube.edges.length);
+        </div>
+    </div>
+
+    <!-- Load Three.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    
+    <!-- Load three-edit browser version -->
+    <script src="../browser/three-edit.js"></script>
+    
+    <script>
+        // Global variables
+        let scene, camera, renderer, mesh;
+        let currentMesh = null;
+        let creationStartTime = 0;
+        
+        // Initialize Three.js scene
+        function initScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, 800 / 500, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 500);
+            renderer.setClearColor(0x000000);
+            
+            const container = document.getElementById('canvas');
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+            
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (mesh) {
+                mesh.rotation.x += 0.01;
+                mesh.rotation.y += 0.01;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Update statistics display
+        function updateStats(editableMesh, creationTime) {
+            const stats = document.getElementById('stats');
+            const statCards = stats.querySelectorAll('.stat-card');
+            
+            statCards[0].querySelector('.stat-value').textContent = editableMesh.vertices.length;
+            statCards[1].querySelector('.stat-value').textContent = editableMesh.edges.length;
+            statCards[2].querySelector('.stat-value').textContent = editableMesh.faces.length;
+            statCards[3].querySelector('.stat-value').textContent = creationTime + 'ms';
+        }
+        
+        // Update info display
+        function updateInfo(message, details = '') {
+            const info = document.getElementById('info');
+            info.innerHTML = `<strong>${message}</strong><br><br>${details}`;
+        }
+        
+        // Update status
+        function updateStatus(message) {
+            const status = document.querySelector('.status');
+            status.textContent = message;
+        }
+        
+        // Display mesh in Three.js
+        function displayMesh(editableMesh, name) {
+            try {
+                // Convert to Three.js BufferGeometry
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                
+                // Create material with different colors for different primitives
+                const colors = {
+                    'Cube': 0x4CAF50,
+                    'Sphere': 0x2196F3,
+                    'Cylinder': 0xFF9800,
+                    'Cone': 0x9C27B0,
+                    'Plane': 0x607D8B,
+                    'Torus': 0xE91E63,
+                    'Circle': 0x00BCD4,
+                    'Pyramid': 0x795548,
+                    'Tetrahedron': 0x3F51B5,
+                    'Octahedron': 0x009688,
+                    'Icosahedron': 0xFF5722
+                };
+                
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: colors[name] || 0x4CAF50,
+                    wireframe: false,
+                    side: THREE.DoubleSide
+                });
+                
+                // Create mesh
+                mesh = new THREE.Mesh(geometry, material);
+                
+                // Clear scene and add new mesh
+                scene.clear();
+                scene.add(mesh);
+                
+                // Add lights back
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 10, 5);
+                scene.add(directionalLight);
+                
+            } catch (error) {
+                updateInfo('Error displaying mesh', `Failed to convert mesh to Three.js: ${error.message}`);
+            }
+        }
+        
+        // Primitive creation functions
+        function createCube() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createCube({
+                    width: 2,
+                    height: 2,
+                    depth: 2,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'box',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Cube');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Cube Created Successfully!', 
+                    `A 2x2x2 cube with ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Box UV mapping<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation<br>
+                    ✅ Three.js conversion`);
+                updateStatus('Cube created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Cube', `Failed to create cube: ${error.message}`);
+                updateStatus('Error creating cube');
+            }
+        }
+        
+        function createSphere() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createSphere({
+                    radius: 1,
+                    widthSegments: 32,
+                    heightSegments: 16,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'spherical',
+                    smoothNormals: true,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Sphere');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Sphere Created Successfully!', 
+                    `A sphere with radius 1, ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Spherical UV mapping<br>
+                    ✅ Smooth normals<br>
+                    ✅ High resolution (32x16 segments)<br>
+                    ✅ Centered positioning<br>
+                    ✅ Automatic validation`);
+                updateStatus('Sphere created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Sphere', `Failed to create sphere: ${error.message}`);
+                updateStatus('Error creating sphere');
+            }
+        }
+        
+        function createCylinder() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createCylinder({
+                    radiusTop: 1,
+                    radiusBottom: 1,
+                    height: 2,
+                    radialSegments: 16,
+                    heightSegments: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'cylindrical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Cylinder');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Cylinder Created Successfully!', 
+                    `A cylinder with radius 1, height 2, ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Cylindrical UV mapping<br>
+                    ✅ Closed caps<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation`);
+                updateStatus('Cylinder created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Cylinder', `Failed to create cylinder: ${error.message}`);
+                updateStatus('Error creating cylinder');
+            }
+        }
+        
+        function createCone() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createCone({
+                    radius: 1,
+                    height: 2,
+                    radialSegments: 16,
+                    heightSegments: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'cylindrical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Cone');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Cone Created Successfully!', 
+                    `A cone with radius 1, height 2, ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Cylindrical UV mapping<br>
+                    ✅ Closed base<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation`);
+                updateStatus('Cone created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Cone', `Failed to create cone: ${error.message}`);
+                updateStatus('Error creating cone');
+            }
+        }
+        
+        function createPlane() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createPlane({
+                    width: 2,
+                    height: 2,
+                    widthSegments: 1,
+                    heightSegments: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'planar',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Plane');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Plane Created Successfully!', 
+                    `A 2x2 plane with ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Planar UV mapping<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation<br>
+                    ✅ Simple topology`);
+                updateStatus('Plane created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Plane', `Failed to create plane: ${error.message}`);
+                updateStatus('Error creating plane');
+            }
+        }
+        
+        function createTorus() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createTorus({
+                    radius: 1,
+                    tube: 0.4,
+                    radialSegments: 16,
+                    tubularSegments: 12,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'cylindrical',
+                    smoothNormals: true,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Torus');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Torus Created Successfully!', 
+                    `A torus with radius 1, tube 0.4, ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Cylindrical UV mapping<br>
+                    ✅ Smooth normals<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation`);
+                updateStatus('Torus created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Torus', `Failed to create torus: ${error.message}`);
+                updateStatus('Error creating torus');
+            }
+        }
+        
+        function createCircle() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createCircle({
+                    radius: 1,
+                    segments: 32,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'planar',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Circle');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Circle Created Successfully!', 
+                    `A circle with radius 1, ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Planar UV mapping<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation<br>
+                    ✅ Triangular faces`);
+                updateStatus('Circle created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Circle', `Failed to create circle: ${error.message}`);
+                updateStatus('Error creating circle');
+            }
+        }
+        
+        function createPyramid() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createPyramid({
+                    width: 2,
+                    height: 2,
+                    depth: 2,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'planar',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Pyramid');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Pyramid Created Successfully!', 
+                    `A pyramid with base 2x2, height 2, ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Planar UV mapping<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation<br>
+                    ✅ Triangular and quad faces`);
+                updateStatus('Pyramid created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Pyramid', `Failed to create pyramid: ${error.message}`);
+                updateStatus('Error creating pyramid');
+            }
+        }
+        
+        function createTetrahedron() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createTetrahedron({
+                    radius: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'spherical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Tetrahedron');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Tetrahedron Created Successfully!', 
+                    `A regular tetrahedron with radius 1, ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Spherical UV mapping<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation<br>
+                    ✅ Platonic solid`);
+                updateStatus('Tetrahedron created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Tetrahedron', `Failed to create tetrahedron: ${error.message}`);
+                updateStatus('Error creating tetrahedron');
+            }
+        }
+        
+        function createOctahedron() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createOctahedron({
+                    radius: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'spherical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Octahedron');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Octahedron Created Successfully!', 
+                    `A regular octahedron with radius 1, ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Spherical UV mapping<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation<br>
+                    ✅ Platonic solid`);
+                updateStatus('Octahedron created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Octahedron', `Failed to create octahedron: ${error.message}`);
+                updateStatus('Error creating octahedron');
+            }
+        }
+        
+        function createIcosahedron() {
+            creationStartTime = Date.now();
+            try {
+                currentMesh = ThreeEdit.createIcosahedron({
+                    radius: 1,
+                    materialId: 0,
+                    centered: true,
+                    uvLayout: 'spherical',
+                    smoothNormals: false,
+                    validate: true
+                });
+                
+                const creationTime = Date.now() - creationStartTime;
+                displayMesh(currentMesh, 'Icosahedron');
+                updateStats(currentMesh, creationTime);
+                updateInfo('Icosahedron Created Successfully!', 
+                    `A regular icosahedron with radius 1, ${currentMesh.vertices.length} vertices, ${currentMesh.edges.length} edges, and ${currentMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ Spherical UV mapping<br>
+                    ✅ Centered positioning<br>
+                    ✅ Material assignment<br>
+                    ✅ Automatic validation<br>
+                    ✅ Platonic solid`);
+                updateStatus('Icosahedron created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Icosahedron', `Failed to create icosahedron: ${error.message}`);
+                updateStatus('Error creating icosahedron');
+            }
+        }
+        
+        // Initialize the demo
+        window.addEventListener('load', () => {
+            initScene();
+            updateStatus('Demo ready - click a button to create a primitive');
+        });
+    </script>
+</body>
+</html> 

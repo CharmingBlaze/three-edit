@@ -67,9 +67,10 @@ export function createRoundedBox(options: CreateRoundedBoxOptions = {}): Editabl
       const y = centerY + Math.sin(angle) * cornerRadius;
       const z = centerZ;
       
-      const vertex = new Vertex(x, y, z);
-      vertex.uv = { u: i / segments, v: 0 };
+      const u = i / segments;
+      const v = 0;
       
+      const vertex = new Vertex(x, y, z, { uv: { u, v } });
       const vertexIndex = mesh.addVertex(vertex);
       vertices.push(vertexIndex);
     }
@@ -128,10 +129,11 @@ export function createRoundedBox(options: CreateRoundedBoxOptions = {}): Editabl
           );
           heightRow.push(...cornerVertices);
         } else {
-          // Regular vertex
-          const vertex = new Vertex(x, y, z);
-          vertex.uv = { u: w / widthSegments, v: h / heightSegments };
+          // Regular vertex with UVs
+          const u = w / widthSegments;
+          const v = h / heightSegments;
           
+          const vertex = new Vertex(x, y, z, { uv: { u, v } });
           const vertexIndex = mesh.addVertex(vertex);
           heightRow.push(vertexIndex);
         }

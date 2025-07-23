@@ -1,95 +1,103 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Edge } from '../core/Edge.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { CreateTorusOptions } from './types';
+import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { validatePrimitive } from './validation';
 
 /**
- * Options for creating a torus
- */
-export interface CreateTorusOptions {
-  /** Radius of the torus (distance from center to tube center) */
-  radius?: number;
-  /** Radius of the tube */
-  tubeRadius?: number;
-  /** Number of radial segments (around the torus) */
-  radialSegments?: number;
-  /** Number of tubular segments (around the tube) */
-  tubularSegments?: number;
-  /** Starting angle in radians */
-  arc?: number;
-  /** Name of the mesh */
-  name?: string;
-}
-
-/**
- * Creates a torus as an EditableMesh
- * @param options Options for creating the torus
- * @returns A new EditableMesh instance representing a torus
+ * Creates a torus as an EditableMesh.
+ * @param options - Options for creating the torus.
+ * @returns A new EditableMesh instance representing a torus.
  */
 export function createTorus(options: CreateTorusOptions = {}): EditableMesh {
-  const radius = options.radius ?? 1;
-  const tubeRadius = options.tubeRadius ?? 0.4;
-  const radialSegments = Math.max(3, Math.floor(options.radialSegments ?? 8));
-  const tubularSegments = Math.max(3, Math.floor(options.tubularSegments ?? 6));
-  const arc = options.arc ?? Math.PI * 2;
-  const name = options.name ?? 'Torus';
-  
-  const mesh = new EditableMesh({ name });
-  
-  // Create vertices for the torus
-  const vertices: number[][] = [];
-  
-  // Create vertices in a grid
-  for (let r = 0; r <= radialSegments; r++) {
-    const u = r / radialSegments * arc;
+  // Normalize options with defaults
+  const normalizedOptions = normalizeOptions(options, {
+    radius: 1,
+    tube: 0.4,
+    radialSegments: 8,
+    tubularSegments: 6,
+    arc: Math.PI * 2,
+    name: 'Torus',
+    materialId: 0,
+    centered: true,
+    uvLayout: 'cylindrical',
+    smoothNormals: true,
+    validate: true
+  }) as Required<CreateTorusOptions>;
+
+  // Validate parameters
+  if (normalizedOptions.radius <= 0) {
+    throw new Error('Torus radius must be positive');
+  }
+  if (normalizedOptions.tube <= 0) {
+    throw new Error('Torus tube must be positive');
+  }
+  if (normalizedOptions.radialSegments < 3) {
+    throw new Error('Torus radialSegments must be at least 3');
+  }
+  if (normalizedOptions.tubularSegments < 3) {
+    throw new Error('Torus tubularSegments must be at least 3');
+  }
+
+  // Create mesh and context
+  const mesh = new EditableMesh({ name: normalizedOptions.name });
+  const context = createPrimitiveContext(mesh, normalizedOptions);
+
+  // Calculate offsets for centered positioning
+  const offsetX = normalizedOptions.centered ? 0 : normalizedOptions.radius;
+  const offsetY = normalizedOptions.centered ? 0 : normalizedOptions.tube;
+  const offsetZ = normalizedOptions.centered ? 0 : normalizedOptions.radius;
+
+  const grid: number[][] = [];
+
+  // Create vertices with UVs
+  for (let i = 0; i <= normalizedOptions.radialSegments; i++) {
     const row: number[] = [];
+    const u = i / normalizedOptions.radialSegments;
+    const theta = u * normalizedOptions.arc;
     
-    for (let t = 0; t <= tubularSegments; t++) {
-      const v = t / tubularSegments * Math.PI * 2;
+    for (let j = 0; j <= normalizedOptions.tubularSegments; j++) {
+      const v = j / normalizedOptions.tubularSegments;
+      const phi = v * Math.PI * 2;
       
-      // Calculate position
-      const x = (radius + tubeRadius * Math.cos(v)) * Math.cos(u);
-      const y = (radius + tubeRadius * Math.cos(v)) * Math.sin(u);
-      const z = tubeRadius * Math.sin(v);
+      const x = offsetX + (normalizedOptions.radius + normalizedOptions.tube * Math.cos(phi)) * Math.cos(theta);
+      const y = offsetY + normalizedOptions.tube * Math.sin(phi);
+      const z = offsetZ + (normalizedOptions.radius + normalizedOptions.tube * Math.cos(phi)) * Math.sin(theta);
       
-      const vertex = new Vertex(x, y, z);
+      const uv = { u, v };
       
-      // Generate UVs
-      const uvU = r / radialSegments;
-      const uvV = t / tubularSegments;
-      vertex.uv = { u: uvU, v: uvV };
-      
-      const vertexIndex = mesh.addVertex(vertex);
-      row.push(vertexIndex);
+      const result = createVertex(mesh, {
+        x,
+        y,
+        z,
+        uv
+      }, context);
+      row.push(result.id);
     }
-    
-    vertices.push(row);
+    grid.push(row);
   }
-  
-  // Create edges and faces
-  for (let r = 0; r < radialSegments; r++) {
-    for (let t = 0; t < tubularSegments; t++) {
-      const a = vertices[r][t];
-      const b = vertices[r][t + 1];
-      const c = vertices[r + 1][t + 1];
-      const d = vertices[r + 1][t];
+
+  // Create faces
+  for (let i = 0; i < normalizedOptions.radialSegments; i++) {
+    for (let j = 0; j < normalizedOptions.tubularSegments; j++) {
+      const v1 = grid[i][j];
+      const v2 = grid[i + 1][j];
+      const v3 = grid[i + 1][j + 1];
+      const v4 = grid[i][j + 1];
       
-      // Create edges
-      const edgeAB = mesh.addEdge(new Edge(a, b));
-      const edgeBC = mesh.addEdge(new Edge(b, c));
-      const edgeCD = mesh.addEdge(new Edge(c, d));
-      const edgeDA = mesh.addEdge(new Edge(d, a));
-      
-      // Create face (material index 0)
-      mesh.addFace(
-        new Face(
-          [a, b, c, d],
-          [edgeAB, edgeBC, edgeCD, edgeDA],
-          { materialIndex: 0 }
-        )
-      );
+      createFace(mesh, {
+        vertexIds: [v1, v2, v3, v4],
+        materialId: normalizedOptions.materialId
+      }, context);
     }
   }
-  
+
+  // Validate if requested
+  if (normalizedOptions.validate) {
+    const validation = validatePrimitive(mesh, 'Torus');
+    if (!validation.isValid) {
+      console.warn('Torus validation warnings:', validation.warnings);
+    }
+  }
+
   return mesh;
-} 
+}

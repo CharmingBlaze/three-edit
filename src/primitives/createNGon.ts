@@ -53,19 +53,16 @@ export function createNGon(options: CreateNGonOptions = {}): EditableMesh {
     const y = (h / heightSegments - 0.5) * height;
     const row: number[] = [];
     
-    // Create vertices around the perimeter
+    // Create vertices around the perimeter with UVs
     for (let s = 0; s <= sides; s++) {
       const theta = thetaStart + (s / sides) * thetaLength;
       const x = Math.cos(theta) * radius;
       const z = Math.sin(theta) * radius;
       
-      const vertex = new Vertex(x, y, z);
-      
-      // Generate UVs
       const u = s / sides;
       const v = h / heightSegments;
-      vertex.uv = { u, v };
       
+      const vertex = new Vertex(x, y, z, { uv: { u, v } });
       const vertexIndex = mesh.addVertex(vertex);
       row.push(vertexIndex);
     }
@@ -110,8 +107,7 @@ export function createNGon(options: CreateNGonOptions = {}): EditableMesh {
       }
       mesh.addFace(new Face(bottomVertices, bottomEdges, { materialIndex: 1 }));
     } else {
-      const bottomCenterVertex = new Vertex(0, -halfHeight, 0);
-      bottomCenterVertex.uv = { u: 0.5, v: 0.5 };
+      const bottomCenterVertex = new Vertex(0, -halfHeight, 0, { uv: { u: 0.5, v: 0.5 } });
       const bottomCenterIndex = mesh.addVertex(bottomCenterVertex);
       for (let s = 0; s < sides; s++) {
         const v1 = vertices[0][s];
@@ -132,8 +128,7 @@ export function createNGon(options: CreateNGonOptions = {}): EditableMesh {
       }
       mesh.addFace(new Face(topVertices, topEdges, { materialIndex: 2 }));
     } else {
-      const topCenterVertex = new Vertex(0, halfHeight, 0);
-      topCenterVertex.uv = { u: 0.5, v: 0.5 };
+      const topCenterVertex = new Vertex(0, halfHeight, 0, { uv: { u: 0.5, v: 0.5 } });
       const topCenterIndex = mesh.addVertex(topCenterVertex);
       for (let s = 0; s < sides; s++) {
         const v1 = vertices[heightSegments][s];

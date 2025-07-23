@@ -1,156 +1,124 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Edge } from '../core/Edge.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { CreateConeOptions } from './types';
+import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { validatePrimitive } from './validation';
 
 /**
- * Options for creating a cone
- */
-export interface CreateConeOptions {
-  /** Radius of the base */
-  radius?: number;
-  /** Height of the cone */
-  height?: number;
-  /** Number of radial segments (around the circumference) */
-  radialSegments?: number;
-  /** Number of height segments */
-  heightSegments?: number;
-  /** Whether the cone is open-ended (no base) */
-  openEnded?: boolean;
-  /** Starting angle in radians */
-  thetaStart?: number;
-  /** Ending angle in radians */
-  thetaLength?: number;
-  /** Name of the mesh */
-  name?: string;
-}
-
-/**
- * Creates a cone as an EditableMesh
- * @param options Options for creating the cone
- * @returns A new EditableMesh instance representing a cone
+ * Creates a cone as an EditableMesh.
+ * @param options - Options for creating the cone.
+ * @returns A new EditableMesh instance representing a cone.
  */
 export function createCone(options: CreateConeOptions = {}): EditableMesh {
-  const radius = options.radius ?? 1;
-  const height = options.height ?? 2;
-  const radialSegments = Math.max(3, Math.floor(options.radialSegments ?? 8));
-  const heightSegments = Math.max(1, Math.floor(options.heightSegments ?? 1));
-  const openEnded = options.openEnded ?? false;
-  const thetaStart = options.thetaStart ?? 0;
-  const thetaLength = options.thetaLength ?? Math.PI * 2;
-  const name = options.name ?? 'Cone';
-  
-  const mesh = new EditableMesh({ name });
-  
-  // Calculate half height for positioning
-  const halfHeight = height / 2;
-  
-  // Create vertices for the cone
-  const vertices: number[][] = [];
-  
-  // Create vertices for each height segment
-  for (let h = 0; h <= heightSegments; h++) {
-    const y = (h / heightSegments - 0.5) * height;
-    const currentRadius = radius * (1 - h / heightSegments); // Radius decreases towards the top
+  // Normalize options with defaults
+  const normalizedOptions = normalizeOptions(options, {
+    radius: 1,
+    height: 2,
+    radialSegments: 8,
+    heightSegments: 1,
+    openEnded: false,
+    name: 'Cone',
+    materialId: 0,
+    centered: true,
+    uvLayout: 'cylindrical',
+    smoothNormals: false,
+    validate: true
+  }) as Required<CreateConeOptions>;
+
+  // Validate parameters
+  if (normalizedOptions.radius <= 0) {
+    throw new Error('Cone radius must be positive');
+  }
+  if (normalizedOptions.height <= 0) {
+    throw new Error('Cone height must be positive');
+  }
+  if (normalizedOptions.radialSegments < 3) {
+    throw new Error('Cone radialSegments must be at least 3');
+  }
+  if (normalizedOptions.heightSegments < 1) {
+    throw new Error('Cone heightSegments must be at least 1');
+  }
+
+  // Create mesh and context
+  const mesh = new EditableMesh({ name: normalizedOptions.name });
+  const context = createPrimitiveContext(mesh, normalizedOptions);
+
+  // Calculate offsets for centered positioning
+  const offsetY = normalizedOptions.centered ? 0 : normalizedOptions.height / 2;
+  const halfHeight = normalizedOptions.height / 2;
+
+  const grid: number[][] = [];
+
+  // Create vertices with UVs
+  for (let h = 0; h <= normalizedOptions.heightSegments; h++) {
+    const y = offsetY + (h / normalizedOptions.heightSegments - 0.5) * normalizedOptions.height;
     const row: number[] = [];
     
-    // Create vertices around the circumference
-    for (let r = 0; r <= radialSegments; r++) {
-      const theta = thetaStart + (r / radialSegments) * thetaLength;
-      const x = Math.cos(theta) * currentRadius;
-      const z = Math.sin(theta) * currentRadius;
+    for (let r = 0; r <= normalizedOptions.radialSegments; r++) {
+      const theta = (r / normalizedOptions.radialSegments) * Math.PI * 2;
       
-      const vertex = new Vertex(x, y, z);
+      // Interpolate radius from base to tip
+      const radius = normalizedOptions.radius * (1 - h / normalizedOptions.heightSegments);
       
-      // Generate UVs
-      const u = r / radialSegments;
-      const v = h / heightSegments;
-      vertex.uv = { u, v };
+      const x = Math.cos(theta) * radius;
+      const z = Math.sin(theta) * radius;
+      const u = r / normalizedOptions.radialSegments;
+      const v = h / normalizedOptions.heightSegments;
       
-      const vertexIndex = mesh.addVertex(vertex);
-      row.push(vertexIndex);
+      const uv = { u, v };
+      
+      const result = createVertex(mesh, {
+        x,
+        y,
+        z,
+        uv
+      }, context);
+      row.push(result.id);
     }
-    
-    vertices.push(row);
+    grid.push(row);
   }
-  
-  // Create edges and faces for the side walls
-  for (let h = 0; h < heightSegments; h++) {
-    for (let r = 0; r < radialSegments; r++) {
-      const a = vertices[h][r];
-      const b = vertices[h][r + 1];
-      const c = vertices[h + 1][r + 1];
-      const d = vertices[h + 1][r];
+
+  // Create side faces
+  for (let h = 0; h < normalizedOptions.heightSegments; h++) {
+    for (let r = 0; r < normalizedOptions.radialSegments; r++) {
+      const v1 = grid[h][r];
+      const v2 = grid[h + 1][r];
+      const v3 = grid[h + 1][r + 1];
+      const v4 = grid[h][r + 1];
       
-      // Create edges
-      const edgeAB = mesh.addEdge(new Edge(a, b));
-      const edgeBC = mesh.addEdge(new Edge(b, c));
-      const edgeCD = mesh.addEdge(new Edge(c, d));
-      const edgeDA = mesh.addEdge(new Edge(d, a));
-      
-      // Create face (material index 0 for sides)
-      mesh.addFace(
-        new Face(
-          [a, b, c, d],
-          [edgeAB, edgeBC, edgeCD, edgeDA],
-          { materialIndex: 0 }
-        )
-      );
+      createFace(mesh, {
+        vertexIds: [v1, v2, v3, v4],
+        materialId: normalizedOptions.materialId
+      }, context);
     }
   }
-  
-  // Create base if not open-ended
-  if (!openEnded) {
-    // Base cap
-    if (thetaLength === Math.PI * 2) {
-      // Full circle - create a single face
-      const baseVertices: number[] = [];
-      const baseEdges: number[] = [];
+
+  // Create base cap if not open-ended
+  if (!normalizedOptions.openEnded) {
+    const baseCenterVertex = createVertex(mesh, {
+      x: 0,
+      y: offsetY - halfHeight,
+      z: 0,
+      uv: { u: 0.5, v: 0.5 }
+    }, context);
+
+    for (let r = 0; r < normalizedOptions.radialSegments; r++) {
+      const v1 = grid[0][r];
+      const v2 = grid[0][r + 1];
       
-      for (let r = 0; r < radialSegments; r++) {
-        baseVertices.push(vertices[0][r]);
-        if (r > 0) {
-          const edge = mesh.addEdge(new Edge(vertices[0][r - 1], vertices[0][r]));
-          baseEdges.push(edge);
-        }
-      }
-      
-      // Close the circle
-      const edge = mesh.addEdge(new Edge(vertices[0][radialSegments - 1], vertices[0][0]));
-      baseEdges.push(edge);
-      
-      mesh.addFace(
-        new Face(
-          baseVertices,
-          baseEdges,
-          { materialIndex: 1 } // Base material
-        )
-      );
-    } else {
-      // Partial circle - create individual triangles
-      // Create center vertex for the base
-      const baseCenterVertex = new Vertex(0, -halfHeight, 0);
-      baseCenterVertex.uv = { u: 0.5, v: 0.5 };
-      const baseCenterIndex = mesh.addVertex(baseCenterVertex);
-      
-      for (let r = 0; r < radialSegments; r++) {
-        const v1 = vertices[0][r];
-        const v2 = vertices[0][r + 1];
-        
-        const edge1 = mesh.addEdge(new Edge(baseCenterIndex, v1));
-        const edge2 = mesh.addEdge(new Edge(v1, v2));
-        const edge3 = mesh.addEdge(new Edge(v2, baseCenterIndex));
-        
-        mesh.addFace(
-          new Face(
-            [baseCenterIndex, v1, v2],
-            [edge1, edge2, edge3],
-            { materialIndex: 1 }
-          )
-        );
-      }
+      createFace(mesh, {
+        vertexIds: [baseCenterVertex.id, v2, v1],
+        materialId: normalizedOptions.materialId
+      }, context);
     }
   }
-  
+
+  // Validate if requested
+  if (normalizedOptions.validate) {
+    const validation = validatePrimitive(mesh, 'Cone');
+    if (!validation.isValid) {
+      console.warn('Cone validation warnings:', validation.warnings);
+    }
+  }
+
   return mesh;
-} 
+}

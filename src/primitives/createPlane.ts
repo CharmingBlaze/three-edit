@@ -1,89 +1,99 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Edge } from '../core/Edge.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { CreatePlaneOptions } from './types';
+import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { validatePrimitive } from './validation';
 
 /**
- * Options for creating a plane
- */
-export interface CreatePlaneOptions {
-  /** Width of the plane */
-  width?: number;
-  /** Height of the plane */
-  height?: number;
-  /** Number of width segments */
-  widthSegments?: number;
-  /** Number of height segments */
-  heightSegments?: number;
-  /** Name of the mesh */
-  name?: string;
-}
-
-/**
- * Creates a plane as an EditableMesh
- * @param options Options for creating the plane
- * @returns A new EditableMesh instance representing a plane
+ * Creates a plane as an EditableMesh.
+ * @param options - Options for creating the plane.
+ * @returns A new EditableMesh instance representing a plane.
  */
 export function createPlane(options: CreatePlaneOptions = {}): EditableMesh {
-  const width = options.width ?? 1;
-  const height = options.height ?? 1;
-  const widthSegments = Math.max(1, Math.floor(options.widthSegments ?? 1));
-  const heightSegments = Math.max(1, Math.floor(options.heightSegments ?? 1));
-  const name = options.name ?? 'Plane';
-  
-  const mesh = new EditableMesh({ name });
-  
-  // Create vertices for the plane
-  const vertices: number[][] = [];
-  
-  // Create vertices in a grid
-  for (let h = 0; h <= heightSegments; h++) {
-    const y = (h / heightSegments - 0.5) * height;
+  // Normalize options with defaults
+  const normalizedOptions = normalizeOptions(options, {
+    width: 1,
+    height: 1,
+    widthSegments: 1,
+    heightSegments: 1,
+    name: 'Plane',
+    materialId: 0,
+    centered: true,
+    uvLayout: 'planar',
+    smoothNormals: false,
+    validate: true
+  }) as Required<CreatePlaneOptions>;
+
+  // Validate parameters
+  if (normalizedOptions.width <= 0) {
+    throw new Error('Plane width must be positive');
+  }
+  if (normalizedOptions.height <= 0) {
+    throw new Error('Plane height must be positive');
+  }
+  if (normalizedOptions.widthSegments < 1) {
+    throw new Error('Plane widthSegments must be at least 1');
+  }
+  if (normalizedOptions.heightSegments < 1) {
+    throw new Error('Plane heightSegments must be at least 1');
+  }
+
+  // Create mesh and context
+  const mesh = new EditableMesh({ name: normalizedOptions.name });
+  const context = createPrimitiveContext(mesh, normalizedOptions);
+
+  // Calculate offsets for centered positioning
+  const offsetX = normalizedOptions.centered ? 0 : normalizedOptions.width / 2;
+  const offsetZ = normalizedOptions.centered ? 0 : normalizedOptions.height / 2;
+
+  const grid: number[][] = [];
+
+  // Create vertices with UVs
+  for (let h = 0; h <= normalizedOptions.heightSegments; h++) {
     const row: number[] = [];
+    const z = offsetZ + (h / normalizedOptions.heightSegments - 0.5) * normalizedOptions.height;
     
-    for (let w = 0; w <= widthSegments; w++) {
-      const x = (w / widthSegments - 0.5) * width;
-      const z = 0; // Plane is in XZ plane
+    for (let w = 0; w <= normalizedOptions.widthSegments; w++) {
+      const x = offsetX + (w / normalizedOptions.widthSegments - 0.5) * normalizedOptions.width;
+      const y = 0;
+      const u = w / normalizedOptions.widthSegments;
+      const v = h / normalizedOptions.heightSegments;
       
-      const vertex = new Vertex(x, y, z);
+      const uv = { u, v };
       
-      // Generate UVs
-      const u = w / widthSegments;
-      const v = h / heightSegments;
-      vertex.uv = { u, v };
-      
-      const vertexIndex = mesh.addVertex(vertex);
-      row.push(vertexIndex);
+      const result = createVertex(mesh, {
+        x,
+        y,
+        z,
+        uv
+      }, context);
+      row.push(result.id);
     }
-    
-    vertices.push(row);
+    grid.push(row);
   }
-  
-  const edgeMap: { [key: string]: number } = {};
-  const addEdge = (v1: number, v2: number): number => {
-    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
-    if (edgeMap[key] === undefined) {
-      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
-    }
-    return edgeMap[key];
-  };
 
-  // Create edges and faces
-  for (let h = 0; h < heightSegments; h++) {
-    for (let w = 0; w < widthSegments; w++) {
-      const v1 = vertices[h][w];
-      const v2 = vertices[h][w + 1];
-      const v3 = vertices[h + 1][w + 1];
-      const v4 = vertices[h + 1][w];
-
-      const edge1 = addEdge(v1, v2);
-      const edge2 = addEdge(v2, v3);
-      const edge3 = addEdge(v3, v4);
-      const edge4 = addEdge(v4, v1);
-
-      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
+  // Create faces
+  for (let h = 0; h < normalizedOptions.heightSegments; h++) {
+    for (let w = 0; w < normalizedOptions.widthSegments; w++) {
+      const v1 = grid[h][w];
+      const v2 = grid[h][w + 1];
+      const v3 = grid[h + 1][w + 1];
+      const v4 = grid[h + 1][w];
+      
+      createFace(mesh, {
+        vertexIds: [v1, v2, v3, v4],
+        materialId: normalizedOptions.materialId
+      }, context);
     }
   }
-  
+
+  // Validate if requested
+  if (normalizedOptions.validate) {
+    const validation = validatePrimitive(mesh, 'Plane');
+    if (!validation.isValid) {
+      console.warn('Plane validation warnings:', validation.warnings);
+    }
+  }
+
   return mesh;
-} 
+}
+ 

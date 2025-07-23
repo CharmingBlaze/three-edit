@@ -1,127 +1,113 @@
-import { EditableMesh } from '../core/index.ts';
-import { Vertex } from '../core/index.ts';
-import { Edge } from '../core/index.ts';
-import { Face } from '../core/index.ts';
-import { Vector3 } from 'three';
+import { EditableMesh } from '../core/EditableMesh';
+import { CreateSphereOptions } from './types';
+import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { validatePrimitive } from './validation';
 
 /**
- * Options for creating a sphere
- */
-export interface CreateSphereOptions {
-  /** Radius of the sphere */
-  radius?: number;
-  /** Number of horizontal segments */
-  widthSegments?: number;
-  /** Number of vertical segments */
-  heightSegments?: number;
-  /** Starting horizontal angle in radians */
-  phiStart?: number;
-  /** Horizontal sweep angle size in radians */
-  phiLength?: number;
-  /** Starting vertical angle in radians */
-  thetaStart?: number;
-  /** Vertical sweep angle size in radians */
-  thetaLength?: number;
-  /** Name of the mesh */
-  name?: string;
-}
-
-/**
- * Creates a sphere as an EditableMesh
- * @param options Options for creating the sphere
- * @returns A new EditableMesh instance representing a sphere
+ * Creates a sphere as an EditableMesh.
+ * @param options - Options for creating the sphere.
+ * @returns A new EditableMesh instance representing a sphere.
  */
 export function createSphere(options: CreateSphereOptions = {}): EditableMesh {
-  const radius = options.radius ?? 1;
-  const widthSegments = Math.max(3, Math.floor(options.widthSegments ?? 32));
-  const heightSegments = Math.max(2, Math.floor(options.heightSegments ?? 16));
-  const phiStart = options.phiStart ?? 0;
-  const phiLength = options.phiLength ?? Math.PI * 2;
-  const thetaStart = options.thetaStart ?? 0;
-  const thetaLength = options.thetaLength ?? Math.PI;
-  const name = options.name ?? 'Sphere';
-  
-  const mesh = new EditableMesh({ name });
-  
-  // Create a grid of vertices
-  const vertexGrid: number[][] = [];
-  
-  // Generate vertices
-  for (let iy = 0; iy <= heightSegments; iy++) {
-    const vertexRow: number[] = [];
-    const v = iy / heightSegments;
-    
-    // Calculate the current vertical angle
-    const theta = thetaStart + v * thetaLength;
-    const sinTheta = Math.sin(theta);
-    const cosTheta = Math.cos(theta);
-    
-    for (let ix = 0; ix <= widthSegments; ix++) {
-      const u = ix / widthSegments;
-      
-      // Calculate the current horizontal angle
-      const phi = phiStart + u * phiLength;
-      
-      // Calculate the vertex position
-      const x = -radius * Math.cos(phi) * sinTheta;
-      const y = radius * cosTheta;
-      const z = radius * Math.sin(phi) * sinTheta;
-      
-      // Create vertex with position and normal
-      const vertex = new Vertex(x, y, z);
-      
-      // Set normal (normalized position vector for a sphere)
-      const normal = new Vector3(x, y, z).normalize();
-      vertex.normal = normal;
-      
-      // Set UV coordinates
-      vertex.uv = { u, v };
-      
-      // Add vertex to mesh and store its index
-      const vertexIndex = mesh.addVertex(vertex);
-      vertexRow.push(vertexIndex);
-    }
-    
-    vertexGrid.push(vertexRow);
+  // Normalize options with defaults
+  const normalizedOptions = normalizeOptions(options, {
+    radius: 1,
+    widthSegments: 32,
+    heightSegments: 16,
+    phiStart: 0,
+    phiLength: Math.PI * 2,
+    thetaStart: 0,
+    thetaLength: Math.PI,
+    name: 'Sphere',
+    materialId: 0,
+    centered: true,
+    uvLayout: 'spherical',
+    smoothNormals: true,
+    validate: true
+  }) as Required<CreateSphereOptions>;
+
+  // Validate parameters
+  if (normalizedOptions.radius <= 0) {
+    throw new Error('Sphere radius must be positive');
   }
-  
-  const edgeMap: { [key: string]: number } = {};
-  const addEdge = (v1: number, v2: number): number => {
-    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
-    if (edgeMap[key] === undefined) {
-      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
+  if (normalizedOptions.widthSegments < 3) {
+    throw new Error('Sphere widthSegments must be at least 3');
+  }
+  if (normalizedOptions.heightSegments < 2) {
+    throw new Error('Sphere heightSegments must be at least 2');
+  }
+
+  // Create mesh and context
+  const mesh = new EditableMesh({ name: normalizedOptions.name });
+  const context = createPrimitiveContext(mesh, normalizedOptions);
+
+  // Calculate offsets for centered positioning
+  const offsetX = normalizedOptions.centered ? 0 : normalizedOptions.radius;
+  const offsetY = normalizedOptions.centered ? 0 : normalizedOptions.radius;
+  const offsetZ = normalizedOptions.centered ? 0 : normalizedOptions.radius;
+
+  const grid: number[][] = [];
+
+  // Create vertices with UVs
+  for (let iy = 0; iy <= normalizedOptions.heightSegments; iy++) {
+    const verticesRow: number[] = [];
+    const v = iy / normalizedOptions.heightSegments;
+
+    for (let ix = 0; ix <= normalizedOptions.widthSegments; ix++) {
+      const u = ix / normalizedOptions.widthSegments;
+      const x = offsetX - normalizedOptions.radius * Math.cos(normalizedOptions.phiStart + u * normalizedOptions.phiLength) * Math.sin(normalizedOptions.thetaStart + v * normalizedOptions.thetaLength);
+      const y = offsetY + normalizedOptions.radius * Math.cos(normalizedOptions.thetaStart + v * normalizedOptions.thetaLength);
+      const z = offsetZ + normalizedOptions.radius * Math.sin(normalizedOptions.phiStart + u * normalizedOptions.phiLength) * Math.sin(normalizedOptions.thetaStart + v * normalizedOptions.thetaLength);
+      
+      const uv = { u, v };
+      
+      const result = createVertex(mesh, {
+        x,
+        y,
+        z,
+        uv
+      }, context);
+      verticesRow.push(result.id);
     }
-    return edgeMap[key];
-  };
+    grid.push(verticesRow);
+  }
 
-  // Create faces and edges
-  for (let iy = 0; iy < heightSegments; iy++) {
-    for (let ix = 0; ix < widthSegments; ix++) {
-      const a = vertexGrid[iy][ix];
-      const b = vertexGrid[iy][ix + 1];
-      const c = vertexGrid[iy + 1][ix + 1];
-      const d = vertexGrid[iy + 1][ix];
+  // Create faces
+  for (let iy = 0; iy < normalizedOptions.heightSegments; iy++) {
+    for (let ix = 0; ix < normalizedOptions.widthSegments; ix++) {
+      const v1 = grid[iy][ix + 1];
+      const v2 = grid[iy][ix];
+      const v3 = grid[iy + 1][ix];
+      const v4 = grid[iy + 1][ix + 1];
 
-      if (iy === 0 && thetaStart === 0) {
-        // Top pole
-        const edge1 = addEdge(a, c);
-        const edge2 = addEdge(c, b);
-        mesh.addFace(new Face([a, c, b], [edge1, edge2, addEdge(b,a)], { materialIndex: 0 }));
-      } else if (iy === heightSegments - 1 && thetaStart + thetaLength === Math.PI) {
-        // Bottom pole
-        const edge1 = addEdge(a, d);
-        const edge2 = addEdge(d, c);
-        mesh.addFace(new Face([a, d, c], [edge1, edge2, addEdge(c,a)], { materialIndex: 0 }));
+      let faceVertexIds: number[];
+
+      if (iy === 0 && normalizedOptions.thetaStart === 0) {
+        // Bottom pole - create triangular face
+        faceVertexIds = [v1, v3, v4];
+      } else if (iy === normalizedOptions.heightSegments - 1 && normalizedOptions.thetaStart + normalizedOptions.thetaLength === Math.PI) {
+        // Top pole - create triangular face
+        faceVertexIds = [v1, v2, v3];
       } else {
-        // Quad face
-        const edge1 = addEdge(a,b);
-        const edge2 = addEdge(b,c);
-        const edge3 = addEdge(c,d);
-        const edge4 = addEdge(d,a);
-        mesh.addFace(new Face([a, b, c, d], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
+        // Regular quad face
+        faceVertexIds = [v1, v2, v3, v4];
       }
+
+      createFace(mesh, {
+        vertexIds: faceVertexIds,
+        materialId: normalizedOptions.materialId
+      }, context);
     }
   }
-  
+
+  // Validate if requested
+  if (normalizedOptions.validate) {
+    const validation = validatePrimitive(mesh, 'Sphere');
+    if (!validation.isValid) {
+      console.warn('Sphere validation warnings:', validation.warnings);
+    }
+  }
+
   return mesh;
 }
+

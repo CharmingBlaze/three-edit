@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Working Three-Edit Primitives Demo</title>
+    <link rel="stylesheet" href="demo-styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Working Three-Edit Primitives Demo</h1>
+        <p style="text-align: center; color: #ccc; margin-bottom: 30px;">
+            Demo showing the primitives that work in the browser version
+        </p>
+        
+        <div class="controls">
+            <button onclick="createCube()">🧱 Cube</button>
+            <button onclick="createSphere()">🔵 Sphere</button>
+            <button onclick="showAllAvailable()">🎨 Show All Available</button>
+            <button onclick="clearScene()">🗑️ Clear Scene</button>
+            <button onclick="toggleRotation()">🔄 Toggle Rotation</button>
+        </div>
+        
+        <div class="canvas-container" id="canvas">
+            <div class="status">Ready - Click a button to create primitives</div>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="total-primitives">0</div>
+                <div class="stat-label">Total Primitives</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-vertices">0</div>
+                <div class="stat-label">Total Vertices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-faces">0</div>
+                <div class="stat-label">Total Faces</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="creation-time">0ms</div>
+                <div class="stat-label">Creation Time</div>
+            </div>
+        </div>
+        
+        <div class="info" id="info">
+            <strong>Working Primitives Demo</strong><br><br>
+            This demo shows the primitives that are currently available in the browser version of three-edit.<br><br>
+            
+            <strong>Available in browser:</strong><br>
+            🧱 Cube - Basic cube primitive<br>
+            🔵 Sphere - Sphere with segments<br><br>
+            
+            <strong>Note:</strong> The browser version is a simplified version. The full library has many more primitives 
+            that are available when using the npm package with TypeScript/ES modules.<br><br>
+            
+            <strong>Features demonstrated:</strong><br>
+            ✅ EditableMesh creation<br>
+            ✅ Three.js conversion<br>
+            ✅ Real-time 3D rendering<br>
+            ✅ Multiple object management<br>
+            ✅ Performance statistics
+        </div>
+        
+        <div class="code-example">
+// Browser version - Limited primitives available:
+
+// Create a cube
+const cube = ThreeEdit.createCube({
+    size: 1.5
+});
+
+// Create a sphere
+const sphere = ThreeEdit.createSphere({
+    radius: 0.8,
+    segments: 16
+});
+
+// Convert to Three.js BufferGeometry
+const geometry = ThreeEdit.toBufferGeometry(cube);
+const material = new THREE.MeshPhongMaterial({ color: 0x4CAF50 });
+const mesh = new THREE.Mesh(geometry, material);
+
+// Full library (npm package) has many more primitives:
+// createCylinder, createCone, createPlane, createTorus, etc.
+        </div>
+    </div>
+
+    <!-- Load Three.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"></script>
+    
+    <!-- Load three-edit browser version -->
+    <script src="../browser/three-edit.js"></script>
+    
+    <script>
+        // Global variables
+        let scene, camera, renderer;
+        let meshes = [];
+        let isRotating = true;
+        let creationStartTime = 0;
+        
+        // Initialize Three.js scene
+        function initScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, 800 / 500, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 500);
+            renderer.setClearColor(0x000000);
+            
+            const container = document.getElementById('canvas');
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+            
+            camera.position.set(0, 5, 15);
+            camera.lookAt(0, 0, 0);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (isRotating) {
+                meshes.forEach((mesh, index) => {
+                    mesh.rotation.x += 0.01;
+                    mesh.rotation.y += 0.01;
+                });
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Update statistics display
+        function updateStats(totalPrimitives, totalVertices, totalFaces, creationTime) {
+            document.getElementById('total-primitives').textContent = totalPrimitives;
+            document.getElementById('total-vertices').textContent = totalVertices;
+            document.getElementById('total-faces').textContent = totalFaces;
+            document.getElementById('creation-time').textContent = creationTime + 'ms';
+        }
+        
+        // Update info display
+        function updateInfo(message, details = '') {
+            const info = document.getElementById('info');
+            info.innerHTML = `<strong>${message}</strong><br><br>${details}`;
+        }
+        
+        // Update status
+        function updateStatus(message) {
+            const status = document.getElementById('canvas').querySelector('.status');
+            if (status) {
+                status.textContent = message;
+            }
+        }
+        
+        // Create cube
+        function createCube() {
+            creationStartTime = Date.now();
+            try {
+                const editableMesh = ThreeEdit.createCube({
+                    size: 1.5
+                });
+                
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x4CAF50,
+                    wireframe: false,
+                    side: THREE.DoubleSide
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(-3, 0, 0);
+                scene.add(mesh);
+                meshes.push(mesh);
+                
+                const creationTime = Date.now() - creationStartTime;
+                updateStats(meshes.length, editableMesh.vertices.length, editableMesh.faces.length, creationTime);
+                updateInfo('Cube Created Successfully!', 
+                    `A cube with size 1.5, ${editableMesh.vertices.length} vertices, and ${editableMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ EditableMesh creation<br>
+                    ✅ Three.js conversion<br>
+                    ✅ Real-time 3D rendering<br>
+                    ✅ Performance tracking`);
+                updateStatus('Cube created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Cube', `Failed to create cube: ${error.message}`);
+                updateStatus('Error creating cube');
+            }
+        }
+        
+        // Create sphere
+        function createSphere() {
+            creationStartTime = Date.now();
+            try {
+                const editableMesh = ThreeEdit.createSphere({
+                    radius: 0.8,
+                    segments: 16
+                });
+                
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x2196F3,
+                    wireframe: false,
+                    side: THREE.DoubleSide
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(3, 0, 0);
+                scene.add(mesh);
+                meshes.push(mesh);
+                
+                const creationTime = Date.now() - creationStartTime;
+                updateStats(meshes.length, editableMesh.vertices.length, editableMesh.faces.length, creationTime);
+                updateInfo('Sphere Created Successfully!', 
+                    `A sphere with radius 0.8, ${editableMesh.vertices.length} vertices, and ${editableMesh.faces.length} faces.<br><br>
+                    <strong>Features:</strong><br>
+                    ✅ EditableMesh creation<br>
+                    ✅ Three.js conversion<br>
+                    ✅ Real-time 3D rendering<br>
+                    ✅ Performance tracking`);
+                updateStatus('Sphere created and displayed');
+                
+            } catch (error) {
+                updateInfo('Error Creating Sphere', `Failed to create sphere: ${error.message}`);
+                updateStatus('Error creating sphere');
+            }
+        }
+        
+        // Show all available primitives
+        function showAllAvailable() {
+            creationStartTime = Date.now();
+            
+            // Clear existing meshes
+            clearScene();
+            
+            let totalVertices = 0;
+            let totalFaces = 0;
+            let successfulPrimitives = 0;
+            
+            // Create cube
+            try {
+                const cubeMesh = ThreeEdit.createCube({ size: 1.2 });
+                const cubeGeometry = ThreeEdit.toBufferGeometry(cubeMesh);
+                const cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x4CAF50 });
+                const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                cube.position.set(-4, 0, 0);
+                scene.add(cube);
+                meshes.push(cube);
+                
+                totalVertices += cubeMesh.vertices.length;
+                totalFaces += cubeMesh.faces.length;
+                successfulPrimitives++;
+                
+                console.log(`✅ Created Cube: ${cubeMesh.vertices.length} vertices, ${cubeMesh.faces.length} faces`);
+            } catch (error) {
+                console.log(`❌ Failed to create Cube: ${error.message}`);
+            }
+            
+            // Create sphere
+            try {
+                const sphereMesh = ThreeEdit.createSphere({ radius: 0.8, segments: 16 });
+                const sphereGeometry = ThreeEdit.toBufferGeometry(sphereMesh);
+                const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0x2196F3 });
+                const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                sphere.position.set(4, 0, 0);
+                scene.add(sphere);
+                meshes.push(sphere);
+                
+                totalVertices += sphereMesh.vertices.length;
+                totalFaces += sphereMesh.faces.length;
+                successfulPrimitives++;
+                
+                console.log(`✅ Created Sphere: ${sphereMesh.vertices.length} vertices, ${sphereMesh.faces.length} faces`);
+            } catch (error) {
+                console.log(`❌ Failed to create Sphere: ${error.message}`);
+            }
+            
+            const creationTime = Date.now() - creationStartTime;
+            
+            // Update statistics
+            updateStats(successfulPrimitives, totalVertices, totalFaces, creationTime);
+            
+            // Update info
+            updateInfo('Available Primitives Created!', 
+                `Created ${successfulPrimitives} out of 2 available primitives.<br><br>
+                <strong>Statistics:</strong><br>
+                📊 Total vertices: ${totalVertices}<br>
+                📊 Total faces: ${totalFaces}<br>
+                ⚡ Creation time: ${creationTime}ms<br><br>
+                <strong>Browser Version Features:</strong><br>
+                ✅ Basic EditableMesh system<br>
+                ✅ Cube and Sphere primitives<br>
+                ✅ Three.js conversion<br>
+                ✅ Real-time 3D rendering<br>
+                ✅ Performance tracking<br><br>
+                <strong>Note:</strong> The full library has many more primitives available when using the npm package!`);
+            
+            updateStatus(`${successfulPrimitives} primitives created and displayed`);
+        }
+        
+        // Clear scene
+        function clearScene() {
+            meshes.forEach(mesh => {
+                scene.remove(mesh);
+            });
+            meshes = [];
+            
+            updateStats(0, 0, 0, 0);
+            updateInfo('Scene Cleared', 'All primitives have been removed from the scene.');
+            updateStatus('Scene cleared');
+        }
+        
+        // Toggle rotation
+        function toggleRotation() {
+            isRotating = !isRotating;
+            updateStatus(isRotating ? 'Rotation enabled' : 'Rotation disabled');
+        }
+        
+        // Initialize the demo
+        window.addEventListener('load', () => {
+            initScene();
+            updateStatus('Demo ready - click buttons to create primitives');
+        });
+    </script>
+</body>
+</html> 

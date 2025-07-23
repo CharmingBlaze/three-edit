@@ -1,159 +1,97 @@
-import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Edge } from '../core/Edge.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { CreateIcosahedronOptions } from './types';
+import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { validatePrimitive } from './validation';
 
 /**
- * Options for creating an icosahedron
+ * Creates an icosahedron as an EditableMesh.
+ * @param options - Options for creating the icosahedron.
+ * @returns A new EditableMesh instance representing an icosahedron.
  */
-export interface IcosahedronOptions {
-  /** Size of the icosahedron (default: 1.0) */
-  size?: number;
-  /** Material index for the faces (default: 0) */
-  materialIndex?: number;
-  /** Whether to generate UV coordinates (default: true) */
-  generateUVs?: boolean;
-  /** Whether to generate vertex normals (default: true) */
-  generateNormals?: boolean;
-  /** Center point of the icosahedron (default: origin) */
-  center?: Vector3;
-}
+export function createIcosahedron(options: CreateIcosahedronOptions = {}): EditableMesh {
+  // Normalize options with defaults
+  const normalizedOptions = normalizeOptions(options, {
+    radius: 1,
+    name: 'Icosahedron',
+    materialId: 0,
+    centered: true,
+    uvLayout: 'spherical',
+    smoothNormals: false,
+    validate: true
+  }) as Required<CreateIcosahedronOptions>;
 
-/**
- * Creates a regular icosahedron primitive
- * @param options Options for creating the icosahedron
- * @returns The created EditableMesh
- */
-export function createIcosahedron(options: IcosahedronOptions = {}): EditableMesh {
-  const size = options.size ?? 1.0;
-  const materialIndex = options.materialIndex ?? 0;
-  const generateUVs = options.generateUVs ?? true;
-  const generateNormals = options.generateNormals ?? true;
-  const center = options.center ?? new Vector3(0, 0, 0);
+  // Validate parameters
+  if (normalizedOptions.radius <= 0) {
+    throw new Error('Icosahedron radius must be positive');
+  }
 
-  const mesh = new EditableMesh();
+  // Create mesh and context
+  const mesh = new EditableMesh({ name: normalizedOptions.name });
+  const context = createPrimitiveContext(mesh, normalizedOptions);
+
+  // Calculate offsets for centered positioning
+  const offsetX = normalizedOptions.centered ? 0 : normalizedOptions.radius;
+  const offsetY = normalizedOptions.centered ? 0 : normalizedOptions.radius;
+  const offsetZ = normalizedOptions.centered ? 0 : normalizedOptions.radius;
 
   // Golden ratio for icosahedron
   const phi = (1 + Math.sqrt(5)) / 2;
+  const a = normalizedOptions.radius / Math.sqrt(phi * phi + 1);
+  const b = a * phi;
 
   // Icosahedron vertices (12 vertices)
-  const vertices = [
-    // Top and bottom vertices
-    new Vector3(0, phi, 1),
-    new Vector3(0, -phi, 1),
-    new Vector3(0, phi, -1),
-    new Vector3(0, -phi, -1),
-    
-    // Front and back vertices
-    new Vector3(1, 0, phi),
-    new Vector3(-1, 0, phi),
-    new Vector3(1, 0, -phi),
-    new Vector3(-1, 0, -phi),
-    
-    // Left and right vertices
-    new Vector3(phi, 1, 0),
-    new Vector3(-phi, 1, 0),
-    new Vector3(phi, -1, 0),
-    new Vector3(-phi, -1, 0)
+  const vertices: number[] = [];
+  
+  // Create the 12 vertices of a regular icosahedron
+  const vertexPositions = [
+    { x: offsetX + 0, y: offsetY + a, z: offsetZ + b, uv: { u: 0, v: 0.5 } },
+    { x: offsetX + 0, y: offsetY - a, z: offsetZ + b, uv: { u: 0.5, v: 0.5 } },
+    { x: offsetX + 0, y: offsetY + a, z: offsetZ - b, uv: { u: 1, v: 0.5 } },
+    { x: offsetX + 0, y: offsetY - a, z: offsetZ - b, uv: { u: 0.25, v: 0.5 } },
+    { x: offsetX + a, y: offsetY + b, z: offsetZ + 0, uv: { u: 0.125, v: 0.25 } },
+    { x: offsetX - a, y: offsetY + b, z: offsetZ + 0, uv: { u: 0.375, v: 0.25 } },
+    { x: offsetX + a, y: offsetY - b, z: offsetZ + 0, uv: { u: 0.125, v: 0.75 } },
+    { x: offsetX - a, y: offsetY - b, z: offsetZ + 0, uv: { u: 0.375, v: 0.75 } },
+    { x: offsetX + b, y: offsetY + 0, z: offsetZ + a, uv: { u: 0.625, v: 0.25 } },
+    { x: offsetX - b, y: offsetY + 0, z: offsetZ + a, uv: { u: 0.875, v: 0.25 } },
+    { x: offsetX + b, y: offsetY + 0, z: offsetZ - a, uv: { u: 0.625, v: 0.75 } },
+    { x: offsetX - b, y: offsetY + 0, z: offsetZ - a, uv: { u: 0.875, v: 0.75 } }
   ];
 
-  // Scale and center vertices
-  vertices.forEach(vertex => {
-    vertex.multiplyScalar(size / Math.sqrt(phi * phi + 1));
-    vertex.add(center);
-  });
-
-  // Add vertices to mesh
-  const vertexIndices: number[] = [];
-  for (const vertex of vertices) {
-    const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, {
-      uv: generateUVs ? { u: 0, v: 0 } : undefined,
-      normal: generateNormals ? new Vector3(0, 1, 0) : undefined
-    });
-    const vertexIndex = mesh.addVertex(newVertex);
-    vertexIndices.push(vertexIndex);
+  for (const vertexData of vertexPositions) {
+    const result = createVertex(mesh, vertexData, context);
+    vertices.push(result.id);
   }
 
-  // Icosahedron faces (20 triangular faces)
-  const faces = [
-    // Top faces
-    [0, 4, 1], [0, 1, 5], [0, 5, 8], [0, 8, 4],
-    [1, 4, 10], [1, 10, 5], [1, 5, 2], [1, 2, 4],
-    
-    // Bottom faces
-    [2, 6, 3], [2, 3, 7], [2, 7, 11], [2, 11, 6],
-    [3, 6, 9], [3, 9, 7], [3, 7, 2], [3, 2, 6],
-    
-    // Side faces
-    [4, 8, 9], [5, 10, 11], [6, 9, 8], [7, 11, 10]
+  // Create the 20 triangular faces
+  const faceDefinitions = [
+    [vertices[0], vertices[1], vertices[4]], [vertices[0], vertices[4], vertices[8]],
+    [vertices[0], vertices[8], vertices[9]], [vertices[0], vertices[9], vertices[1]],
+    [vertices[1], vertices[9], vertices[6]], [vertices[1], vertices[6], vertices[4]],
+    [vertices[4], vertices[6], vertices[10]], [vertices[4], vertices[10], vertices[8]],
+    [vertices[8], vertices[10], vertices[2]], [vertices[8], vertices[2], vertices[9]],
+    [vertices[9], vertices[2], vertices[6]], [vertices[6], vertices[2], vertices[10]],
+    [vertices[3], vertices[7], vertices[5]], [vertices[3], vertices[5], vertices[11]],
+    [vertices[3], vertices[11], vertices[7]], [vertices[7], vertices[11], vertices[5]],
+    [vertices[5], vertices[7], vertices[1]], [vertices[5], vertices[1], vertices[0]],
+    [vertices[5], vertices[0], vertices[11]], [vertices[11], vertices[0], vertices[7]]
   ];
 
-  const edgeMap: { [key: string]: number } = {};
-  const addEdge = (v1: number, v2: number): number => {
-    const key = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
-    if (edgeMap[key] === undefined) {
-      edgeMap[key] = mesh.addEdge(new Edge(v1, v2));
-    }
-    return edgeMap[key];
-  };
-
-  const createFace = (v1: number, v2: number, v3: number): void => {
-    const edge1 = addEdge(v1, v2);
-    const edge2 = addEdge(v2, v3);
-    const edge3 = addEdge(v3, v1);
-
-    mesh.addFace(new Face([v1, v2, v3], [edge1, edge2, edge3], { materialIndex }));
-  };
-
-  // Create faces
-  for (const face of faces) {
-    const v1 = vertexIndices[face[0]];
-    const v2 = vertexIndices[face[1]];
-    const v3 = vertexIndices[face[2]];
-
-    createFace(v1, v2, v3);
+  for (const vertexIds of faceDefinitions) {
+    createFace(mesh, {
+      vertexIds,
+      materialId: normalizedOptions.materialId
+    }, context);
   }
 
-  // Generate proper UVs if requested
-  if (generateUVs) {
-    // UV mapping for icosahedron
-    for (let i = 0; i < mesh.getVertexCount(); i++) {
-      const vertex = mesh.getVertex(i);
-      if (vertex) {
-        // Map vertices to UV coordinates based on their position
-        const u = (vertex.x + size) / (2 * size);
-        const v = (vertex.y + size) / (2 * size);
-        vertex.uv = { u: Math.max(0, Math.min(1, u)), v: Math.max(0, Math.min(1, v)) };
-      }
-    }
-  }
-
-  // Generate proper normals if requested
-  if (generateNormals) {
-    for (let i = 0; i < mesh.getFaceCount(); i++) {
-      const face = mesh.getFace(i);
-      if (face && face.vertices.length >= 3) {
-        const v1 = mesh.getVertex(face.vertices[0]);
-        const v2 = mesh.getVertex(face.vertices[1]);
-        const v3 = mesh.getVertex(face.vertices[2]);
-        
-        if (v1 && v2 && v3) {
-          const vec1 = new Vector3().subVectors(
-            new Vector3(v2.x, v2.y, v2.z),
-            new Vector3(v1.x, v1.y, v1.z)
-          );
-          const vec2 = new Vector3().subVectors(
-            new Vector3(v3.x, v3.y, v3.z),
-            new Vector3(v1.x, v1.y, v1.z)
-          );
-          const normal = new Vector3();
-          normal.crossVectors(vec1, vec2).normalize();
-          face.normal = normal;
-        }
-      }
+  // Validate if requested
+  if (normalizedOptions.validate) {
+    const validation = validatePrimitive(mesh, 'Icosahedron');
+    if (!validation.isValid) {
+      console.warn('Icosahedron validation warnings:', validation.warnings);
     }
   }
 
   return mesh;
-} 
+}
+ 

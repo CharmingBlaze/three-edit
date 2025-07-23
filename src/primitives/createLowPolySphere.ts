@@ -30,20 +30,20 @@ export function createLowPolySphere(options: CreateLowPolySphereOptions = {}): E
   // Create vertices for the low-poly sphere
   const vertices: number[] = [];
   
-  // Create center vertex
-  const centerVertex = new Vertex(0, 0, 0);
-  centerVertex.uv = { u: 0.5, v: 0.5 };
+  // Create center vertex with UVs
+  const centerVertex = new Vertex(0, 0, 0, { uv: { u: 0.5, v: 0.5 } });
   const centerIndex = mesh.addVertex(centerVertex);
   
-  // Create vertices around the sphere
+  // Create vertices around the sphere with UVs
   for (let i = 0; i < segments; i++) {
     const theta = (i / segments) * Math.PI * 2;
     const x = Math.cos(theta) * radius;
     const z = Math.sin(theta) * radius;
     
-    const vertex = new Vertex(x, 0, z);
-    vertex.uv = { u: (Math.cos(theta) + 1) / 2, v: (Math.sin(theta) + 1) / 2 };
+    const u = (Math.cos(theta) + 1) / 2;
+    const v = (Math.sin(theta) + 1) / 2;
     
+    const vertex = new Vertex(x, 0, z, { uv: { u, v } });
     const vertexIndex = mesh.addVertex(vertex);
     vertices.push(vertexIndex);
   }

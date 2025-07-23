@@ -1,24 +1,35 @@
 import { Vector3 } from 'three';
 
 /**
+ * Represents a 2D UV coordinate
+ */
+export interface UV {
+  u: number;
+  v: number;
+}
+
+/**
  * Represents a face in the mesh, defined by vertices and edges
  */
 export class Face {
   /** Indices of vertices that form the face */
   vertices: number[];
-  
+
   /** Indices of edges that form the face */
   edges: number[];
-  
+
+  /** UV coordinates for each vertex in the face */
+  faceVertexUvs: UV[];
+
   /** Material index for the face */
   materialIndex: number;
-  
+
   /** Normal vector for the face */
   normal?: Vector3;
-  
+
   /** Custom user data for storing additional information */
   userData: Record<string, any>;
-  
+
   /**
    * Creates a new Face
    * @param vertices Indices of vertices that form the face
@@ -29,6 +40,7 @@ export class Face {
     vertices: number[] = [],
     edges: number[] = [],
     options: {
+      faceVertexUvs?: UV[];
       materialIndex?: number;
       normal?: Vector3;
       userData?: Record<string, any>;
@@ -36,6 +48,7 @@ export class Face {
   ) {
     this.vertices = vertices;
     this.edges = edges;
+    this.faceVertexUvs = options.faceVertexUvs ?? [];
     this.materialIndex = options.materialIndex ?? 0;
     this.normal = options.normal;
     this.userData = options.userData || {};
@@ -46,10 +59,11 @@ export class Face {
    * @returns A new Face instance with the same properties
    */
   clone(): Face {
-    return new Face(
+    return new Face( 
       [...this.vertices],
       [...this.edges],
       {
+        faceVertexUvs: this.faceVertexUvs.map(uv => ({ ...uv })),
         materialIndex: this.materialIndex,
         normal: this.normal ? this.normal.clone() : undefined,
         userData: { ...this.userData },
