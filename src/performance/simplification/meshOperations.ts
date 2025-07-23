@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { EditableMesh, Vertex, Face } from '../../core/index.ts';
+import { EditableMesh, Face } from '../../core/index.ts';
 import { EdgeCollapse } from './types';
 
 /**
@@ -7,17 +7,29 @@ import { EdgeCollapse } from './types';
  */
 export function collapseEdge(mesh: EditableMesh, collapse: EdgeCollapse): void {
   const { edge, newPosition, affectedFaces } = collapse;
+  
+  // Get vertex indices
   const v1Index = edge.v1;
   const v2Index = edge.v2;
   
-  // Update position of v1 to the new position
-  const v1 = mesh.vertices[v1Index];
+  // Get vertices
+  const v1 = mesh.getVertex(v1Index);
+  const v2 = mesh.getVertex(v2Index);
+  
+  if (!v1 || !v2) {
+    throw new Error('Invalid vertex indices in edge collapse');
+  }
+  
+  if (!newPosition) {
+    throw new Error('New position is required for edge collapse');
+  }
+  
+  // Update v1 position to new position
   v1.x = newPosition.x;
   v1.y = newPosition.y;
   v1.z = newPosition.z;
   
   // Update UV coordinates if both vertices have UVs
-  const v2 = mesh.vertices[v2Index];
   if (v1.uv && v2.uv) {
     v1.uv.u = (v1.uv.u + v2.uv.u) / 2;
     v1.uv.v = (v1.uv.v + v2.uv.v) / 2;
@@ -61,7 +73,7 @@ export function calculateErrorMetric(mesh: EditableMesh): number {
   
   mesh.faces.forEach(face => {
     const area = calculateFaceArea(mesh, face);
-    const center = calculateFaceCenter(mesh, face);
+    const _center = calculateFaceCenter(mesh, face);
     const normal = calculateFaceNormal(mesh, face);
     
     // Calculate error based on face properties

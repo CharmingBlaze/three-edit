@@ -76,7 +76,7 @@ export class GPUOperations {
   private fallbackTransformVertices(
     mesh: EditableMesh,
     transformMatrix: Float32Array,
-    operation: string // Used for logging and debugging
+    _operation: string // Used for logging and debugging
   ): GPUOperationResult {
     const startTime = performance.now();
     let memoryUsage = 0;
@@ -188,7 +188,7 @@ export class GPUOperations {
    */
   private fallbackApplyVertexNoise(
     mesh: EditableMesh,
-    noiseType: string, // Used for shader selection
+    _noiseType: string, // Used for shader selection
     options: { scale: number; intensity: number; seed: number }
   ): GPUOperationResult {
     const startTime = performance.now();

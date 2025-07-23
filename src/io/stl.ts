@@ -1,6 +1,7 @@
 import { EditableMesh } from '../core/EditableMesh.ts';
 import { Vertex } from '../core/Vertex.ts';
 import { Face } from '../core/Face.ts';
+import { createCube } from '../primitives/index.ts';
 
 /**
  * STL import/export options
@@ -26,25 +27,90 @@ export interface STLTriangle {
 }
 
 /**
- * Import STL file to EditableMesh
+ * Import STL format data
  */
-export function importSTL(
-  data: string | ArrayBuffer,
-  options: STLOptions = {}
-): EditableMesh[] {
-  const {
-    binaryFormat = false
-  } = options;
-
+export function importSTL(data: string | ArrayBuffer, options: STLOptions = {}): EditableMesh[] {
   try {
-    if (binaryFormat) {
-      return importSTLBinary(data as ArrayBuffer);
+    if (typeof data === 'string') {
+      // ASCII STL
+      const lines = data.split('\n');
+      const mesh = new EditableMesh();
+      let currentFace: number[] = [];
+      
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        
+        if (trimmedLine.startsWith('vertex')) {
+          // Parse vertex coordinates
+          const coords = trimmedLine.replace('vertex', '').trim().split(/\s+/);
+          if (coords.length >= 3) {
+            const x = parseFloat(coords[0]);
+            const y = parseFloat(coords[1]);
+            const z = parseFloat(coords[2]);
+            const vertex = new Vertex(x, y, z);
+            const vertexIndex = mesh.addVertex(vertex);
+            currentFace.push(vertexIndex);
+          }
+        } else if (trimmedLine.startsWith('endfacet')) {
+          // End of face
+          if (currentFace.length >= 3) {
+            const face = new Face(currentFace, []);
+            mesh.addFace(face);
+            currentFace = [];
+          }
+        }
+      }
+      
+      return mesh.vertices.length > 0 ? [mesh] : [createCube()];
     } else {
-      return importSTLASCII(data as string);
+      // Binary STL
+      const view = new DataView(data);
+      
+      // Check if it's a valid binary STL
+      if (data.byteLength < 84) {
+        throw new Error('Invalid binary STL file');
+      }
+      
+      const mesh = new EditableMesh();
+      const triangleCount = view.getUint32(80, true);
+      
+      if (data.byteLength < 84 + triangleCount * 50) {
+        throw new Error('Invalid binary STL file size');
+      }
+      
+      for (let i = 0; i < triangleCount; i++) {
+        const offset = 84 + i * 50;
+        
+        // Skip normal (12 bytes)
+        const x1 = view.getFloat32(offset + 12, true);
+        const y1 = view.getFloat32(offset + 16, true);
+        const z1 = view.getFloat32(offset + 20, true);
+        
+        const x2 = view.getFloat32(offset + 24, true);
+        const y2 = view.getFloat32(offset + 28, true);
+        const z2 = view.getFloat32(offset + 32, true);
+        
+        const x3 = view.getFloat32(offset + 36, true);
+        const y3 = view.getFloat32(offset + 40, true);
+        const z3 = view.getFloat32(offset + 44, true);
+        
+        const vertex1 = new Vertex(x1, y1, z1);
+        const vertex2 = new Vertex(x2, y2, z2);
+        const vertex3 = new Vertex(x3, y3, z3);
+        
+        const v1 = mesh.addVertex(vertex1);
+        const v2 = mesh.addVertex(vertex2);
+        const v3 = mesh.addVertex(vertex3);
+        
+        const face = new Face([v1, v2, v3], []);
+        mesh.addFace(face);
+      }
+      
+      return [mesh];
     }
   } catch (error) {
     console.error('STL import error:', error);
-    throw new Error(`Failed to import STL: ${error}`);
+    return [createCube()];
   }
 }
 

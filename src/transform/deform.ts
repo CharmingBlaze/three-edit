@@ -1,9 +1,9 @@
 // Legacy exports for backward compatibility
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { bend } from './deform/bend';
+import { twist } from './deform/twist';
+import { taper } from './deform/taper';
+import { EditableMesh } from '../core/index.ts';
 import { BendOptions, TwistOptions, TaperOptions, DeformType } from './deform/types';
-import { bend, bendAdvanced } from './deform/bend';
-import { twist, twistAdvanced } from './deform/twist';
-import { taper, taperAdvanced } from './deform/taper';
 
 export type {
   BendOptions,

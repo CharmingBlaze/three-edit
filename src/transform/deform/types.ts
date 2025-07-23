@@ -1,5 +1,4 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../../core/index.ts';
 
 /**
  * Options for deformation operations

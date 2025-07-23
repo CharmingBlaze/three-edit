@@ -3,9 +3,9 @@ import { EditableMesh } from '../core/EditableMesh.ts';
 import { MorphTarget } from './morphing.ts';
 
 /**
- * Keyframe definition for animation
+ * Keyframe definition for morph animation
  */
-export interface Keyframe {
+export interface MorphKeyframe {
   time: number;
   value: number;
   easing?: 'linear' | 'easeIn' | 'easeOut' | 'easeInOut';
@@ -16,7 +16,7 @@ export interface Keyframe {
  */
 export interface MorphAnimationTrack {
   morphTargetName: string;
-  keyframes: Keyframe[];
+  keyframes: MorphKeyframe[];
   loop?: boolean;
   duration: number;
 }
@@ -51,8 +51,8 @@ export function createMorphAnimation(
 ): AnimationResult {
   const {
     fps = 30,
-    loop = false,
-    preserveNormals = true,
+    loop: _loop = false,
+    preserveNormals: _preserveNormals = true,
     materialIndex
   } = options;
 
@@ -75,7 +75,7 @@ export function createMorphAnimation(
       const weight = evaluateTrack(track, time);
       
       // Apply morph target with calculated weight
-      applyMorphTargetToMesh(frameMesh, morphTarget, weight, preserveNormals);
+      applyMorphTargetToMesh(frameMesh, morphTarget, weight, _preserveNormals);
     }
 
     // Assign material if specified
@@ -113,8 +113,8 @@ function evaluateTrack(track: MorphAnimationTrack, time: number): number {
   }
 
   // Find keyframes to interpolate between
-  let startKeyframe: Keyframe | null = null;
-  let endKeyframe: Keyframe | null = null;
+  let startKeyframe: MorphKeyframe | null = null;
+  let endKeyframe: MorphKeyframe | null = null;
 
   for (let i = 0; i < keyframes.length - 1; i++) {
     if (adjustedTime >= keyframes[i].time && adjustedTime <= keyframes[i + 1].time) {
@@ -149,7 +149,7 @@ function applyMorphTargetToMesh(
   mesh: EditableMesh,
   morphTarget: MorphTarget,
   weight: number,
-  preserveNormals: boolean
+  _preserveNormals: boolean
 ): void {
   if (morphTarget.vertices.length !== mesh.vertices.length) {
     throw new Error(`Morph target "${morphTarget.name}" vertex count must match mesh vertex count`);
@@ -196,7 +196,7 @@ export function createSimpleMorphAnimation(
   duration: number = 1.0,
   options: AnimationOptions = {}
 ): AnimationResult {
-  const { fps = 30 } = options;
+  const { fps: _fps = 30 } = options;
   
   // Check if meshes have the same vertex count
   if (sourceMesh.vertices.length !== targetMesh.vertices.length) {

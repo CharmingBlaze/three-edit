@@ -73,23 +73,24 @@ export function bendAdvanced(
     throw new Error('At least 2 control points are required for advanced bending');
   }
 
-  const angle = options.angle ?? Math.PI / 4;
+  const angle = options.angle ?? Math.PI / 2;
   const axis = options.axis ?? new Vector3(0, 1, 0);
   const center = options.center ?? new Vector3(0, 0, 0);
 
   // Normalize axis
   axis.normalize();
 
-  // Calculate bend curve from control points
-  const curve = calculateBendCurve(controlPoints);
+  // Create spline from control points
+  const spline = createSplineFromPoints(controlPoints);
 
   // Apply bend to each vertex
   for (let i = 0; i < mesh.getVertexCount(); i++) {
     const vertex = mesh.getVertex(i);
     if (!vertex) continue;
 
-    // Calculate bend factor based on position along curve
-    const bendFactor = calculateBendFactor(vertex, curve);
+    // Calculate bend factor based on position along spline
+    const position = new Vector3(vertex.x, vertex.y, vertex.z);
+    const bendFactor = calculateBendFactor(position, spline, controlPoints);
     
     if (bendFactor > 0) {
       // Calculate bend angle for this vertex
@@ -140,21 +141,46 @@ export function calculateBendCurve(controlPoints: Vector3[]): Vector3[] {
 }
 
 /**
- * Calculate bend factor for a vertex based on curve
+ * Create a spline from control points
  */
-export function calculateBendFactor(vertex: any, curve: Vector3[]): number {
-  // Find closest point on curve
-  let minDistance = Infinity;
-  let closestIndex = 0;
+function createSplineFromPoints(points: Vector3[]): Vector3[] {
+  const spline: Vector3[] = [];
+  const segments = 50; // Number of segments between control points
   
-  for (let i = 0; i < curve.length; i++) {
-    const distance = new Vector3(vertex.x, vertex.y, vertex.z).distanceTo(curve[i]);
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestIndex = i;
+  for (let i = 0; i < points.length - 1; i++) {
+    const start = points[i];
+    const end = points[i + 1];
+    
+    for (let j = 0; j <= segments; j++) {
+      const t = j / segments;
+      const point = new Vector3();
+      point.lerpVectors(start, end, t);
+      spline.push(point);
     }
   }
   
-  // Return normalized factor (0 to 1)
-  return closestIndex / Math.max(curve.length - 1, 1);
+  return spline;
+}
+
+/**
+ * Calculate bend factor based on distance from spline
+ */
+function calculateBendFactor(position: Vector3, spline: Vector3[], controlPoints: Vector3[]): number {
+  // Find closest point on spline
+  let minDistance = Infinity;
+  let closestPoint = spline[0];
+  
+  for (const splinePoint of spline) {
+    const distance = position.distanceTo(splinePoint);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = splinePoint;
+    }
+  }
+  
+  // Calculate bend factor based on distance from spline
+  const maxDistance = 2.0; // Maximum distance for bending effect
+  const factor = Math.max(0, 1 - (minDistance / maxDistance));
+  
+  return factor;
 } 

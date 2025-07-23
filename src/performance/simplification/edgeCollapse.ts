@@ -48,10 +48,10 @@ export function calculateEdgeCollapse(
   }
 
   // Calculate optimal position for collapsed vertex
-  const newPosition = calculateOptimalPosition(v1, v2, connectedFaces);
+    const newPosition = calculateOptimalPosition(v1, v2);
   
   // Calculate collapse cost
-  const cost = calculateCollapseCost(mesh, edge, newPosition, connectedFaces, options);
+    const cost = calculateCollapseCost(mesh, edge, connectedFaces, options);
   
   return {
     edge,
@@ -111,8 +111,7 @@ export function isBoundaryEdge(mesh: EditableMesh, edge: { v1: number; v2: numbe
  */
 export function calculateOptimalPosition(
   v1: Vertex,
-  v2: Vertex,
-  connectedFaces: Face[]
+  v2: Vertex
 ): Vector3 {
   // Use midpoint as default
   const midpoint = new Vector3();
@@ -131,7 +130,6 @@ export function calculateOptimalPosition(
 export function calculateCollapseCost(
   mesh: EditableMesh,
   edge: { v1: number; v2: number },
-  newPosition: Vector3,
   connectedFaces: Face[],
   options: SimplificationOptions
 ): number {

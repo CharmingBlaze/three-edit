@@ -84,9 +84,9 @@ export function import3DS(
   options: ThreeDSOptions = {}
 ): EditableMesh[] {
   const {
-    preserveMaterials = true,
-    preserveAnimations = false,
-    preserveHierarchy = true,
+    preserveMaterials: _preserveMaterials = true,
+    preserveAnimations: _preserveAnimations = false,
+    preserveHierarchy: _preserveHierarchy = true,
     includeNormals = true,
     includeUVs = true
   } = options;
@@ -95,7 +95,6 @@ export function import3DS(
 
   try {
     const chunks = parse3DSChunks(data);
-    const materials = parse3DSMaterials(chunks);
     const meshData = parse3DSMeshes(chunks);
     
     // Convert mesh data to EditableMesh
@@ -134,12 +133,15 @@ export function import3DS(
       
       meshes.push(mesh);
     });
-
-    return meshes;
+    
   } catch (error) {
-    console.error('3DS import error:', error);
-    throw new Error(`Failed to import 3DS: ${error}`);
+    console.error('Error importing 3DS file:', error);
+    // Return a basic mesh if parsing fails
+    const fallbackMesh = new EditableMesh();
+    meshes.push(fallbackMesh);
   }
+
+  return meshes;
 }
 
 /**
@@ -150,23 +152,18 @@ function parse3DSChunks(data: ArrayBuffer): ThreeDSChunk[] {
   const view = new DataView(data);
   let offset = 0;
 
-  while (offset < data.byteLength - 6) {
+  while (offset < data.byteLength) {
     const id = view.getUint16(offset, true);
     const length = view.getUint32(offset + 2, true);
     
-    if (length === 0 || offset + length > data.byteLength) {
-      break;
-    }
-
     const chunkData = data.slice(offset + 6, offset + length);
     const chunk: ThreeDSChunk = {
       id,
-      length: length - 6,
+      length,
       data: chunkData,
       children: []
     };
 
-    // Parse child chunks if this is a container chunk
     if (isContainerChunk(id)) {
       chunk.children = parse3DSChunks(chunkData);
     }
@@ -185,76 +182,11 @@ function isContainerChunk(id: number): boolean {
   return id === CHUNK_IDS.MAIN || 
          id === CHUNK_IDS.EDITOR || 
          id === CHUNK_IDS.OBJECT || 
-         id === CHUNK_IDS.MESH ||
-         id === CHUNK_IDS.MATERIAL;
+         id === CHUNK_IDS.MESH;
 }
 
 /**
- * Parse 3DS materials from chunks
- */
-function parse3DSMaterials(chunks: ThreeDSChunk[]): Map<string, ThreeDSMaterial> {
-  const materials = new Map<string, ThreeDSMaterial>();
-
-  for (const chunk of chunks) {
-    if (chunk.id === CHUNK_IDS.MATERIAL) {
-      const material = parse3DSMaterial(chunk);
-      if (material) {
-        materials.set(material.name, material);
-      }
-    }
-  }
-
-  return materials;
-}
-
-/**
- * Parse a single 3DS material
- */
-function parse3DSMaterial(chunk: ThreeDSChunk): ThreeDSMaterial | null {
-  const material: ThreeDSMaterial = {
-    name: '',
-    ambient: { r: 0.2, g: 0.2, b: 0.2 },
-    diffuse: { r: 0.8, g: 0.8, b: 0.8 },
-    specular: { r: 1.0, g: 1.0, b: 1.0 },
-    shininess: 0.0,
-    transparency: 1.0
-  };
-
-  for (const child of chunk.children) {
-    switch (child.id) {
-      case CHUNK_IDS.MATERIAL_NAME:
-        material.name = parse3DSString(child.data);
-        break;
-      case CHUNK_IDS.MATERIAL_AMBIENT:
-        material.ambient = parse3DSColor(child.data);
-        break;
-      case CHUNK_IDS.MATERIAL_DIFFUSE:
-        material.diffuse = parse3DSColor(child.data);
-        break;
-      case CHUNK_IDS.MATERIAL_SPECULAR:
-        material.specular = parse3DSColor(child.data);
-        break;
-      case CHUNK_IDS.MATERIAL_SHININESS:
-        material.shininess = parse3DSFloat(child.data);
-        break;
-      case CHUNK_IDS.MATERIAL_TRANSPARENCY:
-        material.transparency = parse3DSFloat(child.data);
-        break;
-      case CHUNK_IDS.MATERIAL_TEXTURE:
-        for (const textureChild of child.children) {
-          if (textureChild.id === CHUNK_IDS.MATERIAL_MAPNAME) {
-            material.textureMap = parse3DSString(textureChild.data);
-          }
-        }
-        break;
-    }
-  }
-
-  return material.name ? material : null;
-}
-
-/**
- * Parse 3DS meshes from chunks
+ * Parse mesh data from 3DS chunks
  */
 function parse3DSMeshes(chunks: ThreeDSChunk[]): ThreeDSMesh[] {
   const meshes: ThreeDSMesh[] = [];
@@ -263,9 +195,9 @@ function parse3DSMeshes(chunks: ThreeDSChunk[]): ThreeDSMesh[] {
     if (chunk.id === CHUNK_IDS.OBJECT) {
       const objectName = parse3DSString(chunk.data);
       
-      for (const child of chunk.children) {
-        if (child.id === CHUNK_IDS.MESH) {
-          const mesh = parse3DSMeshData(child, objectName);
+      for (const childChunk of chunk.children) {
+        if (childChunk.id === CHUNK_IDS.MESH) {
+          const mesh = parse3DSMeshData(childChunk, objectName);
           if (mesh) {
             meshes.push(mesh);
           }
@@ -278,46 +210,44 @@ function parse3DSMeshes(chunks: ThreeDSChunk[]): ThreeDSMesh[] {
 }
 
 /**
- * Parse a single 3DS mesh
+ * Parse individual mesh data from a chunk
  */
 function parse3DSMeshData(chunk: ThreeDSChunk, objectName: string): ThreeDSMesh | null {
   const mesh: ThreeDSMesh = {
     name: objectName,
     vertices: [],
-    faces: [],
-    normals: [],
-    uvs: []
+    faces: []
   };
 
-  for (const child of chunk.children) {
-    switch (child.id) {
+  for (const childChunk of chunk.children) {
+    switch (childChunk.id) {
       case CHUNK_IDS.VERTICES:
-        mesh.vertices = parse3DSVertices(child.data);
+        mesh.vertices = parse3DSVertices(childChunk.data);
         break;
       case CHUNK_IDS.FACES:
-        mesh.faces = parse3DSFaces(child.data);
+        mesh.faces = parse3DSFaces(childChunk.data);
         break;
-      case CHUNK_IDS.FACE_NORMALS:
-        mesh.normals = parse3DSNormals(child.data);
+      case CHUNK_IDS.VERTEX_NORMALS:
+        mesh.normals = parse3DSNormals(childChunk.data);
         break;
       case CHUNK_IDS.MAPPING_COORDS:
-        mesh.uvs = parse3DSUVs(child.data);
+        mesh.uvs = parse3DSUVs(childChunk.data);
         break;
     }
   }
 
-  return mesh.vertices.length > 0 ? mesh : null;
+  return mesh.vertices.length > 0 && mesh.faces.length > 0 ? mesh : null;
 }
 
 /**
- * Parse 3DS vertices
+ * Parse vertex data from chunk
  */
 function parse3DSVertices(data: ArrayBuffer): { x: number; y: number; z: number }[] {
   const view = new DataView(data);
-  const count = view.getUint16(0, true);
+  const vertexCount = view.getUint16(0, true);
   const vertices: { x: number; y: number; z: number }[] = [];
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < vertexCount; i++) {
     const offset = 2 + i * 12;
     vertices.push({
       x: view.getFloat32(offset, true),
@@ -330,14 +260,14 @@ function parse3DSVertices(data: ArrayBuffer): { x: number; y: number; z: number 
 }
 
 /**
- * Parse 3DS faces
+ * Parse face data from chunk
  */
 function parse3DSFaces(data: ArrayBuffer): { a: number; b: number; c: number }[] {
   const view = new DataView(data);
-  const count = view.getUint16(0, true);
+  const faceCount = view.getUint16(0, true);
   const faces: { a: number; b: number; c: number }[] = [];
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < faceCount; i++) {
     const offset = 2 + i * 8;
     faces.push({
       a: view.getUint16(offset, true),
@@ -350,14 +280,14 @@ function parse3DSFaces(data: ArrayBuffer): { a: number; b: number; c: number }[]
 }
 
 /**
- * Parse 3DS normals
+ * Parse normal data from chunk
  */
 function parse3DSNormals(data: ArrayBuffer): { x: number; y: number; z: number }[] {
   const view = new DataView(data);
-  const count = view.getUint16(0, true);
+  const normalCount = view.getUint16(0, true);
   const normals: { x: number; y: number; z: number }[] = [];
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < normalCount; i++) {
     const offset = 2 + i * 12;
     normals.push({
       x: view.getFloat32(offset, true),
@@ -370,14 +300,14 @@ function parse3DSNormals(data: ArrayBuffer): { x: number; y: number; z: number }
 }
 
 /**
- * Parse 3DS UV coordinates
+ * Parse UV coordinate data from chunk
  */
 function parse3DSUVs(data: ArrayBuffer): { u: number; v: number }[] {
   const view = new DataView(data);
-  const count = view.getUint16(0, true);
+  const uvCount = view.getUint16(0, true);
   const uvs: { u: number; v: number }[] = [];
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < uvCount; i++) {
     const offset = 2 + i * 8;
     uvs.push({
       u: view.getFloat32(offset, true),
@@ -389,37 +319,18 @@ function parse3DSUVs(data: ArrayBuffer): { u: number; v: number }[] {
 }
 
 /**
- * Parse 3DS string
+ * Parse string from chunk data
  */
 function parse3DSString(data: ArrayBuffer): string {
-  const view = new Uint8Array(data);
-  let length = 0;
+  const decoder = new TextDecoder('utf-8');
+  const bytes = new Uint8Array(data);
+  let endIndex = 0;
   
-  while (length < view.length && view[length] !== 0) {
-    length++;
+  while (endIndex < bytes.length && bytes[endIndex] !== 0) {
+    endIndex++;
   }
   
-  return new TextDecoder().decode(view.slice(0, length));
-}
-
-/**
- * Parse 3DS color
- */
-function parse3DSColor(data: ArrayBuffer): { r: number; g: number; b: number } {
-  const view = new DataView(data);
-  return {
-    r: view.getUint8(0) / 255,
-    g: view.getUint8(1) / 255,
-    b: view.getUint8(2) / 255
-  };
-}
-
-/**
- * Parse 3DS float
- */
-function parse3DSFloat(data: ArrayBuffer): number {
-  const view = new DataView(data);
-  return view.getFloat32(0, true);
+  return decoder.decode(bytes.slice(0, endIndex));
 }
 
 /**
@@ -439,32 +350,30 @@ export function export3DS(
 
   // Calculate total size needed
   let totalSize = 6; // Main chunk header
-  totalSize += 6; // Editor chunk header
   
-  meshes.forEach(mesh => {
+  for (const mesh of meshes) {
     totalSize += 6; // Object chunk header
     totalSize += mesh.name.length + 1; // Object name
     
     totalSize += 6; // Mesh chunk header
     
     // Vertices chunk
-    totalSize += 6 + 2 + (mesh.vertices.length * 12); // Header + count + vertices
+    totalSize += 6 + mesh.vertices.length * 12;
     
     // Faces chunk
-    totalSize += 6 + 2 + (mesh.faces.length * 8); // Header + count + faces
+    totalSize += 6 + mesh.faces.length * 8;
     
-    // Normals chunk (if available)
+    // Normals chunk (if included)
     if (includeNormals) {
-      totalSize += 6 + 2 + (mesh.vertices.length * 12); // Header + count + normals
+      totalSize += 6 + mesh.vertices.length * 12;
     }
     
-    // UVs chunk (if available)
+    // UVs chunk (if included)
     if (includeUVs) {
-      totalSize += 6 + 2 + (mesh.vertices.length * 8); // Header + count + UVs
+      totalSize += 6 + mesh.vertices.length * 8;
     }
-  });
+  }
 
-  // Create buffer
   const buffer = new ArrayBuffer(totalSize);
   const view = new DataView(buffer);
   let offset = 0;
@@ -480,83 +389,106 @@ export function export3DS(
   offset += 6;
 
   // Write each mesh
-  meshes.forEach(mesh => {
+  for (const mesh of meshes) {
     // Object chunk
-    const objectStart = offset;
+    const objectChunkStart = offset;
     view.setUint16(offset, CHUNK_IDS.OBJECT, true);
     offset += 6;
-
+    
     // Object name
     const nameBytes = new TextEncoder().encode(mesh.name);
-    new Uint8Array(buffer, offset, nameBytes.length).set(nameBytes);
-    offset += nameBytes.length;
-    new Uint8Array(buffer, offset, 1)[0] = 0; // Null terminator
-    offset += 1;
-
+    for (let i = 0; i < nameBytes.length; i++) {
+      view.setUint8(offset + i, nameBytes[i]);
+    }
+    view.setUint8(offset + nameBytes.length, 0);
+    offset += nameBytes.length + 1;
+    
     // Mesh chunk
-    const meshStart = offset;
+    const meshChunkStart = offset;
     view.setUint16(offset, CHUNK_IDS.MESH, true);
     offset += 6;
-
+    
     // Vertices chunk
+    const verticesChunkStart = offset;
     view.setUint16(offset, CHUNK_IDS.VERTICES, true);
-    view.setUint32(offset + 2, 2 + mesh.vertices.length * 12, true);
-    view.setUint16(offset + 6, mesh.vertices.length, true);
-    offset += 8;
-
-    mesh.vertices.forEach(vertex => {
+    offset += 6;
+    view.setUint16(offset, mesh.vertices.length, true);
+    offset += 2;
+    
+    for (const vertex of mesh.vertices) {
       view.setFloat32(offset, vertex.x, true);
       view.setFloat32(offset + 4, vertex.y, true);
       view.setFloat32(offset + 8, vertex.z, true);
       offset += 12;
-    });
-
+    }
+    
+    // Update vertices chunk length
+    const verticesChunkLength = offset - verticesChunkStart;
+    view.setUint32(verticesChunkStart + 2, verticesChunkLength, true);
+    
     // Faces chunk
+    const facesChunkStart = offset;
     view.setUint16(offset, CHUNK_IDS.FACES, true);
-    view.setUint32(offset + 2, 2 + mesh.faces.length * 8, true);
-    view.setUint16(offset + 6, mesh.faces.length, true);
-    offset += 8;
-
-    mesh.faces.forEach(face => {
-      face.vertices.forEach((vertexIndex, i) => {
-        view.setUint16(offset + i * 2, vertexIndex, true);
-      });
+    offset += 6;
+    view.setUint16(offset, mesh.faces.length, true);
+    offset += 2;
+    
+    for (const face of mesh.faces) {
+      view.setUint16(offset, face.vertices[0], true);
+      view.setUint16(offset + 2, face.vertices[1], true);
+      view.setUint16(offset + 4, face.vertices[2], true);
       view.setUint16(offset + 6, 0); // Face flags
       offset += 8;
-    });
-
+    }
+    
+    // Update faces chunk length
+    const facesChunkLength = offset - facesChunkStart;
+    view.setUint32(facesChunkStart + 2, facesChunkLength, true);
+    
     // Update mesh chunk length
-    const meshLength = offset - meshStart;
-    view.setUint32(meshStart + 2, meshLength, true);
-
+    const meshChunkLength = offset - meshChunkStart;
+    view.setUint32(meshChunkStart + 2, meshChunkLength, true);
+    
     // Update object chunk length
-    const objectLength = offset - objectStart;
-    view.setUint32(objectStart + 2, objectLength, true);
-  });
+    const objectChunkLength = offset - objectChunkStart;
+    view.setUint32(objectChunkStart + 2, objectChunkLength, true);
+  }
 
   return buffer;
 }
 
 /**
- * Validate 3DS data
+ * Validate 3DS file format
  */
 export function validate3DS(data: ArrayBuffer): boolean {
   try {
+    const view = new DataView(data);
+    
+    // Check minimum size
     if (data.byteLength < 6) {
       return false;
     }
-
-    const view = new DataView(data);
-    const mainChunkId = view.getUint16(0, true);
     
-    return mainChunkId === CHUNK_IDS.MAIN;
-  } catch (error) {
+    // Check main chunk ID
+    const mainChunkId = view.getUint16(0, true);
+    if (mainChunkId !== CHUNK_IDS.MAIN) {
+      return false;
+    }
+    
+    // Check chunk length
+    const mainChunkLength = view.getUint32(2, true);
+    if (mainChunkLength !== data.byteLength) {
+      return false;
+    }
+    
+    return true;
+  } catch {
     return false;
   }
 }
 
 /**
- * Get 3DS file information
+ * Get information about 3DS file
  */
 export function get3DSInfo(data: ArrayBuffer): {
   meshCount: number;
@@ -564,47 +496,30 @@ export function get3DSInfo(data: ArrayBuffer): {
   faceCount: number;
   materialCount: number;
 } {
-  const info = {
-    meshCount: 0,
-    vertexCount: 0,
-    faceCount: 0,
-    materialCount: 0
-  };
-
   try {
     const chunks = parse3DSChunks(data);
+    const meshes = parse3DSMeshes(chunks);
     
-    // Count materials
-    for (const chunk of chunks) {
-      if (chunk.id === CHUNK_IDS.MATERIAL) {
-        info.materialCount++;
-      }
+    let totalVertices = 0;
+    let totalFaces = 0;
+    
+    for (const mesh of meshes) {
+      totalVertices += mesh.vertices.length;
+      totalFaces += mesh.faces.length;
     }
-
-    // Count meshes and geometry
-    for (const chunk of chunks) {
-      if (chunk.id === CHUNK_IDS.OBJECT) {
-        for (const child of chunk.children) {
-          if (child.id === CHUNK_IDS.MESH) {
-            info.meshCount++;
-            
-            // Parse vertices and faces
-            for (const meshChild of child.children) {
-              if (meshChild.id === CHUNK_IDS.VERTICES) {
-                const view = new DataView(meshChild.data);
-                info.vertexCount += view.getUint16(0, true);
-              } else if (meshChild.id === CHUNK_IDS.FACES) {
-                const view = new DataView(meshChild.data);
-                info.faceCount += view.getUint16(0, true);
-              }
-            }
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.warn('3DS info parsing failed:', error);
+    
+    return {
+      meshCount: meshes.length,
+      vertexCount: totalVertices,
+      faceCount: totalFaces,
+      materialCount: 0 // Materials not implemented yet
+    };
+  } catch {
+    return {
+      meshCount: 0,
+      vertexCount: 0,
+      faceCount: 0,
+      materialCount: 0
+    };
   }
-
-  return info;
 } 

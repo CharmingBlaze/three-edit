@@ -131,7 +131,7 @@ export class GPUShaders {
   /**
    * Create compute shader program (fallback implementation)
    */
-  createComputeProgram(shaderInfo: ComputeShaderInfo): WebGLProgram | null { // shaderInfo used for program creation
+  createComputeProgram(_shaderInfo: ComputeShaderInfo): WebGLProgram | null { // shaderInfo used for program creation
     // Since compute shaders aren't supported in WebGL2, return null
     // This will trigger fallback to CPU operations
     return null;

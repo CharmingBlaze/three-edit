@@ -1,6 +1,5 @@
 import { Vector3, Matrix4 } from 'three';
 import { EditableMesh } from '../core/EditableMesh.ts';
-import { Selection } from '../selection/Selection.ts';
 
 /**
  * Options for mirroring geometry
@@ -29,8 +28,8 @@ export function mirrorByPlane(
   options: MirrorOptions = {}
 ): EditableMesh {
   const duplicate = options.duplicate ?? true;
-  const weldVertices = options.weldVertices ?? false;
-  const weldTolerance = options.weldTolerance ?? 0.001;
+  const _weldVertices = options.weldVertices ?? false;
+  const _weldTolerance = options.weldTolerance ?? 0.001;
   
   // Normalize the plane normal
   const normalizedNormal = planeNormal.clone().normalize();

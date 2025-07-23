@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>three-edit Mesh Editing Example</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
+        button {
+            margin: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h3>three-edit Demo</h3>
+        <button id="extrudeFace">Extrude Face</button>
+        <button id="bevelEdge">Bevel Edge</button>
+        <button id="reset">Reset Mesh</button>
+    </div>
+
+    <!-- Load Three.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- Load three-edit browser version -->
+    <script src="../browser/three-edit.js"></script>
+    
+    <script>
+        // Basic Three.js setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        
+        // Add orbit controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        
+        // Create a mesh and keep reference to the editable mesh
+        let editableMesh;
+        let threeMesh;
+        
+        // Initialize the scene
+        function initScene() {
+            // Clear existing mesh if any
+            if (threeMesh) scene.remove(threeMesh);
+            
+            // Create a cube using three-edit
+            editableMesh = ThreeEdit.createCube();
+            
+            // Convert to Three.js BufferGeometry
+            const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+            
+            // Create a mesh with the geometry
+            const material = new THREE.MeshNormalMaterial({ wireframe: false });
+            threeMesh = new THREE.Mesh(geometry, material);
+            scene.add(threeMesh);
+        }
+        
+        // Initialize the scene
+        initScene();
+        
+        // Position camera
+        camera.position.z = 5;
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // UI Controls
+        document.getElementById('extrudeFace').addEventListener('click', () => {
+            // Get a face to extrude (for simplicity, we'll use the first face)
+            const faces = editableMesh.faces;
+            if (faces.length > 0) {
+                // Extrude the face
+                ThreeEdit.extrudeFace(editableMesh, faces[0], { depth: 1 });
+                
+                // Update the Three.js geometry
+                threeMesh.geometry.dispose();
+                threeMesh.geometry = ThreeEdit.toBufferGeometry(editableMesh);
+            }
+        });
+        
+        document.getElementById('bevelEdge').addEventListener('click', () => {
+            // Get an edge to bevel (for simplicity, we'll use the first edge)
+            const edges = editableMesh.edges;
+            if (edges.length > 0) {
+                // Bevel the edge
+                ThreeEdit.bevelEdge(editableMesh, edges[0], { segments: 3, offset: 0.2 });
+                
+                // Update the Three.js geometry
+                threeMesh.geometry.dispose();
+                threeMesh.geometry = ThreeEdit.toBufferGeometry(editableMesh);
+            }
+        });
+        
+        document.getElementById('reset').addEventListener('click', () => {
+            initScene();
+        });
+    </script>
+</body>
+</html>

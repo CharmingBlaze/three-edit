@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
-import { EditableMesh, Face, Vertex, Edge } from '../core/index.ts';
-import { calculateFaceNormal, calculateFaceCenter } from '../utils/mathUtils.ts';
+import { EditableMesh, Face } from '../core/index.ts';
+import { calculateFaceNormal } from '../utils/mathUtils.ts';
 
 /**
  * Validation result for mesh integrity checks
@@ -186,7 +186,7 @@ function findDuplicateVertices(mesh: EditableMesh, result: ValidationResult): vo
     vertexMap.get(key)!.push(i);
   }
   
-  for (const [key, indices] of vertexMap) {
+  for (const [_key, indices] of vertexMap) {
     if (indices.length > 1) {
       result.warnings.push(`Duplicate vertices found: ${indices.join(', ')}`);
       result.duplicateVertices.push(...indices);
@@ -210,7 +210,7 @@ function findDuplicateEdges(mesh: EditableMesh, result: ValidationResult): void 
     edgeMap.get(key)!.push(i);
   }
   
-  for (const [key, indices] of edgeMap) {
+  for (const [_key, indices] of edgeMap) {
     if (indices.length > 1) {
       result.warnings.push(`Duplicate edges found: ${indices.join(', ')}`);
       result.duplicateEdges.push(...indices);

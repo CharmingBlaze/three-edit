@@ -64,15 +64,15 @@ export function twist(
  */
 export function twistAdvanced(
   mesh: EditableMesh,
-  twistRate: (position: Vector3) => number,
+  twistProfile: (position: Vector3) => number,
   options: TwistOptions = {}
 ): EditableMesh {
-  const angle = options.angle ?? Math.PI / 2;
-  const axis = options.axis ?? new Vector3(0, 1, 0);
+  const _axis = options.axis ?? new Vector3(0, 1, 0);
   const center = options.center ?? new Vector3(0, 0, 0);
+  const angle = options.angle ?? Math.PI / 2;
 
   // Normalize axis
-  axis.normalize();
+  _axis.normalize();
 
   // Apply twist to each vertex
   for (let i = 0; i < mesh.getVertexCount(); i++) {
@@ -81,7 +81,7 @@ export function twistAdvanced(
 
     // Calculate twist rate for this vertex position
     const position = new Vector3(vertex.x, vertex.y, vertex.z);
-    const twistFactor = twistRate(position);
+    const twistFactor = twistProfile(position);
     
     if (twistFactor > 0) {
       // Calculate twist angle for this vertex
@@ -89,7 +89,7 @@ export function twistAdvanced(
       
       // Create rotation matrix around the axis
       const rotationMatrix = new Matrix4();
-      rotationMatrix.makeRotationAxis(axis, vertexAngle);
+      rotationMatrix.makeRotationAxis(_axis, vertexAngle);
       
       // Apply rotation around center
       const transformedPos = new Vector3(vertex.x, vertex.y, vertex.z);

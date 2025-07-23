@@ -1,4 +1,3 @@
-import { Vector3 } from 'three';
 import { EditableMesh } from '../core/EditableMesh.ts';
 
 // Re-export from modular structure

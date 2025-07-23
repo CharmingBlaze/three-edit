@@ -1,5 +1,4 @@
-// EditableMesh is used in the interface definitions
-import { EditableMesh } from '../../core/index.ts';
+// GPU acceleration types and interfaces
 
 /**
  * GPU acceleration options

@@ -5,11 +5,20 @@ import { OctreeNode, OctreeStatistics } from './types';
  */
 export function calculateOctreeStatistics(root: OctreeNode): OctreeStatistics {
   const stats = calculateStatistics(root);
+  const memoryUsage = calculateOctreeMemoryUsage(root);
+  const distribution = calculateDepthDistribution(root);
+  const nodeDistribution = Array.from({ length: stats.maxDepth + 1 }, (_, i) => distribution.get(i) ?? 0);
   
   return {
     totalNodes: stats.totalNodes,
     leafNodes: stats.leafNodes,
     maxDepth: stats.maxDepth,
+    averageDepth: calculateAverageDepth(root),
+    totalVertices: calculateTotalVertices(root),
+    totalFaces: calculateTotalFaces(root),
+    memoryUsage,
+    nodeDistribution,
+    totalObjects: stats.totalObjects,
     averageObjectsPerLeaf: stats.totalObjects / Math.max(stats.leafNodes, 1)
   };
 }
@@ -108,4 +117,50 @@ export function calculateOctreeBalance(root: OctreeNode): number {
 export function calculateAverageObjectsPerNode(root: OctreeNode): number {
   const stats = calculateStatistics(root);
   return stats.totalObjects / stats.totalNodes;
+} 
+
+/**
+ * Calculate average depth of octree
+ */
+function calculateAverageDepth(root: OctreeNode): number {
+  let totalDepth = 0;
+  let nodeCount = 0;
+  
+  function traverse(node: OctreeNode): void {
+    totalDepth += node.currentDepth;
+    nodeCount++;
+    
+    for (const child of node.children) {
+      traverse(child);
+    }
+  }
+  
+  traverse(root);
+  return nodeCount > 0 ? totalDepth / nodeCount : 0;
+}
+
+/**
+ * Calculate total vertices in octree
+ */
+function calculateTotalVertices(root: OctreeNode): number {
+  let totalVertices = root.vertices.length;
+  
+  for (const child of root.children) {
+    totalVertices += calculateTotalVertices(child);
+  }
+  
+  return totalVertices;
+}
+
+/**
+ * Calculate total faces in octree
+ */
+function calculateTotalFaces(root: OctreeNode): number {
+  let totalFaces = root.faces.length;
+  
+  for (const child of root.children) {
+    totalFaces += calculateTotalFaces(child);
+  }
+  
+  return totalFaces;
 } 

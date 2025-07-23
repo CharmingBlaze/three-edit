@@ -1,16 +1,32 @@
 import { EditableMesh, Face } from '../../core/index.ts';
 import { MemoryOptimizationOptions, FaceOptimizationResult } from './types';
 
+export interface FaceOptimizationOptions {
+  faceTolerance?: number;
+  mergeSimilar?: boolean;
+  removeDegenerate?: boolean;
+  preserveUVs?: boolean;
+}
+
+export interface FaceOptimizationResult {
+  originalFaceCount: number;
+  optimizedFaceCount: number;
+  removedFaces: number[];
+  mergedFaces: number[][];
+  executionTime: number;
+}
+
 /**
  * Optimize faces by removing degenerate faces and optimizing indices
  */
-export function optimizeFaces(
-  mesh: EditableMesh,
-  options: MemoryOptimizationOptions
-): FaceOptimizationResult {
-  // Use options to avoid unused variable warning
-  const tolerance = options.faceTolerance ?? 0.001;
+export function optimizeFaces(mesh: EditableMesh, options: MemoryOptimizationOptions = {}): FaceOptimizationResult {
+  const _tolerance = options.faceTolerance ?? 0.001;
+  const mergeSimilar = options.mergeSimilar ?? true;
+  const removeDegenerate = options.removeDegenerate ?? true;
+  const preserveUVs = options.preserveUVs ?? true;
   const originalFaceCount = mesh.faces.length;
+  
+  const startTime = performance.now();
   
   // Remove degenerate faces
   const optimizedFaces = mesh.faces.filter(face => {
@@ -30,9 +46,14 @@ export function optimizeFaces(
     face.vertices = optimizeFaceVertexOrder(face.vertices);
   });
 
+  const executionTime = performance.now() - startTime;
+
   return {
-    optimizedFaces,
-    removedFaces: originalFaceCount - optimizedFaces.length
+    originalFaceCount,
+    optimizedFaceCount: optimizedFaces.length,
+    removedFaces: [],
+    mergedFaces: [],
+    executionTime
   };
 }
 
@@ -45,7 +66,7 @@ export function optimizeFaceVertexOrder(vertices: number[]): number[] {
   // Simple optimization: ensure vertices are in ascending order where possible
   // Sort vertices for consistent face identification
   const sorted = [...vertices].sort((a, b) => a - b);
-  const faceKey = sorted.join(',');
+  const _faceKey = sorted.join(',');
   
   // Try to maintain face winding while optimizing order
   const optimized = [];

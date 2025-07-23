@@ -47,3 +47,10 @@ export * from './performance';
 
 // Integration features
 export * from './integration';
+
+// JavaScript wrapper (for vanilla JS users)
+import ThreeEditJS from './js-wrapper/index';
+export { ThreeEditJS };
+
+// Default export for easier UMD/vanilla JS usage
+export default ThreeEditJS;

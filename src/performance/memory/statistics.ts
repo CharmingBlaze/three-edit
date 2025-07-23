@@ -6,33 +6,35 @@ import { MemoryStatistics } from './types';
  */
 export function estimateMemoryUsage(mesh: EditableMesh): number {
   let totalBytes = 0;
-
-  // Vertex memory (position, normal, uv, userData)
+  
+  // Vertex memory
   mesh.vertices.forEach(vertex => {
-    totalBytes += 3 * 8; // x, y, z (64-bit doubles)
-    if (vertex.normal) totalBytes += 3 * 8; // normal
-    if (vertex.uv) totalBytes += 2 * 8; // uv
-    if (vertex.userData) totalBytes += 100; // estimated userData size
+    totalBytes += 12; // x, y, z (3 * 4 bytes)
+    if (vertex.normal) totalBytes += 12; // normal (3 * 4 bytes)
+    if (vertex.uv) totalBytes += 8; // uv (2 * 4 bytes)
+    if (vertex.userData && Object.keys(vertex.userData).length > 0) totalBytes += 16; // userData
   });
-
-  // Edge memory
-  mesh.edges.forEach(edge => {
-    totalBytes += 2 * 4; // v1, v2 (32-bit integers)
-    if (edge.userData) totalBytes += 50; // estimated userData size
-  });
-
+  
   // Face memory
-  mesh.faces.forEach(face => {
-    totalBytes += face.vertices.length * 4; // vertex indices
-    totalBytes += face.edges.length * 4; // edge indices
-    if (face.materialIndex !== undefined) totalBytes += 4; // material index
-    if (face.normal) totalBytes += 3 * 8; // normal
-    if (face.userData) totalBytes += 50; // estimated userData size
-  });
-
-  // Matrix memory
-  totalBytes += 16 * 8; // 4x4 matrix (64-bit doubles)
-
+  if (mesh.faces) {
+    mesh.faces.forEach(face => {
+      totalBytes += face.vertices.length * 4; // vertex indices
+      if (face.edges) {
+        totalBytes += face.edges.length * 4; // edge indices
+      }
+      if (face.materialIndex !== undefined) totalBytes += 4; // material index
+      if (face.userData && Object.keys(face.userData).length > 0) totalBytes += 16; // userData
+    });
+  }
+  
+  // Edge memory (if edges are stored separately)
+  if (mesh.edges) {
+    mesh.edges.forEach(edge => {
+      totalBytes += 8; // two vertex indices
+      if (edge.userData && Object.keys(edge.userData).length > 0) totalBytes += 16; // userData
+    });
+  }
+  
   return totalBytes;
 }
 
@@ -67,6 +69,17 @@ export function calculateCompressionRatio(
 ): number {
   if (originalSize === 0) return 0;
   return (originalSize - compressedSize) / originalSize;
+}
+
+/**
+ * Calculate face optimization ratio for statistics
+ */
+export function calculateFaceOptimizationRatio(
+  originalFaceCount: number,
+  optimizedFaceCount: number
+): number {
+  if (originalFaceCount === 0) return 0;
+  return (originalFaceCount - optimizedFaceCount) / originalFaceCount;
 }
 
 /**
@@ -107,15 +120,4 @@ export function generateMemoryStatistics(
     faceOptimizationRatio: faceOptimizationRatio,
     compressionRatio: compressionRatio
   };
-}
-
-/**
- * Calculate face optimization ratio for statistics
- */
-export function calculateFaceOptimizationRatio(
-  originalFaceCount: number,
-  optimizedFaceCount: number
-): number {
-  if (originalFaceCount === 0) return 0;
-  return (originalFaceCount - optimizedFaceCount) / originalFaceCount;
 } 

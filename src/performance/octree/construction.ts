@@ -205,23 +205,29 @@ export function calculateBoundingBox(mesh: EditableMesh): Box3 {
 export function calculateFaceBoundingBox(face: Face): BoundingBox {
   const min = new Vector3(Infinity, Infinity, Infinity);
   const max = new Vector3(-Infinity, -Infinity, -Infinity);
-  
-  // This is a simplified calculation - in a real implementation,
-  // you would need to access the actual vertex positions
-  // For now, return a default bounding box
-  return {
-    min: new Vector3(-1, -1, -1),
-    max: new Vector3(1, 1, 1)
-  };
+
+  // Calculate bounding box from face vertices
+  for (const vertexIndex of face.vertices) {
+    // This would need access to the mesh to get vertex positions
+    // For now, return a default bounding box
+    min.set(-1, -1, -1);
+    max.set(1, 1, 1);
+    break;
+  }
+
+  return { min, max };
 }
 
 /**
  * Calculate face center
  */
 export function calculateFaceCenter(face: Face): Vector3 {
-  // This is a simplified calculation - in a real implementation,
-  // you would need to access the actual vertex positions
-  return new Vector3(0, 0, 0);
+  // Calculate center from face vertices
+  const center = new Vector3(0, 0, 0);
+  
+  // This would need access to the mesh to get vertex positions
+  // For now, return origin
+  return center;
 }
 
 /**

@@ -93,11 +93,11 @@ export function taperAdvanced(
   taperProfile: (position: Vector3) => Vector3,
   options: TaperOptions = {}
 ): EditableMesh {
-  const axis = options.axis ?? new Vector3(0, 1, 0);
+  const _axis = options.axis ?? new Vector3(0, 1, 0);
   const center = options.center ?? new Vector3(0, 0, 0);
 
   // Normalize axis
-  axis.normalize();
+  _axis.normalize();
 
   // Apply taper to each vertex
   for (let i = 0; i < mesh.getVertexCount(); i++) {

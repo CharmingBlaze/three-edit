@@ -36,16 +36,16 @@ export interface TorusKnotOptions {
  * @returns The created EditableMesh
  */
 export function createTorusKnot(options: TorusKnotOptions = {}): EditableMesh {
-  const radius = options.radius ?? 1.0;
+  const radius = options.radius ?? 1;
   const tubeRadius = options.tubeRadius ?? 0.3;
-  const tubularSegments = options.tubularSegments ?? 64;
-  const radialSegments = options.radialSegments ?? 8;
+  const tubularSegments = Math.max(3, Math.floor(options.tubularSegments ?? 64));
+  const radialSegments = Math.max(3, Math.floor(options.radialSegments ?? 8));
   const p = options.p ?? 2;
   const q = options.q ?? 3;
+  const _center = options.center ?? new Vector3(0, 0, 0);
   const materialIndex = options.materialIndex ?? 0;
   const generateUVs = options.generateUVs ?? true;
   const generateNormals = options.generateNormals ?? true;
-  const center = options.center ?? new Vector3(0, 0, 0);
 
   const mesh = new EditableMesh();
 

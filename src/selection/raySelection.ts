@@ -40,7 +40,7 @@ export function selectByRay(
 /**
  * Select faces using a ray
  */
-function selectFacesByRay(mesh: EditableMesh, ray: Ray, maxDistance: number, tolerance: number): number[] {
+function selectFacesByRay(mesh: EditableMesh, ray: Ray, maxDistance: number, _tolerance: number): number[] {
   const selectedFaces: number[] = [];
   
   for (let i = 0; i < mesh.faces.length; i++) {
@@ -76,7 +76,7 @@ function selectFacesByRay(mesh: EditableMesh, ray: Ray, maxDistance: number, tol
 /**
  * Select vertices using a ray
  */
-function selectVerticesByRay(mesh: EditableMesh, ray: Ray, maxDistance: number, tolerance: number): number[] {
+function selectVerticesByRay(mesh: EditableMesh, ray: Ray, maxDistance: number, _tolerance: number): number[] {
   const selectedVertices: number[] = [];
   
   for (let i = 0; i < mesh.vertices.length; i++) {
@@ -86,7 +86,7 @@ function selectVerticesByRay(mesh: EditableMesh, ray: Ray, maxDistance: number, 
     // Check distance from ray to vertex
     const distance = distanceFromRayToPoint(ray, vertexPos);
     
-    if (distance <= tolerance && distance <= maxDistance) {
+    if (distance <= _tolerance && distance <= maxDistance) {
       selectedVertices.push(i);
     }
   }
@@ -97,7 +97,7 @@ function selectVerticesByRay(mesh: EditableMesh, ray: Ray, maxDistance: number, 
 /**
  * Select edges using a ray
  */
-function selectEdgesByRay(mesh: EditableMesh, ray: Ray, maxDistance: number, tolerance: number): number[] {
+function selectEdgesByRay(mesh: EditableMesh, ray: Ray, maxDistance: number, _tolerance: number): number[] {
   const selectedEdges: number[] = [];
   
   for (let i = 0; i < mesh.edges.length; i++) {

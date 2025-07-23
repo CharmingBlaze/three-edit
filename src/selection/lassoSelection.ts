@@ -39,7 +39,7 @@ export function selectByLasso(
 /**
  * Select faces using a lasso
  */
-function selectFacesByLasso(mesh: EditableMesh, points: Vector3[], tolerance: number): number[] {
+function selectFacesByLasso(mesh: EditableMesh, points: Vector3[], _tolerance: number): number[] {
   const selectedFaces: number[] = [];
   
   for (let i = 0; i < mesh.faces.length; i++) {
@@ -57,7 +57,7 @@ function selectFacesByLasso(mesh: EditableMesh, points: Vector3[], tolerance: nu
 /**
  * Select vertices using a lasso
  */
-function selectVerticesByLasso(mesh: EditableMesh, points: Vector3[], tolerance: number): number[] {
+function selectVerticesByLasso(mesh: EditableMesh, points: Vector3[], _tolerance: number): number[] {
   const selectedVertices: number[] = [];
   
   for (let i = 0; i < mesh.vertices.length; i++) {
@@ -75,7 +75,7 @@ function selectVerticesByLasso(mesh: EditableMesh, points: Vector3[], tolerance:
 /**
  * Select edges using a lasso
  */
-function selectEdgesByLasso(mesh: EditableMesh, points: Vector3[], tolerance: number): number[] {
+function selectEdgesByLasso(mesh: EditableMesh, points: Vector3[], _tolerance: number): number[] {
   const selectedEdges: number[] = [];
   
   for (let i = 0; i < mesh.edges.length; i++) {

@@ -95,7 +95,7 @@ export function importCollada(
  */
 function parseColladaGeometry(
   geometryElement: Element,
-  options: ColladaOptions
+  _options: ColladaOptions
 ): EditableMesh | null {
   const mesh = new EditableMesh();
   
@@ -108,7 +108,6 @@ function parseColladaGeometry(
 
     // Parse source elements
     const sources = meshElement.getElementsByTagName('source');
-    const verticesSource = meshElement.getElementsByTagName('vertices')[0];
     
     let positions: number[] = [];
     let normals: number[] = [];
@@ -217,15 +216,15 @@ export function exportCollada(
   options: ColladaOptions = {}
 ): string {
   const {
-    preserveMaterials = true,
-    preserveAnimations = false,
-    preserveHierarchy = true,
-    version = '1.5',
+    preserveMaterials: _preserveMaterials = true,
+    preserveAnimations: _preserveAnimations = false,
+    preserveHierarchy: _preserveHierarchy = true,
+    version: _version = '1.5',
     upAxis = 'Y_UP'
   } = options;
 
   let output = '<?xml version="1.0" encoding="utf-8"?>\n';
-  output += `<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.5">\n`;
+  output += `<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="${_version}">\n`;
   
   output += '  <asset>\n';
   output += '    <contributor>\n';
@@ -241,7 +240,7 @@ export function exportCollada(
   // Export library_geometries
   output += '  <library_geometries>\n';
   
-  meshes.forEach((mesh, index) => {
+  meshes.forEach((_mesh, index) => {
     const geometryId = `geometry-${index}`;
     const meshId = `mesh-${index}`;
     const positionId = `position-${index}`;
@@ -253,7 +252,7 @@ export function exportCollada(
     
     // Export positions
     const positions: number[] = [];
-    mesh.vertices.forEach(vertex => {
+    _mesh.vertices.forEach(vertex => {
       positions.push(vertex.x, vertex.y, vertex.z);
     });
     
@@ -261,7 +260,7 @@ export function exportCollada(
     output += `          <float_array id="${positionId}-array" count="${positions.length}">`;
     output += positions.join(' ') + '</float_array>\n';
     output += '          <technique_common>\n';
-    output += `            <accessor source="#${positionId}-array" count="${mesh.vertices.length}" stride="3">\n`;
+    output += `            <accessor source="#${positionId}-array" count="${_mesh.vertices.length}" stride="3">\n`;
     output += '              <param name="X" type="float"/>\n';
     output += '              <param name="Y" type="float"/>\n';
     output += '              <param name="Z" type="float"/>\n';
@@ -273,7 +272,7 @@ export function exportCollada(
     const normals: number[] = [];
     let hasNormals = false;
     
-    mesh.vertices.forEach(vertex => {
+    _mesh.vertices.forEach(vertex => {
       if (vertex.normal) {
         normals.push(vertex.normal.x, vertex.normal.y, vertex.normal.z);
         hasNormals = true;
@@ -287,7 +286,7 @@ export function exportCollada(
       output += `          <float_array id="${normalId}-array" count="${normals.length}">`;
       output += normals.join(' ') + '</float_array>\n';
       output += '          <technique_common>\n';
-      output += `            <accessor source="#${normalId}-array" count="${mesh.vertices.length}" stride="3">\n`;
+      output += `            <accessor source="#${normalId}-array" count="${_mesh.vertices.length}" stride="3">\n`;
       output += '              <param name="X" type="float"/>\n';
       output += '              <param name="Y" type="float"/>\n';
       output += '              <param name="Z" type="float"/>\n';
@@ -300,7 +299,7 @@ export function exportCollada(
     const uvs: number[] = [];
     let hasUVs = false;
     
-    mesh.vertices.forEach(vertex => {
+    _mesh.vertices.forEach(vertex => {
       if (vertex.uv) {
         uvs.push(vertex.uv.u, vertex.uv.v);
         hasUVs = true;
@@ -314,7 +313,7 @@ export function exportCollada(
       output += `          <float_array id="${uvId}-array" count="${uvs.length}">`;
       output += uvs.join(' ') + '</float_array>\n';
       output += '          <technique_common>\n';
-      output += `            <accessor source="#${uvId}-array" count="${mesh.vertices.length}" stride="2">\n`;
+      output += `            <accessor source="#${uvId}-array" count="${_mesh.vertices.length}" stride="2">\n`;
       output += '              <param name="S" type="float"/>\n';
       output += '              <param name="T" type="float"/>\n';
       output += '            </accessor>\n';
@@ -333,17 +332,31 @@ export function exportCollada(
     }
     output += '        </vertices>\n';
 
-    // Export triangles
-    output += `        <triangles count="${mesh.faces.length}">\n`;
-    output += `          <input semantic="VERTEX" source="#${meshId}-vertices" offset="0"/>\n`;
-    
+    // Export triangles (triangulate quads)
     const indices: number[] = [];
-    mesh.faces.forEach(face => {
-      face.vertices.forEach(vertexIndex => {
-        indices.push(vertexIndex);
-      });
+    let triangleCount = 0;
+    
+    _mesh.faces.forEach(face => {
+      if (face.vertices.length === 3) {
+        // Triangle
+        indices.push(...face.vertices);
+        triangleCount++;
+      } else if (face.vertices.length === 4) {
+        // Quad - triangulate into 2 triangles
+        indices.push(face.vertices[0], face.vertices[1], face.vertices[2]); // First triangle
+        indices.push(face.vertices[0], face.vertices[2], face.vertices[3]); // Second triangle
+        triangleCount += 2;
+      } else if (face.vertices.length > 4) {
+        // Polygon - triangulate using fan triangulation
+        for (let i = 1; i < face.vertices.length - 1; i++) {
+          indices.push(face.vertices[0], face.vertices[i], face.vertices[i + 1]);
+          triangleCount++;
+        }
+      }
     });
     
+    output += `        <triangles count="${triangleCount}">\n`;
+    output += `          <input semantic="VERTEX" source="#${meshId}-vertices" offset="0"/>\n`;
     output += `          <p>${indices.join(' ')}</p>\n`;
     output += '        </triangles>\n';
     
@@ -357,7 +370,7 @@ export function exportCollada(
   output += '  <library_visual_scenes>\n';
   output += '    <visual_scene id="Scene" name="Scene">\n';
   
-  meshes.forEach((mesh, index) => {
+  meshes.forEach((_mesh, index) => {
     const nodeId = `node-${index}`;
     const geometryId = `geometry-${index}`;
     

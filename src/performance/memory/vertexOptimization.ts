@@ -16,7 +16,7 @@ export function optimizeVertexSharing(
   // Round coordinates to specified precision
   const precision = Math.pow(10, options.precision ?? 6);
 
-  mesh.vertices.forEach((vertex, index) => {
+  mesh.vertices.forEach((vertex, _index) => {
     // Use index to avoid unused variable warning
     const key = createVertexKey(vertex, precision);
     

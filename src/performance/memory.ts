@@ -1,5 +1,8 @@
 // Legacy exports for backward compatibility
 import { EditableMesh } from '../core/index.ts';
+import { Vertex } from '../core/Vertex.ts';
+import { Face } from '../core/Face.ts';
+import { Vector3 } from 'three';
 import { MemoryOptimizationOptions, MemoryStatistics, CompressedVertex } from './memory/types';
 import { optimizeVertexSharing } from './memory/vertexOptimization';
 import { optimizeFaces } from './memory/faceOptimization';
@@ -85,7 +88,57 @@ export class MemoryOptimizer {
    */
   private optimizeFaces(): void {
     const result = optimizeFaces(this.mesh, this.options);
-    this.mesh.faces = result.optimizedFaces;
+    // The optimizeFaces function returns a result object, not the faces array
+    // We need to filter the faces ourselves based on the result
+    this.mesh.faces = this.mesh.faces.filter(face => {
+      if (face.vertices.length < 3) return false;
+      
+      // Check for duplicate vertices
+      const uniqueVertices = new Set(face.vertices);
+      if (uniqueVertices.size < 3) return false;
+      
+      // Check for zero area faces
+      const area = this.calculateFaceArea(face);
+      return area > 1e-10;
+    });
+  }
+
+  /**
+   * Calculate face area for optimization decisions
+   */
+  private calculateFaceArea(face: any): number {
+    if (face.vertices.length < 3) return 0;
+
+    const vertices = face.vertices.map((index: number) => this.mesh.vertices[index]).filter(Boolean);
+    if (vertices.length < 3) return 0;
+
+    // Calculate area using cross product
+    const v0 = vertices[0];
+    const v1 = vertices[1];
+    const v2 = vertices[2];
+
+    const edge1 = {
+      x: v1.x - v0.x,
+      y: v1.y - v0.y,
+      z: v1.z - v0.z
+    };
+
+    const edge2 = {
+      x: v2.x - v0.x,
+      y: v2.y - v0.y,
+      z: v2.z - v0.z
+    };
+
+    // Cross product
+    const cross = {
+      x: edge1.y * edge2.z - edge1.z * edge2.y,
+      y: edge1.z * edge2.x - edge1.x * edge2.z,
+      z: edge1.x * edge2.y - edge1.y * edge2.x
+    };
+
+    // Area is half the magnitude of the cross product
+    const magnitude = Math.sqrt(cross.x * cross.x + cross.y * cross.y + cross.z * cross.z);
+    return magnitude / 2;
   }
 
   /**
@@ -150,6 +203,10 @@ export class MemoryOptimizer {
    * Get compressed vertex data for external processing
    */
   getCompressedVertexData(): CompressedVertex[] {
+    if (!this.mesh.vertices || this.mesh.vertices.length === 0) {
+      return [];
+    }
+    
     const compressedVertices: CompressedVertex[] = this.mesh.vertices.map((vertex, index) => ({
       x: vertex.x,
       y: vertex.y,
@@ -168,20 +225,24 @@ export class MemoryOptimizer {
     vertices: CompressedVertex[],
     faces: Array<{ vertices: number[]; materialIndex: number }>
   ): EditableMesh {
-    // This would need to be implemented based on the actual EditableMesh constructor
-    // For now, return a basic mesh structure
     const mesh = new EditableMesh();
     
     // Convert compressed vertices to EditableMesh vertices
-    mesh.vertices = vertices.map(_v => {
-      // This is a simplified conversion - actual implementation would need proper Vertex creation
-      return {} as any; // Placeholder
+    mesh.vertices = vertices.map(v => {
+      const vertex = new Vertex(v.x, v.y, v.z);
+      if (v.normal) {
+        vertex.normal = new Vector3(v.normal[0], v.normal[1], v.normal[2]);
+      }
+      if (v.uv) {
+        vertex.uv = { u: v.uv[0], v: v.uv[1] };
+      }
+      return vertex;
     });
     
     // Convert faces
-    mesh.faces = faces.map(_f => {
-      // This is a simplified conversion - actual implementation would need proper Face creation
-      return {} as any; // Placeholder
+    mesh.faces = faces.map(f => {
+      const face = new Face(f.vertices, [], { materialIndex: f.materialIndex });
+      return face;
     });
     
     return mesh;

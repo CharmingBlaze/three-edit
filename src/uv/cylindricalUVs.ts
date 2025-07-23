@@ -23,9 +23,7 @@ export function generateCylindricalUVs(
   // Generate raw UVs based on cylindrical projection
   mesh.vertices.forEach(vertex => {
     const pos = new Vector3(vertex.x, vertex.y, vertex.z);
-    
-    // Convert to cylindrical coordinates
-    const radius = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+    const _radius = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
     const theta = Math.atan2(pos.z, pos.x);
     const height = pos.y;
     

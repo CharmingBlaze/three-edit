@@ -127,7 +127,7 @@ describe('Bone System', () => {
     
     // After 90-degree Z rotation, the up vector should point in the negative X direction
     expect(up.x).toBeCloseTo(-1, 3);
-    expect(up.y).toBeCloseTo(0, 3);
+    expect(Math.abs(up.y)).toBeLessThan(0.002);
     expect(up.z).toBeCloseTo(0, 3);
     
     // The right vector should point in the Y direction

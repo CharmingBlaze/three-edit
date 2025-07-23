@@ -468,7 +468,7 @@ export class SkinnedMeshOperations {
   /**
    * Reset mesh to bind pose
    */
-  static resetToBindPose(mesh: EditableMesh, skin: Skin): void {
+  static resetToBindPose(_mesh: EditableMesh, _skin: Skin): void {
     // This would restore the original vertex positions
     // In a real implementation, you would store the bind pose positions
     // For now, we'll just leave the mesh as is

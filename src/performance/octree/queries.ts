@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { EditableMesh, Vertex, Face } from '../../core/index.ts';
+import { Vertex, Face } from '../../core/index.ts';
 import { OctreeNode, SpatialQueryOptions } from './types';
 
 /**
@@ -137,7 +137,7 @@ export function distanceToNode(point: Vector3, node: OctreeNode): number {
 /**
  * Calculate face center
  */
-export function calculateFaceCenter(face: Face): Vector3 {
+export function calculateFaceCenter(_face: Face): Vector3 {
   // This is a simplified calculation - in a real implementation,
   // you would need to access the actual vertex positions
   return new Vector3(0, 0, 0);
