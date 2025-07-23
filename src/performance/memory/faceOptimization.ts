@@ -1,5 +1,5 @@
 import { EditableMesh, Face } from '../../core/index.ts';
-import { MemoryOptimizationOptions, FaceOptimizationResult } from './types';
+import { MemoryOptimizationOptions } from './types';
 
 export interface FaceOptimizationOptions {
   faceTolerance?: number;
@@ -19,11 +19,8 @@ export interface FaceOptimizationResult {
 /**
  * Optimize faces by removing degenerate faces and optimizing indices
  */
-export function optimizeFaces(mesh: EditableMesh, options: MemoryOptimizationOptions = {}): FaceOptimizationResult {
-  const _tolerance = options.faceTolerance ?? 0.001;
-  const mergeSimilar = options.mergeSimilar ?? true;
-  const removeDegenerate = options.removeDegenerate ?? true;
-  const preserveUVs = options.preserveUVs ?? true;
+export function optimizeFaces(mesh: EditableMesh, _options: MemoryOptimizationOptions = {}): FaceOptimizationResult {
+  // const _tolerance = options.faceTolerance ?? 0.001;
   const originalFaceCount = mesh.faces.length;
   
   const startTime = performance.now();
@@ -65,8 +62,8 @@ export function optimizeFaceVertexOrder(vertices: number[]): number[] {
 
   // Simple optimization: ensure vertices are in ascending order where possible
   // Sort vertices for consistent face identification
-  const sorted = [...vertices].sort((a, b) => a - b);
-  const _faceKey = sorted.join(',');
+  // const sorted = [...vertices].sort((a, b) => a - b);
+  // const _faceKey = sorted.join(',');
   
   // Try to maintain face winding while optimizing order
   const optimized = [];

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Vector3 } from 'three';
+
 import { createGreebleBlock } from '../primitives/createGreebleBlock.ts';
 import { createEmpty } from '../primitives/createEmpty.ts';
 import { createBoundingBox } from '../primitives/createBoundingBox.ts';

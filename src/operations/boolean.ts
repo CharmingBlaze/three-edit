@@ -1,9 +1,16 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-
-import { validateGeometryIntegrity } from '../validation/validateGeometryIntegrity.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { validateGeometryIntegrity } from '../validation/validateGeometryIntegrity';
+import { 
+  performCSGOperation, 
+  csgUnion as performCSGUnion, 
+  csgSubtract as performCSGSubtract, 
+  csgIntersect as performCSGIntersect,
+  CSGResult
+} from './boolean/csgOperations';
+import { CSGOptions } from './boolean/types';
 
 /**
- * Options for boolean operations
+ * Boolean operation options
  */
 export interface BooleanOptions {
   /** Whether to validate the result mesh */
@@ -14,10 +21,12 @@ export interface BooleanOptions {
   tolerance?: number;
   /** Whether to preserve material assignments */
   preserveMaterials?: boolean;
+  /** Whether to merge coincident vertices */
+  mergeVertices?: boolean;
 }
 
 /**
- * Result of a boolean operation
+ * Boolean operation result
  */
 export interface BooleanResult {
   /** The resulting mesh */
@@ -28,195 +37,77 @@ export interface BooleanResult {
   error?: string;
   /** Validation results if validation was performed */
   validation?: any;
+  /** Statistics about the operation */
+  statistics?: {
+    inputVertices: number;
+    inputFaces: number;
+    outputVertices: number;
+    outputFaces: number;
+    processingTime: number;
+  };
 }
 
 /**
- * Performs a boolean union operation between two meshes
+ * Perform union operation between two meshes
  * @param meshA First mesh
  * @param meshB Second mesh
  * @param options Boolean operation options
- * @returns Result containing the unioned mesh
+ * @returns Boolean operation result
  */
-export function union(meshA: EditableMesh, meshB: EditableMesh, options: BooleanOptions = {}): BooleanResult {
-  try {
-    const result = performBooleanOperation(meshA, meshB, 'union', options);
-    return result;
-  } catch (error) {
-    return {
-      mesh: new EditableMesh(),
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during union operation'
-    };
-  }
+export function booleanUnion(meshA: EditableMesh, meshB: EditableMesh, options: BooleanOptions = {}): BooleanResult {
+  return performCSGUnion(meshA, meshB, options);
 }
 
 /**
- * Performs a boolean subtract operation (A - B)
- * @param meshA First mesh (minuend)
- * @param meshB Second mesh (subtrahend)
- * @param options Boolean operation options
- * @returns Result containing the subtracted mesh
- */
-export function subtract(meshA: EditableMesh, meshB: EditableMesh, options: BooleanOptions = {}): BooleanResult {
-  try {
-    const result = performBooleanOperation(meshA, meshB, 'subtract', options);
-    return result;
-  } catch (error) {
-    return {
-      mesh: new EditableMesh(),
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during subtract operation'
-    };
-  }
-}
-
-/**
- * Performs a boolean intersect operation between two meshes
+ * Perform intersection operation between two meshes
  * @param meshA First mesh
  * @param meshB Second mesh
  * @param options Boolean operation options
- * @returns Result containing the intersected mesh
+ * @returns Boolean operation result
  */
-export function intersect(meshA: EditableMesh, meshB: EditableMesh, options: BooleanOptions = {}): BooleanResult {
-  try {
-    const result = performBooleanOperation(meshA, meshB, 'intersect', options);
-    return result;
-  } catch (error) {
-    return {
-      mesh: new EditableMesh(),
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during intersect operation'
-    };
-  }
+export function booleanIntersection(meshA: EditableMesh, meshB: EditableMesh, options: BooleanOptions = {}): BooleanResult {
+  return performCSGIntersect(meshA, meshB, options);
 }
 
 /**
- * Performs a generic boolean operation
+ * Perform difference operation between two meshes
+ * @param meshA First mesh
+ * @param meshB Second mesh
+ * @param options Boolean operation options
+ * @returns Boolean operation result
+ */
+export function booleanDifference(meshA: EditableMesh, meshB: EditableMesh, options: BooleanOptions = {}): BooleanResult {
+  return performCSGSubtract(meshA, meshB, options);
+}
+
+/**
+ * Generic boolean operation function
  * @param meshA First mesh
  * @param meshB Second mesh
  * @param operation Type of boolean operation
  * @param options Boolean operation options
- * @returns Result containing the operated mesh
+ * @returns Boolean operation result
  */
 export function booleanOperation(
   meshA: EditableMesh, 
   meshB: EditableMesh, 
-  operation: 'union' | 'subtract' | 'intersect',
+  operation: 'union' | 'intersection' | 'difference',
   options: BooleanOptions = {}
 ): BooleanResult {
-  try {
-    const result = performBooleanOperation(meshA, meshB, operation, options);
-    return result;
-  } catch (error) {
-    return {
-      mesh: new EditableMesh(),
-      success: false,
-      error: error instanceof Error ? error.message : `Unknown error during ${operation} operation`
-    };
+  switch (operation) {
+    case 'union':
+      return booleanUnion(meshA, meshB, options);
+    case 'intersection':
+      return booleanIntersection(meshA, meshB, options);
+    case 'difference':
+      return booleanDifference(meshA, meshB, options);
+    default:
+      return {
+        mesh: new EditableMesh(),
+        success: false,
+        error: `Unknown boolean operation: ${operation}`
+      };
   }
-}
-
-/**
- * Copy mesh data to result mesh
- * @param source Source mesh
- * @param target Target mesh
- * @param vertexOffset Offset for vertex indices
- */
-function copyMeshData(source: EditableMesh, target: EditableMesh, vertexOffset: number): void {
-  // Copy vertices
-  for (const vertex of source.vertices) {
-    const newVertex = vertex.clone();
-    target.addVertex(newVertex);
-  }
-
-  // Copy edges
-  for (const edge of source.edges) {
-    const newEdge = edge.clone();
-    newEdge.v1 += vertexOffset;
-    newEdge.v2 += vertexOffset;
-    target.addEdge(newEdge);
-  }
-
-  // Copy faces
-  for (const face of source.faces) {
-    const newFace = face.clone();
-    // Adjust vertex indices
-    newFace.vertices = newFace.vertices.map((v: number) => v + vertexOffset);
-    target.addFace(newFace);
-  }
-}
-
-/**
- * Basic boolean operation implementation
- * This is a simplified implementation - a production version would use a proper CSG library
- * @param meshA First mesh
- * @param meshB Second mesh
- * @param operation Type of boolean operation
- * @returns Resulting mesh
- */
-function implementBasicBoolean(
-  meshA: EditableMesh,
-  meshB: EditableMesh,
-  operation: 'union' | 'subtract' | 'intersect',
-): EditableMesh {
-  const resultMesh = new EditableMesh({ name: `${meshA.name}_${operation}_${meshB.name}` });
-
-  // For now, implement a simple approach that copies the first mesh
-  // This is a placeholder - real implementation would use proper CSG algorithms
-  
-  if (operation === 'union') {
-    // Copy all vertices, edges, and faces from both meshes
-    copyMeshData(meshA, resultMesh, 0);
-    copyMeshData(meshB, resultMesh, meshA.vertices.length);
-  } else if (operation === 'subtract') {
-    // Copy only meshA for now
-    copyMeshData(meshA, resultMesh, 0);
-  } else if (operation === 'intersect') {
-    // For intersection, we'd need to find overlapping regions
-    // For now, return an empty mesh
-    console.warn('Intersection operation not yet fully implemented');
-  }
-
-  return resultMesh;
-}
-
-/**
- * Internal function to perform boolean operations
- * @param meshA First mesh
- * @param meshB Second mesh
- * @param operation Type of boolean operation
- * @param options Boolean operation options
- * @returns Result containing the operated mesh
- */
-function performBooleanOperation(
-  meshA: EditableMesh,
-  meshB: EditableMesh,
-  operation: 'union' | 'subtract' | 'intersect',
-  options: BooleanOptions = {}
-): BooleanResult {
-  const {
-    validate = true,
-    repair = false, // repair is not implemented
-  } = options;
-
-  // For now, implement a basic approach
-  // In a full implementation, this would use a proper CSG library
-  const result = implementBasicBoolean(meshA, meshB, operation);
-
-  // Validate and repair if requested
-  if (validate) {
-    const validation = validateGeometryIntegrity(result);
-    if (!validation.valid && repair) {
-      // TODO: Implement repair functionality
-      console.warn('Geometry validation failed, repair not yet implemented');
-    }
-  }
-
-  return {
-    mesh: result,
-    success: true,
-    validation: validate ? validateGeometryIntegrity(result) : undefined
-  };
 }
 
 /**
@@ -234,7 +125,7 @@ export const BooleanAdvanced = {
       removeInternal?: boolean;
     } = {}
   ): BooleanResult {
-    return union(meshA, meshB, options);
+    return booleanUnion(meshA, meshB, options);
   },
 
   /**
@@ -248,7 +139,7 @@ export const BooleanAdvanced = {
       invertResult?: boolean;
     } = {}
   ): BooleanResult {
-    return subtract(meshA, meshB, options);
+    return booleanDifference(meshA, meshB, options);
   },
 
   /**
@@ -262,6 +153,6 @@ export const BooleanAdvanced = {
       tolerance?: number;
     } = {}
   ): BooleanResult {
-    return intersect(meshA, meshB, options);
+    return booleanIntersection(meshA, meshB, options);
   }
 };

@@ -1,8 +1,8 @@
-import { EditableMesh } from '../../core/EditableMesh.ts';
-import { Face } from '../../core/Face.ts';
-import { Edge } from '../../core/Edge.ts';
+import { EditableMesh } from '../../core/EditableMesh';
+import { Face } from '../../core/Face';
+import { Edge } from '../../core/Edge';
 import { BooleanModifierOptions, AdvancedIntersectionOptions } from './types';
-import { performCSG } from './csgOperations';
+import { performCSGOperation } from './csgOperations';
 
 /**
  * Apply boolean modifier to mesh
@@ -17,19 +17,23 @@ export function applyBooleanModifier(
   
   switch (operation) {
     case 'union':
-      resultMesh = performCSG(mesh, modifierMesh, 'union', options);
+      const unionResult = performCSGOperation(mesh, modifierMesh, 'union', options);
+      resultMesh = unionResult.mesh;
       break;
     case 'intersection':
-      resultMesh = performCSG(mesh, modifierMesh, 'intersection', options);
+      const intersectionResult = performCSGOperation(mesh, modifierMesh, 'intersection', options);
+      resultMesh = intersectionResult.mesh;
       break;
     case 'difference':
-      resultMesh = performCSG(mesh, modifierMesh, 'difference', options);
+      const differenceResult = performCSGOperation(mesh, modifierMesh, 'difference', options);
+      resultMesh = differenceResult.mesh;
       break;
     case 'xor':
       // XOR = (A ∪ B) - (A ∩ B)
-      const unionResult = performCSG(mesh, modifierMesh, 'union', options);
-      const intersectionResult = performCSG(mesh, modifierMesh, 'intersection', options);
-      resultMesh = performCSG(unionResult, intersectionResult, 'difference', options);
+      const unionResultXOR = performCSGOperation(mesh, modifierMesh, 'union', options);
+      const intersectionResultXOR = performCSGOperation(mesh, modifierMesh, 'intersection', options);
+      const xorResult = performCSGOperation(unionResultXOR.mesh, intersectionResultXOR.mesh, 'difference', options);
+      resultMesh = xorResult.mesh;
       break;
     default:
       throw new Error(`Unknown boolean operation: ${operation}`);

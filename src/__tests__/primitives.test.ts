@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Vector3 } from 'three';
+
 import { createCube } from '../primitives/createCube.ts';
 import { createSphere } from '../primitives/createSphere.ts';
 import { createCylinder } from '../primitives/createCylinder.ts';
@@ -32,11 +32,11 @@ describe('Primitives', () => {
       expect(cube.name).toBe('Cube');
     });
 
-    it('should create a segmented cube', () => {
+    it('should create a custom sized cube', () => {
       const cube = createCube({ 
-        widthSegments: 2, 
-        heightSegments: 3, 
-        depthSegments: 4 
+        width: 2, 
+        height: 3, 
+        depth: 4 
       });
       const validation = validateMesh(cube);
       

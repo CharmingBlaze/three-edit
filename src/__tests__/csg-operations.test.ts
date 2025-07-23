@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { createCube, createSphere } from '../primitives/index.ts';
-import { performCSG } from '../operations/boolean/csgOperations.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { createCube, createSphere } from '../primitives/index';
+import { performCSGOperation } from '../operations/boolean/csgOperations';
 import {
   csgUnion,
   csgIntersection,
   csgDifference,
   csgXOR
-} from '../operations/advancedBoolean.ts';
-import { BooleanHistoryManager } from '../operations/boolean/history.ts';
-import { CSGOptions } from '../operations/boolean/types.ts';
+} from '../operations/advancedBoolean';
+import { BooleanHistoryManager } from '../operations/boolean/history';
+import { CSGOptions } from '../operations/boolean/types';
 
 describe('CSG Operations', () => {
   let cube: EditableMesh;
@@ -22,40 +22,41 @@ describe('CSG Operations', () => {
 
   describe('performCSG', () => {
     it('should perform union operation', () => {
-      const result = performCSG(cube, sphere, 'union');
+      const result = performCSGOperation(cube, sphere, 'union');
       
-      expect(result).toBeInstanceOf(EditableMesh);
-      expect(result.getFaceCount()).toBeGreaterThanOrEqual(cube.getFaceCount());
-      expect(result.getVertexCount()).toBeGreaterThanOrEqual(cube.getVertexCount());
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
+      expect(result.mesh.getFaceCount()).toBeGreaterThanOrEqual(cube.getFaceCount());
+      expect(result.mesh.getVertexCount()).toBeGreaterThanOrEqual(cube.getVertexCount());
     });
 
     it('should perform intersection operation', () => {
-      const result = performCSG(cube, sphere, 'intersection');
+      const result = performCSGOperation(cube, sphere, 'intersection');
       
-      expect(result).toBeInstanceOf(EditableMesh);
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
       // Intersection should have fewer or equal faces than original
-      expect(result.getFaceCount()).toBeLessThanOrEqual(cube.getFaceCount());
+      expect(result.mesh.getFaceCount()).toBeLessThanOrEqual(cube.getFaceCount());
     });
 
     it('should perform difference operation', () => {
-      const result = performCSG(cube, sphere, 'difference');
+      const result = performCSGOperation(cube, sphere, 'difference');
       
-      expect(result).toBeInstanceOf(EditableMesh);
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
       // Difference should have fewer or equal faces than original
-      expect(result.getFaceCount()).toBeLessThanOrEqual(cube.getFaceCount());
+      expect(result.mesh.getFaceCount()).toBeLessThanOrEqual(cube.getFaceCount());
     });
 
     it('should handle custom tolerance', () => {
       const options: CSGOptions = { tolerance: 0.01 };
-      const result = performCSG(cube, sphere, 'intersection', options);
+      const result = performCSGOperation(cube, sphere, 'intersection', options);
       
-      expect(result).toBeInstanceOf(EditableMesh);
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
     });
 
     it('should throw error for unknown operation', () => {
-      expect(() => {
-        performCSG(cube, sphere, 'unknown' as any);
-      }).toThrow('Unknown CSG operation: unknown');
+      const result = performCSGOperation(cube, sphere, 'unknown' as any);
+      
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Unknown CSG operation: unknown');
     });
   });
 
@@ -213,24 +214,24 @@ describe('CSG Operations', () => {
     it('should handle empty meshes', () => {
       const emptyMesh = new EditableMesh();
       
-      const result = performCSG(emptyMesh, cube, 'union');
-      expect(result).toBeInstanceOf(EditableMesh);
+      const result = performCSGOperation(emptyMesh, cube, 'union');
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
     });
 
     it('should handle identical meshes', () => {
       const cube1 = cube.clone();
       const cube2 = cube.clone();
       
-      const result = performCSG(cube1, cube2, 'union');
-      expect(result).toBeInstanceOf(EditableMesh);
+      const result = performCSGOperation(cube1, cube2, 'union');
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
     });
 
     it('should handle meshes with different vertex counts', () => {
       const smallCube = createCube({ width: 1, height: 1, depth: 1 });
       const largeCube = createCube({ width: 3, height: 3, depth: 3 });
       
-      const result = performCSG(smallCube, largeCube, 'union');
-      expect(result).toBeInstanceOf(EditableMesh);
+      const result = performCSGOperation(smallCube, largeCube, 'union');
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
     });
 
     it('should preserve material indices', () => {
@@ -242,15 +243,15 @@ describe('CSG Operations', () => {
       cube1.faces.forEach(face => face.materialIndex = 0);
       cube2.faces.forEach(face => face.materialIndex = 1);
       
-      const result = performCSG(cube1, cube2, 'union');
-      expect(result).toBeInstanceOf(EditableMesh);
+      const result = performCSGOperation(cube1, cube2, 'union');
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
       
       // Check that material indices are preserved
       let hasMaterial0 = false;
       let hasMaterial1 = false;
       
-      for (let i = 0; i < result.getFaceCount(); i++) {
-        const face = result.getFace(i);
+      for (let i = 0; i < result.mesh.getFaceCount(); i++) {
+        const face = result.mesh.getFace(i);
         if (face) {
           if (face.materialIndex === 0) hasMaterial0 = true;
           if (face.materialIndex === 1) hasMaterial1 = true;
@@ -271,10 +272,10 @@ describe('CSG Operations', () => {
       });
       
       const startTime = performance.now();
-      const result = performCSG(largeCube, largeSphere, 'union');
+      const result = performCSGOperation(largeCube, largeSphere, 'union');
       const endTime = performance.now();
       
-      expect(result).toBeInstanceOf(EditableMesh);
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
       expect(endTime - startTime).toBeLessThan(5000); // Should complete within 5 seconds
     });
 
@@ -286,13 +287,13 @@ describe('CSG Operations', () => {
       const startTime = performance.now();
       
       // Perform multiple operations
-      const unionResult = performCSG(cube1, cube2, 'union');
-      const intersectionResult = performCSG(unionResult, sphere, 'intersection');
-      const differenceResult = performCSG(intersectionResult, cube2, 'difference');
+      const unionResult = performCSGOperation(cube1, cube2, 'union');
+      const intersectionResult = performCSGOperation(unionResult.mesh, sphere, 'intersection');
+      const differenceResult = performCSGOperation(intersectionResult.mesh, cube2, 'difference');
       
       const endTime = performance.now();
       
-      expect(differenceResult).toBeInstanceOf(EditableMesh);
+      expect(differenceResult.mesh).toBeInstanceOf(EditableMesh);
       expect(endTime - startTime).toBeLessThan(3000); // Should complete within 3 seconds
     });
   });

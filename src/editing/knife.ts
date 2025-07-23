@@ -211,6 +211,8 @@ function processCutLine(
 ): KnifeResult {
   const { createVertices, splitFaces, tolerance, preserveMaterials, createEdges, fillHoles } = options;
 
+  console.log('processCutLine called with options:', { createVertices, splitFaces, tolerance, preserveMaterials, createEdges, fillHoles });
+
   let verticesCreated = 0;
   let edgesCreated = 0;
   let facesSplit = 0;
@@ -218,7 +220,10 @@ function processCutLine(
   // Find intersections with faces
   const intersections = findFaceIntersections(mesh, cutLine, tolerance);
 
+  console.log('Found intersections:', intersections.length);
+
   if (intersections.length === 0) {
+    console.log('No intersections found, returning early');
     return {
       success: true,
       verticesCreated: 0,
@@ -233,18 +238,25 @@ function processCutLine(
   // Create vertices at intersection points only if requested
   const newVertexIndices: number[] = [];
   if (createVertices) {
+    console.log('Creating vertices at', intersections.length, 'intersection points');
     for (const intersection of intersections) {
       const vertexIndex = createVertexAtPosition(mesh, intersection.position);
       newVertexIndices.push(vertexIndex);
       verticesCreated++;
+      console.log('Created vertex at', intersection.position, 'with index', vertexIndex);
     }
+  } else {
+    console.log('createVertices is false, skipping vertex creation');
   }
 
   // Split faces that intersect with the cut line only if requested
   if (splitFaces && createVertices) {
+    console.log('Splitting faces at', intersections.length, 'intersection points');
     for (let i = 0; i < intersections.length; i++) {
       const intersection = intersections[i];
       const faceIndex = intersection.faceIndex;
+      
+      console.log('Splitting face', faceIndex, 'at intersection', i);
       
       if (faceIndex >= 0 && faceIndex < mesh.faces.length) {
         const splitResult = splitFaceAtIntersection(
@@ -255,19 +267,27 @@ function processCutLine(
           preserveMaterials
         );
         
+        console.log('Split result for face', faceIndex, ':', splitResult);
+        
         if (splitResult.success) {
           facesSplit += splitResult.facesCreated;
         }
+      } else {
+        console.log('Invalid face index:', faceIndex, 'mesh has', mesh.faces.length, 'faces');
       }
     }
+  } else {
+    console.log('splitFaces or createVertices is false, skipping face splitting');
   }
 
   // Create edges along the cut line only if requested
   if (createEdges && createVertices && newVertexIndices.length >= 2) {
+    console.log('Creating edges between', newVertexIndices.length, 'vertices');
     for (let i = 0; i < newVertexIndices.length - 1; i++) {
       const edgeIndex = createEdge(mesh, newVertexIndices[i], newVertexIndices[i + 1]);
       if (edgeIndex >= 0) {
         edgesCreated++;
+        console.log('Created edge between vertices', newVertexIndices[i], 'and', newVertexIndices[i + 1], 'with index', edgeIndex);
       }
     }
   }
@@ -276,7 +296,10 @@ function processCutLine(
   if (fillHoles && createVertices) {
     const holesFilled = fillHolesCreatedByCut(mesh, newVertexIndices, tolerance);
     facesSplit += holesFilled;
+    console.log('Filled', holesFilled, 'holes');
   }
+
+  console.log('processCutLine result:', { verticesCreated, edgesCreated, facesSplit });
 
   return {
     success: true,
@@ -344,16 +367,23 @@ function findEdgeIntersections(
 ): Array<{ position: Vector3; edgeIndex: number; parameter: number }> {
   const intersections: Array<{ position: Vector3; edgeIndex: number; parameter: number }> = [];
 
+  // Calculate cut line length to determine if this is a small segment (likely from circular cut)
+  const cutLineLength = cutLine.start.distanceTo(cutLine.end);
+  const isSmallSegment = cutLineLength < 0.1; // Small segments from circular cuts
+  
+  // For small segments, use a more permissive bounding box check
+  const boundingBoxExpansion = isSmallSegment ? 0.5 : 0; // Expand bounding box for small segments
+  
   // Quick bounding box check to skip edges that can't possibly intersect
   const cutLineMin = new Vector3(
-    Math.min(cutLine.start.x, cutLine.end.x),
-    Math.min(cutLine.start.y, cutLine.end.y),
-    Math.min(cutLine.start.z, cutLine.end.z)
+    Math.min(cutLine.start.x, cutLine.end.x) - boundingBoxExpansion,
+    Math.min(cutLine.start.y, cutLine.end.y) - boundingBoxExpansion,
+    Math.min(cutLine.start.z, cutLine.end.z) - boundingBoxExpansion
   );
   const cutLineMax = new Vector3(
-    Math.max(cutLine.start.x, cutLine.end.x),
-    Math.max(cutLine.start.y, cutLine.end.y),
-    Math.max(cutLine.start.z, cutLine.end.z)
+    Math.max(cutLine.start.x, cutLine.end.x) + boundingBoxExpansion,
+    Math.max(cutLine.start.y, cutLine.end.y) + boundingBoxExpansion,
+    Math.max(cutLine.start.z, cutLine.end.z) + boundingBoxExpansion
   );
 
   for (let edgeIndex = 0; edgeIndex < mesh.edges.length; edgeIndex++) {
@@ -379,6 +409,9 @@ function findEdgeIntersections(
         edgeMax.z < cutLineMin.z || edgeMin.z > cutLineMax.z) {
       continue; // No intersection possible
     }
+
+    // Debug: print edge and cut line being checked
+    console.log('Checking edge', edgeIndex, 'from', v1, 'to', v2, 'against cut line', cutLine.start, cutLine.end);
     
     const intersection = lineLineIntersection(
       cutLine,
@@ -387,6 +420,7 @@ function findEdgeIntersections(
     );
     
     if (intersection) {
+      console.log('Intersection found at', intersection.position, 'on edge', edgeIndex);
       intersections.push({
         position: intersection.position,
         edgeIndex,
@@ -715,23 +749,29 @@ export function knifeCutCircle(
   mesh: EditableMesh,
   center: Vector3,
   radius: number,
+  normal: Vector3,
   segments: number = 32,
   options: KnifeOptions = {}
 ): KnifeResult {
   const points: Vector3[] = [];
-  
-  // Create circle in XY plane at the center's z-coordinate
+  normal.normalize();
+
+  // Create two orthogonal vectors to the normal
+  const u = (Math.abs(normal.x) > 0.1 ? new Vector3(0, 1, 0) : new Vector3(1, 0, 0)).cross(normal).normalize();
+  const v = normal.clone().cross(u).normalize();
+
+  // Generate points on the plane defined by the normal
   for (let i = 0; i < segments; i++) {
     const angle = (i / segments) * Math.PI * 2;
-    const x = center.x + Math.cos(angle) * radius;
-    const y = center.y + Math.sin(angle) * radius;
-    points.push(new Vector3(x, y, center.z));
+    const pointOnCircle = u.clone().multiplyScalar(Math.cos(angle) * radius)
+      .add(v.clone().multiplyScalar(Math.sin(angle) * radius));
+    points.push(center.clone().add(pointOnCircle));
   }
-  
-  // Close the circle by adding the first point at the end
+
+  // Close the circle
   if (points.length > 0) {
     points.push(points[0].clone());
   }
 
   return knifeCutPath(mesh, points, options);
-} 
+}

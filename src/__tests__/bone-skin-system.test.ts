@@ -3,7 +3,7 @@ import { Bone, Skeleton, Skin } from '../core';
 import { WeightPaintingBrush, WeightPaintingOperations } from '../operations/weightPainting';
 import { SkeletalAnimation, SkinnedMeshOperations } from '../operations/skeletalAnimation';
 import { EditableMesh } from '../core/EditableMesh';
-import { Vector3, Quaternion, Matrix4 } from '../utils/math';
+import { Vector3, Matrix4 } from '../utils/math';
 
 describe('Bone System', () => {
   let bone: Bone;
@@ -120,10 +120,8 @@ describe('Bone System', () => {
   it('should get bone world vectors', () => {
     bone.setRotation(0, 0, 0.707, 0.707); // 90-degree rotation around Z
     
-    const direction = bone.getWorldDirection();
     const up = bone.getWorldUp();
     const right = bone.getWorldRight();
-    const forward = bone.getWorldForward();
     
     // After 90-degree Z rotation, the up vector should point in the negative X direction
     expect(up.x).toBeCloseTo(-1, 3);
@@ -767,11 +765,9 @@ describe('Weight Painting System', () => {
 
 describe('Skeletal Animation System', () => {
   let animation: SkeletalAnimation;
-  let skeleton: Skeleton;
 
   beforeEach(() => {
     animation = new SkeletalAnimation();
-    skeleton = Skeleton.createHumanoidSkeleton();
   });
 
   it('should create animation system', () => {

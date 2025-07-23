@@ -1,6 +1,6 @@
 {
   "name": "three-edit",
-  "version": "0.1.0",
+  "version": "0.2.0-alpha",
   "description": "Modular headless 3D editing library for Three.js",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -27,7 +27,7 @@
     "geometry",
     "mesh"
   ],
-  "author": "",
+  "author": "three-edit contributors",
   "license": "MIT",
   "peerDependencies": {
     "three": "^0.150.0"

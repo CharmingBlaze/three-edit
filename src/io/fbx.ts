@@ -54,7 +54,7 @@ export interface FBXKeyframe {
 /**
  * Import FBX format data
  */
-export function importFBX(data: string | ArrayBuffer, options: FBXOptions = {}): EditableMesh[] {
+export function importFBX(data: string | ArrayBuffer): EditableMesh[] {
   try {
     // Basic FBX parsing - this is a simplified implementation
     if (typeof data === 'string') {

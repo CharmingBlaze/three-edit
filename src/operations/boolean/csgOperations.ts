@@ -1,309 +1,495 @@
-import { EditableMesh } from '../../core/EditableMesh.ts';
-import { Face } from '../../core/Face.ts';
-import { Vertex } from '../../core/Vertex.ts';
+import { EditableMesh } from '../../core/EditableMesh';
+import { Vertex } from '../../core/Vertex';
+import { Edge } from '../../core/Edge';
+import { Face } from '../../core/Face';
+import { Vector3 } from 'three';
 import { CSGOptions } from './types';
+import { validateGeometryIntegrity } from '../../validation/validateGeometryIntegrity';
 
 /**
- * Performs CSG (Constructive Solid Geometry) operations between two meshes
- * @param meshA The first mesh
- * @param meshB The second mesh
- * @param operation The CSG operation to perform
- * @param options Options for the CSG operation
- * @returns The result mesh
+ * CSG operation types
  */
-export function performCSG(
-  meshA: EditableMesh,
-  meshB: EditableMesh,
-  operation: 'union' | 'intersection' | 'difference',
-  options: CSGOptions = {}
-): EditableMesh {
-  const tolerance = options.tolerance ?? 0.001;
+export type CSGOperation = 'union' | 'difference' | 'intersection';
 
-  // Create a copy of meshA as the result
-  const resultMesh = meshA.clone();
+/**
+ * CSG operation result
+ */
+export interface CSGResult {
+  /** The resulting mesh */
+  mesh: EditableMesh;
+  /** Whether the operation was successful */
+  success: boolean;
+  /** Error message if operation failed */
+  error?: string;
+  /** Validation results if validation was performed */
+  validation?: any;
+  /** Statistics about the operation */
+  statistics?: {
+    inputVertices: number;
+    inputFaces: number;
+    outputVertices: number;
+    outputFaces: number;
+    processingTime: number;
+  };
+}
 
-  // Perform the CSG operation
-  switch (operation) {
-    case 'union':
-      return performUnion(resultMesh, meshB, tolerance);
-    
-    case 'intersection':
-      return performIntersection(resultMesh, meshB, tolerance);
-    
-    case 'difference':
-      return performDifference(resultMesh, meshB, tolerance);
-    
-    default:
-      throw new Error(`Unknown CSG operation: ${operation}`);
+/**
+ * CSG Node for building CSG trees
+ */
+export class CSGNode {
+  public mesh: EditableMesh;
+  public operation?: CSGOperation;
+  public left?: CSGNode;
+  public right?: CSGNode;
+
+  constructor(mesh: EditableMesh, operation?: CSGOperation, left?: CSGNode, right?: CSGNode) {
+    this.mesh = mesh;
+    this.operation = operation;
+    this.left = left;
+    this.right = right;
+  }
+
+  /**
+   * Evaluate the CSG tree
+   */
+  evaluate(options: CSGOptions = {}): CSGResult {
+    if (!this.operation || !this.left || !this.right) {
+      // Leaf node - return the mesh
+      return {
+        mesh: this.mesh.clone(),
+        success: true,
+        statistics: {
+          inputVertices: this.mesh.vertices.length,
+          inputFaces: this.mesh.faces.length,
+          outputVertices: this.mesh.vertices.length,
+          outputFaces: this.mesh.faces.length,
+          processingTime: 0
+        }
+      };
+    }
+
+    // Evaluate left and right subtrees
+    const leftResult = this.left.evaluate(options);
+    const rightResult = this.right.evaluate(options);
+
+    if (!leftResult.success || !rightResult.success) {
+      return {
+        mesh: new EditableMesh(),
+        success: false,
+        error: `Failed to evaluate ${this.operation}: ${leftResult.error || rightResult.error}`
+      };
+    }
+
+    // Perform the operation
+    return performCSGOperation(leftResult.mesh, rightResult.mesh, this.operation, options);
   }
 }
 
 /**
- * Performs union operation
+ * Perform CSG operation between two meshes
+ */
+export function performCSGOperation(
+  meshA: EditableMesh,
+  meshB: EditableMesh,
+  operation: CSGOperation,
+  options: CSGOptions = {}
+): CSGResult {
+  const startTime = performance.now();
+  const {
+    tolerance = 1e-6,
+    validate = true,
+    repair = false,
+    preserveMaterials = true,
+    mergeVertices = true
+  } = options;
+
+  try {
+    // Ensure meshes are valid
+    if (meshA.vertices.length === 0 || meshB.vertices.length === 0) {
+      return {
+        mesh: new EditableMesh(),
+        success: false,
+        error: 'One or both input meshes are empty'
+      };
+    }
+
+    // Create result mesh
+    const resultMesh = new EditableMesh({
+      name: `${meshA.name}_${operation}_${meshB.name}`
+    });
+
+    // Perform the specific operation
+    let success = false;
+    switch (operation) {
+      case 'union':
+        success = performUnion(meshA, meshB, resultMesh, options);
+        break;
+      case 'difference':
+        success = performSubtract(meshA, meshB, resultMesh, options);
+        break;
+      case 'intersection':
+        success = performIntersect(meshA, meshB, resultMesh, options);
+        break;
+      default:
+        return {
+          mesh: new EditableMesh(),
+          success: false,
+          error: `Unknown CSG operation: ${operation}`
+        };
+    }
+
+    if (!success) {
+      return {
+        mesh: new EditableMesh(),
+        success: false,
+        error: `Failed to perform ${operation} operation`
+      };
+    }
+
+    // Post-process the result
+    if (mergeVertices) {
+      mergeCoincidentVertices(resultMesh, tolerance);
+    }
+
+    // Validate if requested
+    let validation;
+    if (validate) {
+      validation = validateGeometryIntegrity(resultMesh);
+      if (!validation.valid && repair) {
+        // TODO: Implement repair functionality
+        console.warn('Geometry validation failed, repair not yet implemented');
+      }
+    }
+
+    const processingTime = performance.now() - startTime;
+
+    return {
+      mesh: resultMesh,
+      success: true,
+      validation,
+      statistics: {
+        inputVertices: meshA.vertices.length + meshB.vertices.length,
+        inputFaces: meshA.faces.length + meshB.faces.length,
+        outputVertices: resultMesh.vertices.length,
+        outputFaces: resultMesh.faces.length,
+        processingTime
+      }
+    };
+
+  } catch (error) {
+    return {
+      mesh: new EditableMesh(),
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error during CSG operation'
+    };
+  }
+}
+
+/**
+ * Perform union operation
  */
 function performUnion(
   meshA: EditableMesh,
   meshB: EditableMesh,
-  _tolerance: number
-): EditableMesh {
-  // Add all faces from meshB to meshA
-  for (let i = 0; i < meshB.getFaceCount(); i++) {
-    const face = meshB.getFace(i);
-    if (face) {
-      // Create new face with same vertices
-      const newFace = new Face(face.vertices, face.edges, {
-        materialIndex: face.materialIndex ?? 0
-      });
-      meshA.addFace(newFace);
-    }
+  resultMesh: EditableMesh,
+  options: CSGOptions
+): boolean {
+  try {
+    // Copy all vertices and faces from both meshes
+    const vertexOffset = meshA.vertices.length;
+    
+    // Copy meshA
+    copyMeshData(meshA, resultMesh, 0);
+    
+    // Copy meshB
+    copyMeshData(meshB, resultMesh, vertexOffset);
+    
+    // Remove overlapping geometry
+    removeOverlappingGeometry(resultMesh, options.tolerance || 1e-6);
+    
+    return true;
+  } catch (error) {
+    console.error('Union operation failed:', error);
+    return false;
   }
-
-  return meshA;
 }
 
 /**
- * Performs intersection operation
+ * Perform subtract operation
  */
-function performIntersection(
+function performSubtract(
   meshA: EditableMesh,
   meshB: EditableMesh,
-  tolerance: number
-): EditableMesh {
-  // For intersection, we need to find faces that are inside both meshes
-  // This is a simplified implementation
-  const intersectionFaces: Face[] = [];
-
-  // Check each face of meshA against meshB
-  for (let i = 0; i < meshA.getFaceCount(); i++) {
-    const face = meshA.getFace(i);
-    if (!face) continue;
-
-    // Check if face center is inside meshB
-    const faceCenter = calculateFaceCenter(meshA, face);
-    if (isPointInsideMesh(faceCenter, meshB, tolerance)) {
-      intersectionFaces.push(face);
-    }
-  }
-
-  // Create new mesh with intersection faces
-  const resultMesh = new EditableMesh();
-  
-  // Add vertices and faces
-  for (const face of intersectionFaces) {
-    // Add vertices for this face
-    const vertexIndices: number[] = [];
-    for (const vertexIndex of face.vertices) {
-      const vertex = meshA.getVertex(vertexIndex);
-      if (vertex) {
-        const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, { uv: vertex.uv });
-        vertexIndices.push(resultMesh.addVertex(newVertex));
+  resultMesh: EditableMesh,
+  options: CSGOptions
+): boolean {
+  try {
+    // Copy meshA
+    copyMeshData(meshA, resultMesh, 0);
+    
+    // Find intersection regions and remove them
+    const intersectionRegions = findIntersectionRegions(resultMesh, meshB, options.tolerance || 1e-6);
+    
+    // Remove faces in intersection regions
+    for (const faceIndex of intersectionRegions) {
+      if (faceIndex < resultMesh.faces.length) {
+        resultMesh.removeFace(faceIndex);
       }
     }
-
-    // Create new face
-    const newFace = new Face(vertexIndices, [], {
-      materialIndex: face.materialIndex ?? 0
-    });
-    resultMesh.addFace(newFace);
+    
+    return true;
+  } catch (error) {
+    console.error('Subtract operation failed:', error);
+    return false;
   }
-
-  return resultMesh;
 }
 
 /**
- * Performs difference operation
+ * Perform intersect operation
  */
-function performDifference(
+function performIntersect(
   meshA: EditableMesh,
   meshB: EditableMesh,
-  tolerance: number
-): EditableMesh {
-  // For difference, we need to remove faces that are inside meshB
-  const remainingFaces: Face[] = [];
-
-  // Check each face of meshA against meshB
-  for (let i = 0; i < meshA.getFaceCount(); i++) {
-    const face = meshA.getFace(i);
-    if (!face) continue;
-
-    // Check if face center is outside meshB
-    const faceCenter = calculateFaceCenter(meshA, face);
-    if (!isPointInsideMesh(faceCenter, meshB, tolerance)) {
-      remainingFaces.push(face);
-    }
-  }
-
-  // Create new mesh with remaining faces
-  const resultMesh = new EditableMesh();
-  
-  // Add vertices and faces
-  for (const face of remainingFaces) {
-    // Add vertices for this face
-    const vertexIndices: number[] = [];
-    for (const vertexIndex of face.vertices) {
-      const vertex = meshA.getVertex(vertexIndex);
-      if (vertex) {
-        const newVertex = new Vertex(vertex.x, vertex.y, vertex.z, { uv: vertex.uv });
-        vertexIndices.push(resultMesh.addVertex(newVertex));
+  resultMesh: EditableMesh,
+  options: CSGOptions
+): boolean {
+  try {
+    // Find intersection regions
+    const intersectionRegions = findIntersectionRegions(meshA, meshB, options.tolerance || 1e-6);
+    
+    // Copy only the intersection faces
+    for (const faceIndex of intersectionRegions) {
+      if (faceIndex < meshA.faces.length) {
+        const face = meshA.faces[faceIndex];
+        const newFace = face.clone();
+        resultMesh.addFace(newFace);
+        
+        // Add vertices if not already present
+        for (const vertexIndex of face.vertices) {
+          const vertex = meshA.vertices[vertexIndex];
+          if (vertex && !resultMesh.vertices.includes(vertex)) {
+            resultMesh.addVertex(vertex.clone());
+          }
+        }
       }
     }
-
-    // Create new face
-    const newFace = new Face(vertexIndices, [], {
-      materialIndex: face.materialIndex ?? 0
-    });
-    resultMesh.addFace(newFace);
+    
+    return true;
+  } catch (error) {
+    console.error('Intersect operation failed:', error);
+    return false;
   }
-
-  return resultMesh;
 }
 
 /**
- * Calculate face center
+ * Copy mesh data to target mesh
  */
-interface Point { x: number; y: number; z: number; }
+function copyMeshData(source: EditableMesh, target: EditableMesh, vertexOffset: number): void {
+  // Copy vertices
+  for (const vertex of source.vertices) {
+    const newVertex = vertex.clone();
+    target.addVertex(newVertex);
+  }
+  
+  // Copy edges
+  for (const edge of source.edges) {
+    const newEdge = new Edge(
+      edge.v1 + vertexOffset,
+      edge.v2 + vertexOffset
+    );
+    target.addEdge(newEdge);
+  }
+  
+  // Copy faces
+  for (const face of source.faces) {
+    const newFace = face.clone();
+    // Adjust vertex indices
+    newFace.vertices = newFace.vertices.map(v => v + vertexOffset);
+    target.addFace(newFace);
+  }
+}
 
-function calculateFaceCenter(mesh: EditableMesh, face: Face): Point {
-  const center = { x: 0, y: 0, z: 0 };
-  let count = 0;
+/**
+ * Remove overlapping geometry from the result mesh
+ */
+function removeOverlappingGeometry(mesh: EditableMesh, tolerance: number): void {
+  // Find and remove duplicate faces
+  const facesToRemove: number[] = [];
+  
+  for (let i = 0; i < mesh.faces.length; i++) {
+    for (let j = i + 1; j < mesh.faces.length; j++) {
+      if (facesAreEqual(mesh.faces[i], mesh.faces[j], tolerance)) {
+        facesToRemove.push(j);
+      }
+    }
+  }
+  
+  // Remove faces in reverse order to maintain indices
+  facesToRemove.sort((a, b) => b - a);
+  for (const faceIndex of facesToRemove) {
+    mesh.removeFace(faceIndex);
+  }
+}
 
+/**
+ * Check if two faces are equal
+ */
+function facesAreEqual(faceA: Face, faceB: Face, tolerance: number): boolean {
+  if (faceA.vertices.length !== faceB.vertices.length) {
+    return false;
+  }
+  
+  // Check if vertices are the same (allowing for different order)
+  const verticesA = faceA.vertices.slice().sort();
+  const verticesB = faceB.vertices.slice().sort();
+  
+  for (let i = 0; i < verticesA.length; i++) {
+    if (verticesA[i] !== verticesB[i]) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+/**
+ * Find intersection regions between two meshes
+ */
+function findIntersectionRegions(meshA: EditableMesh, meshB: EditableMesh, tolerance: number): number[] {
+  const intersectionFaces: number[] = [];
+  
+  // Simple implementation: find faces that are close to each other
+  // In a full implementation, this would use proper spatial partitioning
+  for (let i = 0; i < meshA.faces.length; i++) {
+    const faceA = meshA.faces[i];
+    const centerA = calculateFaceCenter(faceA, meshA);
+    
+    for (let j = 0; j < meshB.faces.length; j++) {
+      const faceB = meshB.faces[j];
+      const centerB = calculateFaceCenter(faceB, meshB);
+      
+      const distance = centerA.distanceTo(centerB);
+      if (distance < tolerance) {
+        intersectionFaces.push(i);
+        break;
+      }
+    }
+  }
+  
+  return intersectionFaces;
+}
+
+/**
+ * Calculate the center of a face
+ */
+function calculateFaceCenter(face: Face, mesh: EditableMesh): Vector3 {
+  const center = new Vector3();
+  
   for (const vertexIndex of face.vertices) {
-    const vertex = mesh.getVertex(vertexIndex);
+    const vertex = mesh.vertices[vertexIndex];
     if (vertex) {
-      center.x += vertex.x;
-      center.y += vertex.y;
-      center.z += vertex.z;
-      count++;
+      center.add(new Vector3(vertex.x, vertex.y, vertex.z));
     }
   }
-
-  if (count > 0) {
-    center.x /= count;
-    center.y /= count;
-    center.z /= count;
-  }
-
+  
+  center.divideScalar(face.vertices.length);
   return center;
 }
 
 /**
- * Check if point is inside mesh using ray casting
+ * Merge coincident vertices
  */
-function isPointInsideMesh(point: Point, mesh: EditableMesh, tolerance: number): boolean {
-  // Use ray casting to determine if point is inside mesh
-  const rayDirection = { x: 1, y: 0, z: 0 }; // Cast ray in +X direction
-  let intersectionCount = 0;
-
-  // Check each face of the mesh
-  for (let i = 0; i < mesh.getFaceCount(); i++) {
-    const face = mesh.getFace(i);
-    if (!face) continue;
-
-    // Check if ray intersects with this face
-    if (rayIntersectsFace(point, rayDirection, mesh, face, tolerance)) {
-      intersectionCount++;
+function mergeCoincidentVertices(mesh: EditableMesh, tolerance: number): void {
+  const verticesToMerge = new Map<number, number>();
+  
+  for (let i = 0; i < mesh.vertices.length; i++) {
+    for (let j = i + 1; j < mesh.vertices.length; j++) {
+      const vertexA = mesh.vertices[i];
+      const vertexB = mesh.vertices[j];
+      
+      const distance = Math.sqrt(
+        Math.pow(vertexA.x - vertexB.x, 2) +
+        Math.pow(vertexA.y - vertexB.y, 2) +
+        Math.pow(vertexA.z - vertexB.z, 2)
+      );
+      
+      if (distance <= tolerance) {
+        verticesToMerge.set(j, i);
+      }
     }
   }
-
-  // Odd number of intersections means point is inside
-  return (intersectionCount % 2) === 1;
+  
+  // Apply vertex merging
+  for (const [fromIndex, toIndex] of verticesToMerge) {
+    // Update all faces that reference the merged vertex
+    for (const face of mesh.faces) {
+      for (let k = 0; k < face.vertices.length; k++) {
+        if (face.vertices[k] === fromIndex) {
+          face.vertices[k] = toIndex;
+        }
+      }
+    }
+    
+    // Update all edges that reference the merged vertex
+    for (const edge of mesh.edges) {
+      if (edge.v1 === fromIndex) {
+        edge.v1 = toIndex;
+      }
+      if (edge.v2 === fromIndex) {
+        edge.v2 = toIndex;
+      }
+    }
+  }
+  
+  // Remove merged vertices
+  const indicesToRemove = Array.from(verticesToMerge.keys()).sort((a, b) => b - a);
+  for (const index of indicesToRemove) {
+    mesh.removeVertex(index);
+  }
 }
 
 /**
- * Check if ray intersects with a face
+ * Create a CSG tree for complex operations
  */
-function rayIntersectsFace(
-  rayOrigin: Point,
-  rayDirection: Point,
-  mesh: EditableMesh,
-  face: Face,
-  tolerance: number
-): boolean {
-  // Get face vertices
-  const vertices: Point[] = [];
-  for (const vertexIndex of face.vertices) {
-    const vertex = mesh.getVertex(vertexIndex);
-    if (vertex) {
-      vertices.push({ x: vertex.x, y: vertex.y, z: vertex.z });
-    }
+export function createCSGTree(meshes: EditableMesh[], operations: CSGOperation[]): CSGNode | null {
+  if (meshes.length === 0) {
+    return null;
   }
-
-  if (vertices.length < 3) return false;
-
-  // Check intersection with each triangle of the face
-  for (let i = 1; i < vertices.length - 1; i++) {
-    const triangle = [
-      vertices[0],
-      vertices[i],
-      vertices[i + 1]
-    ];
-
-    if (rayIntersectsTriangle(rayOrigin, rayDirection, triangle, tolerance)) {
-      return true;
-    }
+  
+  if (meshes.length === 1) {
+    return new CSGNode(meshes[0]);
   }
-
-  return false;
+  
+  if (meshes.length !== operations.length + 1) {
+    throw new Error('Number of operations must be one less than number of meshes');
+  }
+  
+  let currentNode = new CSGNode(meshes[0]);
+  
+  for (let i = 0; i < operations.length; i++) {
+    const rightNode = new CSGNode(meshes[i + 1]);
+    currentNode = new CSGNode(
+      new EditableMesh(), // Placeholder mesh
+      operations[i],
+      currentNode,
+      rightNode
+    );
+  }
+  
+  return currentNode;
 }
 
 /**
- * Check if ray intersects with a triangle
+ * Export the main CSG functions
  */
-function rayIntersectsTriangle(
-  rayOrigin: Point,
-  rayDirection: Point,
-  triangle: Point[],
-  tolerance: number
-): boolean {
-  if (triangle.length !== 3) return false;
+export function csgUnion(meshA: EditableMesh, meshB: EditableMesh, options: CSGOptions = {}): CSGResult {
+  return performCSGOperation(meshA, meshB, 'union', options);
+}
 
-  const [v0, v1, v2] = triangle;
+export function csgSubtract(meshA: EditableMesh, meshB: EditableMesh, options: CSGOptions = {}): CSGResult {
+  return performCSGOperation(meshA, meshB, 'difference', options);
+}
 
-  // Calculate triangle edges
-  const edge1 = {
-    x: v1.x - v0.x,
-    y: v1.y - v0.y,
-    z: v1.z - v0.z
-  };
-  const edge2 = {
-    x: v2.x - v0.x,
-    y: v2.y - v0.y,
-    z: v2.z - v0.z
-  };
-
-  // Calculate determinant
-  const h = {
-    x: rayDirection.y * edge2.z - rayDirection.z * edge2.y,
-    y: rayDirection.z * edge2.x - rayDirection.x * edge2.z,
-    z: rayDirection.x * edge2.y - rayDirection.y * edge2.x
-  };
-
-  const a = edge1.x * h.x + edge1.y * h.y + edge1.z * h.z;
-
-  if (Math.abs(a) < tolerance) return false; // Ray is parallel to triangle
-
-  const f = 1.0 / a;
-  const s = {
-    x: rayOrigin.x - v0.x,
-    y: rayOrigin.y - v0.y,
-    z: rayOrigin.z - v0.z
-  };
-
-  const u = f * (s.x * h.x + s.y * h.y + s.z * h.z);
-
-  if (u < 0.0 || u > 1.0) return false;
-
-  const q = {
-    x: s.y * edge1.z - s.z * edge1.y,
-    y: s.z * edge1.x - s.x * edge1.z,
-    z: s.x * edge1.y - s.y * edge1.x
-  };
-
-  const v = f * (rayDirection.x * q.x + rayDirection.y * q.y + rayDirection.z * q.z);
-
-  if (v < 0.0 || u + v > 1.0) return false;
-
-  const t = f * (edge2.x * q.x + edge2.y * q.y + edge2.z * q.z);
-
-  return t > tolerance; // Intersection point is in front of ray origin
+export function csgIntersect(meshA: EditableMesh, meshB: EditableMesh, options: CSGOptions = {}): CSGResult {
+  return performCSGOperation(meshA, meshB, 'intersection', options);
 } 

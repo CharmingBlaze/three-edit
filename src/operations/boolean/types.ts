@@ -8,6 +8,10 @@ export interface CSGOptions {
   preserveMaterials?: boolean;
   mergeVertices?: boolean;
   validateResult?: boolean;
+  /** Whether to validate the result */
+  validate?: boolean;
+  /** Whether to repair geometry issues */
+  repair?: boolean;
 }
 
 /**

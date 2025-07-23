@@ -12,10 +12,8 @@ export interface MaterialOptimizationResult {
 /**
  * Optimize materials by consolidating similar materials
  */
-export function optimizeMaterials(mesh: EditableMesh, options: MemoryOptimizationOptions = {}): MaterialOptimizationResult {
-  const _precision = options.precision ?? 0.001;
-  const mergeSimilar = options.mergeSimilar ?? true;
-  const removeUnused = options.removeUnused ?? true;
+export function optimizeMaterials(_mesh: EditableMesh, _options: MemoryOptimizationOptions = {}): MaterialOptimizationResult {
+  // const _precision = options.precision ?? 0.001;
   
   const startTime = performance.now();
   const originalMaterialCount = 0; // Placeholder for material count

@@ -28,8 +28,8 @@ export function mirrorByPlane(
   options: MirrorOptions = {}
 ): EditableMesh {
   const duplicate = options.duplicate ?? true;
-  const _weldVertices = options.weldVertices ?? false;
-  const _weldTolerance = options.weldTolerance ?? 0.001;
+  // const _weldVertices = options.weldVertices ?? false;
+  // const _weldTolerance = options.weldTolerance ?? 0.001;
   
   // Normalize the plane normal
   const normalizedNormal = planeNormal.clone().normalize();

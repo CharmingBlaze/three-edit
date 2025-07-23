@@ -1,42 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { EditableMesh } from '../core/EditableMesh.ts';
-import { createCube, createSphere } from '../primitives/index.ts';
-import {
-  importFBX,
-  exportFBX,
-  validateFBX,
-  getFBXInfo,
-  FBXOptions
-} from '../io/fbx.ts';
-import {
-  importCollada,
-  exportCollada,
-  validateCollada,
-  getColladaInfo,
-  ColladaOptions
-} from '../io/collada.ts';
-import {
-  importSTL,
-  exportSTL,
-  validateSTL,
-  getSTLInfo,
-  STLOptions
-} from '../io/stl.ts';
-import {
-  import3DS,
-  export3DS,
-  validate3DS,
-  get3DSInfo,
-  ThreeDSOptions
-} from '../io/3ds.ts';
+import { createCube } from '../primitives/index.ts';
+import { exportSTL } from '../io/stl.ts';
 
 describe('External Format Support', () => {
   let cube: EditableMesh;
-  let sphere: EditableMesh;
 
   beforeEach(() => {
     cube = createCube({ width: 2, height: 2, depth: 2 });
-    sphere = createSphere({ radius: 1, widthSegments: 8, heightSegments: 8 });
   });
 
   /*

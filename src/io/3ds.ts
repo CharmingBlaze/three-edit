@@ -341,9 +341,6 @@ export function export3DS(
   options: ThreeDSOptions = {}
 ): ArrayBuffer {
   const {
-    preserveMaterials = true,
-    preserveAnimations = false,
-    preserveHierarchy = true,
     includeNormals = true,
     includeUVs = true
   } = options;

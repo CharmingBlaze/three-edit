@@ -4,12 +4,13 @@
 
 ## ✨ Features
 
+- **🎯 JavaScript & TypeScript Support**: Works seamlessly with both JavaScript and TypeScript - no TypeScript knowledge required!
 - **Modular Architecture**: The library is designed to be modular, allowing you to use only the parts you need.
 - **Headless by Design**: three-edit is completely headless, meaning it doesn't rely on any specific rendering or UI framework.
 - **Rich Set of Operations**: It provides a wide range of editing operations, including extrusion, beveling, and more.
 - **Advanced Selection System**: A powerful selection system that allows for complex queries and manipulations.
+- **Scene Graph System**: Full hierarchical object system with transform inheritance.
 - **Built with TypeScript**: The library is written in TypeScript, providing strong typing and improved developer experience.
-- **Vanilla JavaScript Support**: Use the library with vanilla JavaScript in browsers without a build step.
 
 ## 📦 Installation
 
@@ -72,14 +73,21 @@ scene.add(mesh);
 
 ### Vanilla JavaScript
 
-For vanilla JavaScript users, we provide a simplified API through the `ThreeEditJS` object:
+For vanilla JavaScript users, we provide a simplified API through the `ThreeEditJS` wrapper:
 
 ```javascript
+// Import the JavaScript wrapper
+import ThreeEditJS from 'three-edit/js-wrapper';
+
 // Create a new cube
-const cube = ThreeEdit.createCube();
+const cube = ThreeEditJS.createCube({
+    width: 2,
+    height: 2,
+    depth: 2
+});
 
 // Convert the cube to a Three.js BufferGeometry
-const geometry = ThreeEdit.toBufferGeometry(cube);
+const geometry = ThreeEditJS.toBufferGeometry(cube);
 
 // Create a new Three.js mesh
 const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
@@ -89,8 +97,15 @@ const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
 // Helper method for applying operations
-const extrudedGeometry = ThreeEdit.applyOperation(cube, ThreeEdit.extrudeFace, cube.faces[0], { depth: 1 });
+const extrudedGeometry = ThreeEditJS.applyOperation(
+    cube, 
+    ThreeEditJS.extrudeFace, 
+    cube.faces[0], 
+    { distance: 1 }
+);
 ```
+
+**🎉 No TypeScript required!** The JavaScript wrapper provides all the same functionality with a JavaScript-friendly API.
 
 ## 📚 Documentation
 
@@ -98,7 +113,22 @@ For more detailed information and examples, please refer to the [documentation](
 
 ### Examples
 
-Check out the examples in the `examples` directory:
+- [Basic Usage](examples/basic-cube.html) - Simple cube creation and manipulation
+- [Mesh Editing](examples/mesh-editing.html) - Advanced mesh editing operations
+- [Scene Graph](examples/scene-graph-demo.html) - Scene graph system usage
+- [JavaScript Usage](examples/javascript-usage.html) - JavaScript-specific examples
 
-- [Basic Cube Example](examples/basic-cube.html) - Simple example of creating and displaying a cube
-- [Mesh Editing Example](examples/mesh-editing.html) - Interactive example showing face extrusion and edge beveling
+### Documentation
+
+- [Getting Started](docs/getting-started.md) - Quick start guide
+- [JavaScript Usage](docs/javascript-usage.md) - Complete JavaScript guide
+- [API Reference](docs/api-reference.md) - Full API documentation
+- [Scene Graph](docs/scene-graph.md) - Scene graph system guide
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [contributing guide](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

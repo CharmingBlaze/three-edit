@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
 import { EditableMesh } from '../core/EditableMesh.ts';
-import { UVGenerationParams } from './types';
+// import { UVGenerationParams } from './types';
 
 /**
  * Projection axis for planar UV generation

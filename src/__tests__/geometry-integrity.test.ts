@@ -5,11 +5,11 @@ import { Vertex } from '../core/Vertex.ts';
 import { Edge } from '../core/Edge.ts';
 import { Face } from '../core/Face.ts';
 import { createCube } from '../primitives/createCube.ts';
-import { validateGeometryIntegrity, checkFlippedFaces, validateMaterialIndices, validateUVCoordinates, validateMeshForRendering } from '../validation/validateGeometryIntegrity.ts';
+import { validateGeometryIntegrity, validateMeshForRendering } from '../validation/validateGeometryIntegrity.ts';
 import { fixWindingOrder, recalculateNormals, recalculateVertexNormals, fixGeometryIntegrity } from '../validation/fixWindingOrder.ts';
 import { generatePlanarUVs, generateCylindricalUVs, generateSphericalUVs } from '../uv/generatePlanarUVs.ts';
-import { MaterialManager } from '../materials/materialManager.ts';
-import { calculateFaceNormal } from '../utils/mathUtils.ts';
+import { MaterialManager } from '../materials/MaterialManager.ts';
+
 import { Selection } from '../selection/Selection.ts';
 
 describe('Geometry Integrity Validation', () => {
@@ -88,8 +88,8 @@ describe('Geometry Integrity Validation', () => {
     const mesh = new EditableMesh();
     
     // Add duplicate vertices at the same position
-    const v0 = mesh.addVertex(new Vertex(0, 0, 0));
-    const v1 = mesh.addVertex(new Vertex(0, 0, 0)); // Duplicate
+    mesh.addVertex(new Vertex(0, 0, 0));
+    mesh.addVertex(new Vertex(0, 0, 0)); // Duplicate
     
     const result = validateGeometryIntegrity(mesh);
     expect(result.duplicateVertices).toHaveLength(1);

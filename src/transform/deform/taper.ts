@@ -128,7 +128,7 @@ export function taperAdvanced(
  */
 export function calculateTaperProfile(
   vertex: any,
-  axis: Vector3,
+  _axis: Vector3,
   startPoint: Vector3,
   endPoint: Vector3,
   factor: number

@@ -9,19 +9,13 @@ import {
   interpolateShapes,
   applyMorphTargets,
   createMorphTarget,
-  blendMorphTargets,
-  MorphingOptions,
-  ShapeInterpolationOptions,
-  MorphTargetOptions
+  blendMorphTargets
 } from '../operations/morphing.ts';
 import {
   subdivideSurface,
   laplacianSmoothing,
   smoothEdges,
-  smoothVertices,
-  SmoothingOptions,
-  SubdivisionOptions,
-  LaplacianOptions
+  smoothVertices
 } from '../operations/smoothing.ts';
 import {
   csgUnion,
@@ -30,11 +24,9 @@ import {
   csgXOR,
   applyBooleanModifier,
   advancedIntersection,
-  BooleanHistoryManager,
-  CSGOptions,
-  BooleanModifierOptions,
-  AdvancedIntersectionOptions
+  BooleanHistoryManager
 } from '../operations/advancedBoolean.ts';
+
 
 describe('Advanced Operations', () => {
   let cube: EditableMesh;
@@ -235,7 +227,7 @@ describe('Advanced Operations', () => {
       });
 
       it('should preserve normals when requested', () => {
-        const result = subdivideSurface(cube, { preserveNormals: true });
+        const result = subdivideSurface(cube, { preserveBoundaries: true });
         
         expect(result).toBeInstanceOf(EditableMesh);
       });
@@ -259,15 +251,14 @@ describe('Advanced Operations', () => {
       it('should apply Laplacian smoothing with custom parameters', () => {
         const result = laplacianSmoothing(cube, { 
           iterations: 3, 
-          lambda: 0.3, 
-          mu: -0.1 
+          lambda: 0.3
         });
         
         expect(result).toBeInstanceOf(EditableMesh);
       });
 
-      it('should preserve volume when requested', () => {
-        const result = laplacianSmoothing(cube, { preserveVolume: true });
+      it('should preserve boundaries when requested', () => {
+        const result = laplacianSmoothing(cube, { preserveBoundaries: true });
         
         expect(result).toBeInstanceOf(EditableMesh);
       });

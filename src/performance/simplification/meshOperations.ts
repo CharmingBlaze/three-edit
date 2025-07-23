@@ -6,7 +6,7 @@ import { EdgeCollapse } from './types';
  * Collapse an edge in the mesh
  */
 export function collapseEdge(mesh: EditableMesh, collapse: EdgeCollapse): void {
-  const { edge, newPosition, affectedFaces } = collapse;
+  const { edge, newPosition } = collapse;
   
   // Get vertex indices
   const v1Index = edge.v1;
@@ -73,7 +73,7 @@ export function calculateErrorMetric(mesh: EditableMesh): number {
   
   mesh.faces.forEach(face => {
     const area = calculateFaceArea(mesh, face);
-    const _center = calculateFaceCenter(mesh, face);
+    // const _center = calculateFaceCenter(mesh, face);
     const normal = calculateFaceNormal(mesh, face);
     
     // Calculate error based on face properties

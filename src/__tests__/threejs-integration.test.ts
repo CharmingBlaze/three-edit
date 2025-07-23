@@ -9,11 +9,7 @@ import {
   integrateIntoScene,
   extractFromScene,
   createSceneGraph,
-  validateThreeJSIntegration,
-  ThreeJSIntegrationOptions,
-  MaterialConversionOptions,
-  AnimationConversionOptions,
-  SceneGraphOptions
+  validateThreeJSIntegration
 } from '../integration/threejs.ts';
 
 describe('Three.js Integration', () => {
@@ -229,7 +225,7 @@ describe('Three.js Integration', () => {
   describe('integrateIntoScene', () => {
     it('should integrate mesh into scene', () => {
       const scene = {
-        children: [],
+        children: [] as any[],
         add(child: any) {
           this.children.push(child);
         },
@@ -249,7 +245,7 @@ describe('Three.js Integration', () => {
 
     it('should create groups when requested', () => {
       const scene = {
-        children: [],
+        children: [] as any[],
         add(child: any) {
           this.children.push(child);
         },
@@ -269,7 +265,7 @@ describe('Three.js Integration', () => {
 
     it('should flatten meshes when requested', () => {
       const scene = {
-        children: [],
+        children: [] as any[],
         add(child: any) {
           this.children.push(child);
         },
@@ -390,7 +386,7 @@ describe('Three.js Integration', () => {
   describe('validateThreeJSIntegration', () => {
     it('should validate successful conversion', () => {
       const threeMesh = convertToThreeMesh(cube);
-      const isValid = validateThreeJSIntegration(cube, threeMesh);
+      validateThreeJSIntegration(cube, threeMesh);
 
       // The validation might fail due to triangulation, so let's check the actual counts
       const editableVertexCount = cube.vertices.length;

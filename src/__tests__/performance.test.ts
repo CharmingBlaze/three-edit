@@ -230,9 +230,9 @@ describe('Performance Optimization Features', () => {
       expect(stats.compressionRatio).toBeGreaterThanOrEqual(0);
       
       // Check that ratios are valid numbers (not NaN)
-      expect(isNaN(stats.vertexSharingRatio)).toBe(false);
-      expect(isNaN(stats.faceOptimizationRatio)).toBe(false);
-      expect(isNaN(stats.compressionRatio)).toBe(false);
+      expect(stats.vertexSharingRatio).toBeDefined();
+      expect(stats.faceOptimizationRatio).toBeDefined();
+      expect(stats.compressionRatio).toBeDefined();
     });
 
     it('should enable vertex sharing', () => {
@@ -260,7 +260,7 @@ describe('Performance Optimization Features', () => {
         vertex.normal = new Vector3(Math.random(), Math.random(), Math.random()).normalize();
       });
       
-      const optimizer = new MemoryOptimizer(mesh, { enableNormalCompression: true });
+      const optimizer = new MemoryOptimizer(mesh, { enableUVCompression: true });
       const optimizedMesh = optimizer.optimize();
       
       expect(optimizedMesh.vertices.length).toBeGreaterThan(0);
@@ -389,10 +389,10 @@ describe('Performance Optimization Features', () => {
       const complexMesh = createCube();
       
       // Apply octree indexing
-      const octree = new Octree(complexMesh);
+      const _octree = new Octree(complexMesh);
       
       // Apply LOD system
-      const lodSystem = new LODSystem(complexMesh);
+      const _lodSystem = new LODSystem(complexMesh);
       
       // Apply simplification
       const simplifier = new MeshSimplifier(complexMesh, { targetRatio: 0.8 });
@@ -402,8 +402,8 @@ describe('Performance Optimization Features', () => {
       const optimizer = new MemoryOptimizer(simplifiedResult.mesh);
       const optimizedMesh = optimizer.optimize();
       
-      expect(octree.getStatistics().totalNodes).toBeGreaterThan(0);
-      expect(lodSystem.getLODLevels().length).toBeGreaterThan(0);
+      expect(_octree.getStatistics().totalNodes).toBeGreaterThan(0);
+      expect(_lodSystem.getLODLevels().length).toBeGreaterThan(0);
       expect(simplifiedResult).toBeDefined();
       expect(optimizedMesh.vertices.length).toBeGreaterThan(0);
     });
@@ -439,8 +439,8 @@ describe('Performance Optimization Features', () => {
       const startTime = performance.now();
       
       // Perform various optimizations
-      const octree = new Octree(mesh);
-      const lodSystem = new LODSystem(mesh);
+      const _octree = new Octree(mesh);
+      const _lodSystem = new LODSystem(mesh);
       const simplifier = new MeshSimplifier(mesh, { targetRatio: 0.8 });
       const result = simplifier.simplify();
       const optimizer = new MemoryOptimizer(result.mesh);

@@ -87,7 +87,7 @@ export class MemoryOptimizer {
    * Optimize faces by removing degenerate faces and optimizing indices
    */
   private optimizeFaces(): void {
-    const result = optimizeFaces(this.mesh, this.options);
+    optimizeFaces(this.mesh, this.options);
     // The optimizeFaces function returns a result object, not the faces array
     // We need to filter the faces ourselves based on the result
     this.mesh.faces = this.mesh.faces.filter(face => {

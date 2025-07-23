@@ -99,7 +99,7 @@ Run all tests with npm run test (if setup)
 
 🛡️ Never Do This
 
-Never write more than 150–200 lines in one file
+Never write more than 150–300 lines in one file
 
 Never use any or skip types
 

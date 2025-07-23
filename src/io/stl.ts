@@ -29,7 +29,7 @@ export interface STLTriangle {
 /**
  * Import STL format data
  */
-export function importSTL(data: string | ArrayBuffer, options: STLOptions = {}): EditableMesh[] {
+export function importSTL(data: string | ArrayBuffer): EditableMesh[] {
   try {
     if (typeof data === 'string') {
       // ASCII STL
@@ -115,153 +115,153 @@ export function importSTL(data: string | ArrayBuffer, options: STLOptions = {}):
 }
 
 /**
- * Import STL ASCII format
+ * Import STL ASCII format (unused - kept for future implementation)
  */
-function importSTLASCII(
-  data: string
-): EditableMesh[] {
-  const meshes: EditableMesh[] = [];
-  const lines = data.split('\n');
-  let currentMesh: EditableMesh | null = null;
-  let currentNormal: { x: number; y: number; z: number } | null = null;
-  let currentVertices: { x: number; y: number; z: number }[] = [];
+// function importSTLASCII(
+//   data: string
+// ): EditableMesh[] {
+//   const meshes: EditableMesh[] = [];
+//   const lines = data.split('\n');
+//   let currentMesh: EditableMesh | null = null;
+//   let currentNormal: { x: number; y: number; z: number } | null = null;
+//   let currentVertices: { x: number; y: number; z: number }[] = [];
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+//   for (let i = 0; i < lines.length; i++) {
+//     const line = lines[i].trim();
     
-    if (line.startsWith('solid')) {
-      currentMesh = new EditableMesh();
-    } else if (line.startsWith('endsolid')) {
-      if (currentMesh) {
-        meshes.push(currentMesh);
-        currentMesh = null;
-      }
-    } else if (line.startsWith('facet normal')) {
-      currentVertices = [];
+//     if (line.startsWith('solid')) {
+//       currentMesh = new EditableMesh();
+//     } else if (line.startsWith('endsolid')) {
+//       if (currentMesh) {
+//         meshes.push(currentMesh);
+//         currentMesh = null;
+//       }
+//     } else if (line.startsWith('facet normal')) {
+//       currentVertices = [];
       
-      // Parse normal
-      const normalMatch = line.match(/facet normal\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)/);
-      if (normalMatch) {
-        currentNormal = {
-          x: parseFloat(normalMatch[1]),
-          y: parseFloat(normalMatch[2]),
-          z: parseFloat(normalMatch[3])
-        };
-      }
-    } else if (line.startsWith('outer loop')) {
-      // Continue parsing
-    } else if (line.startsWith('vertex')) {
+//       // Parse normal
+//       const normalMatch = line.match(/facet normal\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)/);
+//       if (normalMatch) {
+//         currentNormal = {
+//           x: parseFloat(normalMatch[1]),
+//           y: parseFloat(normalMatch[2]),
+//           z: parseFloat(normalMatch[3])
+//         };
+//       }
+//     } else if (line.startsWith('outer loop')) {
+//       // Continue parsing
+//     } else if (line.startsWith('vertex')) {
       
-      // Parse vertex
-      const vertexMatch = line.match(/vertex\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)/);
-      if (vertexMatch) {
-        currentVertices.push({
-          x: parseFloat(vertexMatch[1]),
-          y: parseFloat(vertexMatch[2]),
-          z: parseFloat(vertexMatch[3])
-        });
-      }
-    } else if (line.startsWith('endloop')) {
-      // Continue parsing
-    } else if (line.startsWith('endfacet')) {
+//       // Parse vertex
+//       const vertexMatch = line.match(/vertex\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)/);
+//       if (vertexMatch) {
+//         currentVertices.push({
+//           x: parseFloat(vertexMatch[1]),
+//           y: parseFloat(vertexMatch[2]),
+//           z: parseFloat(vertexMatch[3])
+//         });
+//       }
+//     } else if (line.startsWith('endloop')) {
+//       // Continue parsing
+//     } else if (line.startsWith('endfacet')) {
       
-      // Create triangle from collected vertices
-      if (currentMesh && currentVertices.length === 3) {
-        const vertexIndices: number[] = [];
+//       // Create triangle from collected vertices
+//       if (currentMesh && currentVertices.length === 3) {
+//         const vertexIndices: number[] = [];
         
-        // Add vertices to mesh
-        for (const vertexData of currentVertices) {
-          const vertex = new Vertex(vertexData.x, vertexData.y, vertexData.z);
+//         // Add vertices to mesh
+//         for (const vertexData of currentVertices) {
+//           const vertex = new Vertex(vertexData.x, vertexData.y, vertexData.z);
           
-          // Add normal if available
-          if (currentNormal) {
-            vertex.normal = currentNormal as any;
-          }
+//           // Add normal if available
+//           if (currentNormal) {
+//             vertex.normal = currentNormal as any;
+//           }
           
-          currentMesh.addVertex(vertex);
-          vertexIndices.push(currentMesh.vertices.length - 1);
-        }
+//           currentMesh.addVertex(vertex);
+//           vertexIndices.push(currentMesh.vertices.length - 1);
+//         }
         
-        // Create face
-        const face = new Face(vertexIndices, []);
-        currentMesh.addFace(face);
-      }
+//         // Create face
+//         const face = new Face(vertexIndices, []);
+//         currentMesh.addFace(face);
+//       }
       
-      currentNormal = null;
-      currentVertices = [];
-    }
-  }
+//       currentNormal = null;
+//       currentVertices = [];
+//     }
+//   }
 
-  return meshes;
-}
+//   return meshes;
+// }
 
 /**
- * Import STL binary format
+ * Import STL binary format (unused - kept for future implementation)
  */
-function importSTLBinary(
-  data: ArrayBuffer
-): EditableMesh[] {
-  const meshes: EditableMesh[] = [];
-  const view = new DataView(data);
+// function importSTLBinary(
+//   data: ArrayBuffer
+// ): EditableMesh[] {
+//   const meshes: EditableMesh[] = [];
+//   const view = new DataView(data);
   
-  // Read triangle count (4 bytes after header)
-  const triangleCount = view.getUint32(80, true);
+//   // Read triangle count (4 bytes after header)
+//   const triangleCount = view.getUint32(80, true);
   
-  // Create mesh
-  const mesh = new EditableMesh();
+//   // Create mesh
+//   const mesh = new EditableMesh();
   
-  // Each triangle is 50 bytes: 12 bytes normal + 36 bytes vertices + 2 bytes attribute
-  let offset = 84;
+//   // Each triangle is 50 bytes: 12 bytes normal + 36 bytes vertices + 2 bytes attribute
+//   let offset = 84;
   
-  for (let i = 0; i < triangleCount; i++) {
-    // Read normal
-    const nx = view.getFloat32(offset, true);
-    const ny = view.getFloat32(offset + 4, true);
-    const nz = view.getFloat32(offset + 8, true);
+//   for (let i = 0; i < triangleCount; i++) {
+//     // Read normal
+//     const nx = view.getFloat32(offset, true);
+//     const ny = view.getFloat32(offset + 4, true);
+//     const nz = view.getFloat32(offset + 8, true);
     
-    // Read vertices
-    const v1x = view.getFloat32(offset + 12, true);
-    const v1y = view.getFloat32(offset + 16, true);
-    const v1z = view.getFloat32(offset + 20, true);
+//     // Read vertices
+//     const v1x = view.getFloat32(offset + 12, true);
+//     const v1y = view.getFloat32(offset + 16, true);
+//     const v1z = view.getFloat32(offset + 20, true);
     
-    const v2x = view.getFloat32(offset + 24, true);
-    const v2y = view.getFloat32(offset + 28, true);
-    const v2z = view.getFloat32(offset + 32, true);
+//     const v2x = view.getFloat32(offset + 24, true);
+//     const v2y = view.getFloat32(offset + 28, true);
+//     const v2z = view.getFloat32(offset + 32, true);
     
-    const v3x = view.getFloat32(offset + 36, true);
-    const v3y = view.getFloat32(offset + 40, true);
-    const v3z = view.getFloat32(offset + 44, true);
+//     const v3x = view.getFloat32(offset + 36, true);
+//     const v3y = view.getFloat32(offset + 40, true);
+//     const v3z = view.getFloat32(offset + 44, true);
     
-    // Add vertices to mesh
-    const vertex1 = new Vertex(v1x, v1y, v1z);
-    const vertex2 = new Vertex(v2x, v2y, v2z);
-    const vertex3 = new Vertex(v3x, v3y, v3z);
+//     // Add vertices to mesh
+//     const vertex1 = new Vertex(v1x, v1y, v1z);
+//     const vertex2 = new Vertex(v2x, v2y, v2z);
+//     const vertex3 = new Vertex(v3x, v3y, v3z);
     
-    // Add normals if they're not zero
-    if (nx !== 0 || ny !== 0 || nz !== 0) {
-      vertex1.normal = { x: nx, y: ny, z: nz } as any;
-      vertex2.normal = { x: nx, y: ny, z: nz } as any;
-      vertex3.normal = { x: nx, y: ny, z: nz } as any;
-    }
+//     // Add normals if they're not zero
+//     if (nx !== 0 || ny !== 0 || nz !== 0) {
+//       vertex1.normal = { x: nx, y: ny, z: nz } as any;
+//       vertex2.normal = { x: nx, y: ny, z: nz } as any;
+//       vertex3.normal = { x: nx, y: ny, z: nz } as any;
+//     }
     
-    mesh.addVertex(vertex1);
-    mesh.addVertex(vertex2);
-    mesh.addVertex(vertex3);
+//     mesh.addVertex(vertex1);
+//     mesh.addVertex(vertex2);
+//     mesh.addVertex(vertex3);
     
-    // Create face
-    const face = new Face([
-      mesh.vertices.length - 3,
-      mesh.vertices.length - 2,
-      mesh.vertices.length - 1
-    ], []);
-    mesh.addFace(face);
+//     // Create face
+//     const face = new Face([
+//       mesh.vertices.length - 3,
+//       mesh.vertices.length - 2,
+//       mesh.vertices.length - 1
+//     ], []);
+//     mesh.addFace(face);
     
-    offset += 50; // Move to next triangle
-  }
+//     offset += 50; // Move to next triangle
+//   }
   
-  meshes.push(mesh);
-  return meshes;
-}
+//   meshes.push(mesh);
+//   return meshes;
+// }
 
 /**
  * Export EditableMesh to STL format

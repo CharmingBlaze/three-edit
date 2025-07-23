@@ -207,7 +207,7 @@ export function calculateFaceBoundingBox(face: Face): BoundingBox {
   const max = new Vector3(-Infinity, -Infinity, -Infinity);
 
   // Calculate bounding box from face vertices
-  for (const vertexIndex of face.vertices) {
+  for (const _vertexIndex of face.vertices) {
     // This would need access to the mesh to get vertex positions
     // For now, return a default bounding box
     min.set(-1, -1, -1);
@@ -221,7 +221,7 @@ export function calculateFaceBoundingBox(face: Face): BoundingBox {
 /**
  * Calculate face center
  */
-export function calculateFaceCenter(face: Face): Vector3 {
+export function calculateFaceCenter(_face: Face): Vector3 {
   // Calculate center from face vertices
   const center = new Vector3(0, 0, 0);
   

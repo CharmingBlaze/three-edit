@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Vector3 } from 'three';
+
 import { createWedge } from '../primitives/createWedge.ts';
 import { createNGon } from '../primitives/createNGon.ts';
 import { createPipe } from '../primitives/createPipe.ts';

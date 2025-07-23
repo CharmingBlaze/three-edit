@@ -37,7 +37,7 @@ export function createStairs(options: CreateStairsOptions = {}): EditableMesh {
   const steps = Math.max(2, Math.floor(options.steps ?? 4));
   const widthSegments = Math.max(1, Math.floor(options.widthSegments ?? 1));
   const heightSegments = Math.max(1, Math.floor(options.heightSegments ?? 1));
-  const _depthSegments = Math.max(1, Math.floor(options.depthSegments ?? 1));
+  // const _depthSegments = Math.max(1, Math.floor(options.depthSegments ?? 1));
   const name = options.name ?? 'Stairs';
   
   const mesh = new EditableMesh({ name });
@@ -94,7 +94,7 @@ export function createStairs(options: CreateStairsOptions = {}): EditableMesh {
         // Create edges
         const edgeAB = mesh.addEdge(new Edge(a, b));
         const edgeBC = mesh.addEdge(new Edge(b, c));
-        const _edgeCD = mesh.addEdge(new Edge(c, d));
+        // const _edgeCD = mesh.addEdge(new Edge(c, d));
         const edgeDA = mesh.addEdge(new Edge(d, a));
         const edgeEF = mesh.addEdge(new Edge(e, f));
         const edgeFG = mesh.addEdge(new Edge(f, g));

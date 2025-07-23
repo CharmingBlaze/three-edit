@@ -112,7 +112,7 @@ export function twistAdvanced(
  */
 export function calculateTwistFactor(
   vertex: any,
-  axis: Vector3,
+  _axis: Vector3,
   startPoint: Vector3,
   endPoint: Vector3
 ): number {

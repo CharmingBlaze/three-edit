@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Vector3 } from 'three';
+
 import { createLowPolySphere } from '../primitives/createLowPolySphere.ts';
 import { createRoundedBox } from '../primitives/createRoundedBox.ts';
 import { createStairs } from '../primitives/createStairs.ts';

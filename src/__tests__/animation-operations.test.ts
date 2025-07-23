@@ -1,17 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Vector3 } from 'three';
 import { EditableMesh } from '../core/EditableMesh.ts';
-import { createCube, createSphere } from '../primitives/index.ts';
+import { createCube } from '../primitives/index.ts';
 import {
   createMorphAnimation,
   createSimpleMorphAnimation,
   exportAnimationKeyframes,
-  Keyframe,
-  MorphAnimationTrack,
-  AnimationOptions,
-  AnimationResult
+  MorphAnimationTrack
 } from '../operations/animation.ts';
-import { createMorphTarget, MorphTarget } from '../operations/morphing.ts';
+import { createMorphTarget } from '../operations/morphing.ts';
 
 describe('Animation Operations', () => {
   let cube: EditableMesh;

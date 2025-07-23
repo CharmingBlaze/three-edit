@@ -236,10 +236,36 @@ describe('Knife Tool', () => {
 
   describe('knifeCutCircle', () => {
     it('should perform circular cut', () => {
-      const center = new Vector3(0, 0, 0.5); // Place on front face
-      const radius = 1.5; // Use larger radius that definitely intersects with cube
+      console.log('=== CIRCULAR CUT TEST STARTING ===');
+      
+      const center = new Vector3(0, 0, 0); // Place at center of cube
+      const radius = 0.4; // Use radius that intersects with cube bounds
 
-      const result = knifeCutCircle(cube, center, radius);
+      // Print all cube vertices
+      console.log('Cube vertices:', cube.vertices.map(v => ({ x: v.x, y: v.y, z: v.z })));
+
+      // Generate circle points
+      const segments = 32;
+      const points = [];
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const x = center.x + Math.cos(angle) * radius;
+        const y = center.y + Math.sin(angle) * radius;
+        points.push({ x, y, z: center.z });
+      }
+      points.push(points[0]);
+      console.log('Circle points:', points);
+
+      const result = knifeCutCircle(cube, center, radius, new Vector3(0, 0, 1));
+
+      console.log('Circular cut result:', result);
+      console.log('Result details:', {
+        success: result.success,
+        verticesCreated: result.verticesCreated,
+        edgesCreated: result.edgesCreated,
+        facesSplit: result.facesSplit,
+        error: result.error
+      });
 
       expect(result.success).toBe(true);
       expect(result.verticesCreated).toBeGreaterThan(0);
@@ -247,11 +273,13 @@ describe('Knife Tool', () => {
     });
 
     it('should handle different segment counts', () => {
-      const center = new Vector3(0, 0, 0.5); // Place on front face
-      const radius = 1.5; // Use larger radius that definitely intersects with cube
+      const center = new Vector3(0, 0, 0); // Place at center of cube
+      const radius = 0.4; // Use radius that intersects with cube bounds
 
-      const result8 = knifeCutCircle(cube, center, radius, 8);
-      const result16 = knifeCutCircle(cube, center, radius, 16);
+      const result8 = knifeCutCircle(cube, center, radius, new Vector3(0, 0, 1), 8);
+      const result16 = knifeCutCircle(cube, center, radius, new Vector3(0, 0, 1), 16);
+
+      console.log('Segment count test results:', { result8, result16 });
 
       expect(result8.success).toBe(true);
       expect(result16.success).toBe(true);
@@ -259,13 +287,27 @@ describe('Knife Tool', () => {
     });
 
     it('should handle off-center circular cut', () => {
-      const center = new Vector3(0.5, 0.5, 0.5); // Place on front face, off-center
-      const radius = 1.0; // Use larger radius that definitely intersects with cube
+      const center = new Vector3(0.2, 0.2, 0); // Place off-center but still intersecting
+      const radius = 0.3; // Use radius that intersects with cube bounds
 
-      const result = knifeCutCircle(cube, center, radius);
+      const result = knifeCutCircle(cube, center, radius, new Vector3(0, 0, 1));
+
+      console.log('Off-center circular cut result:', result);
 
       expect(result.success).toBe(true);
       expect(result.verticesCreated).toBeGreaterThan(0);
+    });
+
+    it('should perform circular cut on a different plane', () => {
+      const center = new Vector3(0, 0, 0);
+      const radius = 0.4;
+      const normal = new Vector3(1, 0, 0); // Cut on the YZ plane
+
+      const result = knifeCutCircle(cube, center, radius, normal);
+
+      expect(result.success).toBe(true);
+      expect(result.verticesCreated).toBeGreaterThan(0);
+      expect(result.facesSplit).toBeGreaterThan(0);
     });
   });
 

@@ -7,8 +7,23 @@ All notable changes to the three-edit library will be documented in this file.
 ### 🎉 Major Improvements
 - **Build System Fixed**: Resolved all 138 TypeScript compilation errors
 - **Production Ready**: Library now builds successfully with zero errors
-- **Test Suite**: All 544 tests passing across 22 test files
+- **Test Suite**: All 569 tests passing across 23 test files
 - **Modular Architecture**: Clean, well-structured codebase with proper separation of concerns
+- **🎭 Scene Graph System**: Complete hierarchical scene management system added
+
+### 🎭 Scene Graph System (NEW)
+- **SceneNode**: Individual nodes with transform, children, and optional mesh binding
+- **SceneGraph**: Manages all nodes with graph traversal and manipulation
+- **Parent/Child Relationships**: Full hierarchy support with transform inheritance
+- **Local/World Transforms**: Matrix4-based transform system with computed world matrices
+- **Mesh Binding**: Optional EditableMesh association per node
+- **Metadata Support**: Name, tags, visibility, userData, and more
+- **Safety Features**: Cycle detection, validation, and safe node operations
+- **Traversal Utilities**: Multiple traversal strategies (preorder, postorder, breadth-first)
+- **Flattening Tools**: Convert hierarchy to flat lists with filtering options
+- **Three.js Integration**: Seamless conversion to Three.js Scene and Object3D
+- **Node Utilities**: Safe add/remove operations, search by ID/name/tag
+- **Comprehensive Testing**: 25 dedicated tests covering all functionality
 
 ### 🔧 Build & Development
 - Fixed TypeScript configuration to be less strict for test files

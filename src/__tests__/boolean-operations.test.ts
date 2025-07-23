@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { createCube } from '../primitives/createCube.ts';
-import { createSphere } from '../primitives/createSphere.ts';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { union, subtract, intersect, booleanOperation, BooleanAdvanced } from '../operations/boolean.ts';
-import { validateGeometryIntegrity } from '../validation/validateGeometryIntegrity.ts';
+import { createCube } from '../primitives/createCube';
+import { EditableMesh } from '../core/EditableMesh';
+import { 
+  booleanUnion, 
+  booleanDifference, 
+  booleanIntersection, 
+  booleanOperation, 
+  BooleanAdvanced 
+} from '../operations/boolean';
 
 describe('Boolean Operations', () => {
   describe('Union Operations', () => {
@@ -16,7 +20,7 @@ describe('Boolean Operations', () => {
         vertex.x += 0.5;
       });
       
-      const result = union(cubeA, cubeB);
+      const result = booleanUnion(cubeA, cubeB);
       
       expect(result.success).toBe(true);
       expect(result.mesh).toBeDefined();
@@ -29,7 +33,7 @@ describe('Boolean Operations', () => {
       const cubeA = createCube({ width: 1, height: 1, depth: 1 });
       const cubeB = createCube({ width: 1, height: 1, depth: 1 });
       
-      const result = union(cubeA, cubeB, { validate: true, repair: true });
+      const result = booleanUnion(cubeA, cubeB, { validate: true, repair: true });
       
       expect(result.success).toBe(true);
       expect(result.validation).toBeDefined();
@@ -55,11 +59,11 @@ describe('Boolean Operations', () => {
       const cubeA = createCube({ width: 2, height: 2, depth: 2, name: 'CubeA' });
       const cubeB = createCube({ width: 1, height: 1, depth: 1, name: 'CubeB' });
       
-      const result = subtract(cubeA, cubeB);
+      const result = booleanDifference(cubeA, cubeB);
       
       expect(result.success).toBe(true);
       expect(result.mesh).toBeDefined();
-      expect(result.mesh.name).toBe('CubeA_subtract_CubeB');
+      expect(result.mesh.name).toBe('CubeA_difference_CubeB');
     });
 
     it('should handle subtract with advanced options', () => {
@@ -82,11 +86,11 @@ describe('Boolean Operations', () => {
       const cubeA = createCube({ width: 2, height: 2, depth: 2, name: 'CubeA' });
       const cubeB = createCube({ width: 1, height: 1, depth: 1, name: 'CubeB' });
       
-      const result = intersect(cubeA, cubeB);
+      const result = booleanIntersection(cubeA, cubeB);
       
       expect(result.success).toBe(true);
       expect(result.mesh).toBeDefined();
-      expect(result.mesh.name).toBe('CubeA_intersect_CubeB');
+      expect(result.mesh.name).toBe('CubeA_intersection_CubeB');
     });
 
     it('should handle intersect with advanced options', () => {
@@ -110,8 +114,8 @@ describe('Boolean Operations', () => {
       const cubeB = createCube({ width: 1, height: 1, depth: 1 });
       
       const unionResult = booleanOperation(cubeA, cubeB, 'union');
-      const subtractResult = booleanOperation(cubeA, cubeB, 'subtract');
-      const intersectResult = booleanOperation(cubeA, cubeB, 'intersect');
+      const subtractResult = booleanOperation(cubeA, cubeB, 'difference');
+      const intersectResult = booleanOperation(cubeA, cubeB, 'intersection');
       
       expect(unionResult.success).toBe(true);
       expect(subtractResult.success).toBe(true);
@@ -122,7 +126,7 @@ describe('Boolean Operations', () => {
       const cubeA = createCube({ width: 1, height: 1, depth: 1 });
       const cubeB = createCube({ width: 1, height: 1, depth: 1 });
       
-      const operations: Array<'union' | 'subtract' | 'intersect'> = ['union', 'subtract', 'intersect'];
+      const operations = ['union', 'difference', 'intersection'] as const;
       
       operations.forEach(operation => {
         const result = booleanOperation(cubeA, cubeB, operation);
@@ -136,23 +140,24 @@ describe('Boolean Operations', () => {
     it('should handle invalid meshes gracefully', () => {
       const emptyMesh = new EditableMesh({ name: 'Empty' });
       const cube = createCube();
-      
-      const result = union(emptyMesh, cube);
+
+      const result = booleanUnion(emptyMesh, cube);
       
       // Should still return a result, even if operation is limited
-      expect(result.mesh).toBeDefined();
+      expect(result).toBeDefined();
+      expect(typeof result.success).toBe('boolean');
     });
 
     it('should preserve material assignments when requested', () => {
       const cubeA = createCube({ width: 1, height: 1, depth: 1 });
       const cubeB = createCube({ width: 1, height: 1, depth: 1 });
       
-      // Assign materials to test preservation
+      // Assign materials to faces
       cubeA.faces.forEach((face, index) => {
         face.materialIndex = index % 2;
       });
       
-      const result = union(cubeA, cubeB, { preserveMaterials: true });
+      const result = booleanUnion(cubeA, cubeB, { preserveMaterials: true });
       
       expect(result.success).toBe(true);
       expect(result.mesh).toBeDefined();
@@ -164,35 +169,36 @@ describe('Boolean Operations', () => {
       const cubeA = createCube({ width: 1, height: 1, depth: 1 });
       const cubeB = createCube({ width: 1, height: 1, depth: 1 });
       
-      const result = union(cubeA, cubeB, { validate: true });
+      const result = booleanUnion(cubeA, cubeB, { validate: true });
       
       expect(result.validation).toBeDefined();
-      expect(typeof result.validation).toBe('object');
+      expect(result.success).toBe(true);
     });
 
     it('should handle validation errors gracefully', () => {
       const cubeA = createCube({ width: 1, height: 1, depth: 1 });
       const cubeB = createCube({ width: 1, height: 1, depth: 1 });
       
-      const result = union(cubeA, cubeB, { validate: true, repair: true });
+      const result = booleanUnion(cubeA, cubeB, { validate: true, repair: true });
       
       expect(result.success).toBe(true);
-      // Even if validation fails, the operation should still return a result
-      expect(result.mesh).toBeDefined();
+      expect(result.validation).toBeDefined();
     });
   });
 
   describe('Performance', () => {
     it('should handle large meshes efficiently', () => {
-      const cubeA = createCube({ width: 1, height: 1, depth: 1 });
+      const cubeA = createCube({ width: 2, height: 2, depth: 2 });
       const cubeB = createCube({ width: 1, height: 1, depth: 1 });
       
       const startTime = performance.now();
-      const result = union(cubeA, cubeB);
+      const result = booleanUnion(cubeA, cubeB);
       const endTime = performance.now();
       
       expect(result.success).toBe(true);
       expect(endTime - startTime).toBeLessThan(1000); // Should complete within 1 second
+      expect(result.statistics).toBeDefined();
+      expect(result.statistics?.processingTime).toBeGreaterThan(0);
     });
   });
 }); 

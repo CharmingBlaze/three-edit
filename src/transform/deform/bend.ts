@@ -165,16 +165,16 @@ function createSplineFromPoints(points: Vector3[]): Vector3[] {
 /**
  * Calculate bend factor based on distance from spline
  */
-function calculateBendFactor(position: Vector3, spline: Vector3[], controlPoints: Vector3[]): number {
+function calculateBendFactor(position: Vector3, spline: Vector3[], _controlPoints: Vector3[]): number {
   // Find closest point on spline
   let minDistance = Infinity;
-  let closestPoint = spline[0];
+  // let closestPoint = spline[0];
   
   for (const splinePoint of spline) {
     const distance = position.distanceTo(splinePoint);
     if (distance < minDistance) {
       minDistance = distance;
-      closestPoint = splinePoint;
+      // closestPoint = splinePoint;
     }
   }
   

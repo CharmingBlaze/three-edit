@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
 import { EditableMesh } from '../core/index.ts';
 import { 
@@ -273,7 +273,7 @@ describe('Additional Primitives', () => {
         const twists = [1, 2, 3, 5];
         
         for (const twist of twists) {
-          const mesh = createMobiusStrip({ twists });
+          const mesh = createMobiusStrip({ twists: twist });
           expect(mesh).toBeInstanceOf(EditableMesh);
           expect(mesh.getVertexCount()).toBeGreaterThan(0);
           expect(mesh.getFaceCount()).toBeGreaterThan(0);

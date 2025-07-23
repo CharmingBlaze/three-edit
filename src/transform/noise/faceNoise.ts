@@ -17,11 +17,11 @@ export function applyFaceDisplacement(
   const persistence = options.persistence ?? 0.5;
   const lacunarity = options.lacunarity ?? 2.0;
   const direction = options.direction ?? new Vector3(0, 1, 0);
-  const _allFaces = options.allFaces ?? true;
+  // const _allFaces = options.allFaces ?? true;
   const threshold = options.threshold ?? 0;
-  const _preserveNormals = options.preserveNormals ?? true;
-  const _keepOriginal = options.keepOriginal ?? true;
-  const _materialIndex = options.materialIndex ?? 0;
+  // const _preserveNormals = options.preserveNormals ?? true;
+  // const _keepOriginal = options.keepOriginal ?? true;
+  // const _materialIndex = options.materialIndex ?? 0;
 
   // Normalize direction
   direction.normalize();
@@ -89,15 +89,15 @@ export function applyCellularNoise(
     const vertex = mesh.getVertex(i);
     if (!vertex) continue;
 
-    // Calculate cellular noise value
-    const noiseValue = noise.fractal(
-      vertex.x * scale,
-      vertex.y * scale,
-      vertex.z * scale,
-      octaves,
-      persistence,
-      lacunarity
-    );
+    // Calculate cellular noise value (unused - kept for future implementation)
+    // const noiseValue = noise.fractal(
+    //   vertex.x * scale,
+    //   vertex.y * scale,
+    //   vertex.z * scale,
+    //   octaves,
+    //   persistence,
+    //   lacunarity
+    // );
 
     // Apply cellular displacement
     const displacement = new Vector3(

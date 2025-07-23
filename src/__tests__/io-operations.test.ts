@@ -1,20 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Vector3, Vector2 } from 'three';
+import { Vector3 } from 'three';
 import { EditableMesh } from '../core/index.ts';
 import { createCube } from '../primitives/index.ts';
 import { 
   parseOBJ, 
-  exportOBJ, 
-  loadOBJ, 
-  saveOBJ,
+  exportOBJ,
   parseGLTF,
   exportGLTF,
-  loadGLTF,
-  saveGLTF,
   parsePLY,
-  exportPLY,
-  loadPLY,
-  savePLY
+  exportPLY
 } from '../io/index.ts';
 
 describe('IO Operations', () => {
@@ -136,9 +130,9 @@ f 1/1/1 2/2/2 3/3/3 4/4/4`;
       expect(gltf.asset.version).toBe('2.0');
       expect(gltf.asset.generator).toBe('three-edit');
       expect(gltf.meshes).toBeDefined();
-      expect(gltf.meshes.length).toBeGreaterThan(0);
+      expect(gltf.meshes!.length).toBeGreaterThan(0);
       expect(gltf.accessors).toBeDefined();
-      expect(gltf.accessors.length).toBeGreaterThan(0);
+      expect(gltf.accessors!.length).toBeGreaterThan(0);
     });
 
     it('should export mesh to GLTF format with custom options', () => {
@@ -408,9 +402,6 @@ end_header
 
   describe('Integration Tests', () => {
     it('should round-trip mesh through OBJ format', () => {
-      const originalVertexCount = mesh.getVertexCount();
-      const originalFaceCount = mesh.getFaceCount();
-      
       const objContent = exportOBJ(mesh);
       const parsedMesh = parseOBJ(objContent);
       
@@ -420,9 +411,6 @@ end_header
     });
 
     it('should round-trip mesh through GLTF format', () => {
-      const originalVertexCount = mesh.getVertexCount();
-      const originalFaceCount = mesh.getFaceCount();
-      
       const gltf = exportGLTF(mesh);
       const parsedMesh = parseGLTF(gltf);
       
@@ -432,9 +420,6 @@ end_header
     });
 
     it('should round-trip mesh through PLY format', () => {
-      const originalVertexCount = mesh.getVertexCount();
-      const originalFaceCount = mesh.getFaceCount();
-      
       const plyContent = exportPLY(mesh);
       const parsedMesh = parsePLY(plyContent);
       
