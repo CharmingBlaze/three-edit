@@ -1,86 +1,12 @@
 /**
- * Geometry utility functions for three-edit
- * Pure functions for triangulation, vertex merging, and extrusion operations
+ * Face Operations - Pure functions for face manipulation
+ * Extracted from geometry.ts for better modularity
  */
 
-import { EditableMesh } from '../core/EditableMesh';
-import { Vertex } from '../core/Vertex';
-import { Face } from '../core/Face';
-import { Matrix4, Vector3 } from 'three';
-import { distanceSquared3D, isValidTriangle } from './math';
-
-/**
- * Merge vertices that are close to each other
- */
-export function mergeVertices(
-  vertices: Vertex[],
-  faces: Face[],
-  threshold: number = 1e-6
-): {
-  newVertices: Vertex[];
-  newFaces: Face[];
-  vertexMap: number[];
-} {
-  const vertexMap: number[] = [];
-  const newVertices: Vertex[] = [];
-  const thresholdSquared = threshold * threshold;
-  
-  // Create vertex map
-  for (let i = 0; i < vertices.length; i++) {
-    let found = false;
-    
-    for (let j = 0; j < newVertices.length; j++) {
-      const distance = distanceSquared3D(
-        new Vector3(vertices[i].x, vertices[i].y, vertices[i].z),
-        new Vector3(newVertices[j].x, newVertices[j].y, newVertices[j].z)
-      );
-      
-      if (distance <= thresholdSquared) {
-        vertexMap[i] = j;
-        found = true;
-        break;
-      }
-    }
-    
-    if (!found) {
-      vertexMap[i] = newVertices.length;
-      newVertices.push(vertices[i].clone());
-    }
-  }
-  
-  // Update faces with new vertex indices
-  const newFaces: Face[] = [];
-  for (const face of faces) {
-    const newVertexIndices = face.vertices.map(oldIndex => vertexMap[oldIndex]);
-    
-    // Remove duplicate consecutive vertices
-    const uniqueVertices: number[] = [];
-    for (let i = 0; i < newVertexIndices.length; i++) {
-      const current = newVertexIndices[i];
-      const next = newVertexIndices[(i + 1) % newVertexIndices.length];
-      
-      if (current !== next) {
-        uniqueVertices.push(current);
-      }
-    }
-    
-    // Only create face if it has at least 3 vertices
-    if (uniqueVertices.length >= 3) {
-      const newFace = new Face(
-        uniqueVertices,
-        [], // Edges will be updated by the mesh
-        {
-          materialIndex: face.materialIndex,
-          normal: face.normal?.clone(),
-          userData: { ...face.userData }
-        }
-      );
-      newFaces.push(newFace);
-    }
-  }
-  
-  return { newVertices, newFaces, vertexMap };
-}
+import { Vertex } from '../../core/Vertex';
+import { Face } from '../../core/Face';
+import { Vector3 } from 'three';
+import { isValidTriangle } from '../math';
 
 /**
  * Triangulate a polygon (face with more than 3 vertices)
@@ -198,41 +124,6 @@ export function triangulatePolygon(vertices: Vertex[], face: Face): Face[] {
   }
   
   return triangles;
-}
-
-/**
- * Check if a point is inside a triangle
- */
-function pointInTriangle(point: Vertex, a: Vertex, b: Vertex, c: Vertex): boolean {
-  const v0 = new Vector3(c.x - a.x, c.y - a.y, c.z - a.z);
-  const v1 = new Vector3(b.x - a.x, b.y - a.y, b.z - a.z);
-  const v2 = new Vector3(point.x - a.x, point.y - a.y, point.z - a.z);
-  
-  const dot00 = v0.dot(v0);
-  const dot01 = v0.dot(v1);
-  const dot02 = v0.dot(v2);
-  const dot11 = v1.dot(v1);
-  const dot12 = v1.dot(v2);
-  
-  const invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-  const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-  const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-  
-  return u >= 0 && v >= 0 && u + v <= 1;
-}
-
-/**
- * Calculate angle at vertex b between edges ba and bc
- */
-function calculateAngle(a: Vertex, b: Vertex, c: Vertex): number {
-  const ba = new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
-  const bc = new Vector3(c.x - b.x, c.y - b.y, c.z - b.z);
-  
-  ba.normalize();
-  bc.normalize();
-  
-  const dot = ba.dot(bc);
-  return Math.acos(Math.max(-1, Math.min(1, dot)));
 }
 
 /**
@@ -403,138 +294,6 @@ export function extrudeFace(
 }
 
 /**
- * Calculate bounding box for vertices
- */
-/**
- * Compute the centroid of a face
- */
-export function computeCentroid(face: Face, vertices: Vertex[]): Vector3 {
-  const faceVertices = face.vertices.map(index => vertices[index]).filter(Boolean);
-  if (faceVertices.length === 0) {
-    return new Vector3(0, 0, 0);
-  }
-  
-  const centroid = new Vector3(0, 0, 0);
-  for (const vertex of faceVertices) {
-    centroid.add(new Vector3(vertex.x, vertex.y, vertex.z));
-  }
-  centroid.divideScalar(faceVertices.length);
-  
-  return centroid;
-}
-
-export function calculateBoundingBox(vertices: Vertex[]): {
-  min: Vector3;
-  max: Vector3;
-  center: Vector3;
-  size: Vector3;
-} {
-  if (vertices.length === 0) {
-    return {
-      min: new Vector3(0, 0, 0),
-      max: new Vector3(0, 0, 0),
-      center: new Vector3(0, 0, 0),
-      size: new Vector3(0, 0, 0)
-    };
-  }
-  
-  const min = new Vector3(Infinity, Infinity, Infinity);
-  const max = new Vector3(-Infinity, -Infinity, -Infinity);
-  
-  vertices.forEach(vertex => {
-    min.x = Math.min(min.x, vertex.x);
-    min.y = Math.min(min.y, vertex.y);
-    min.z = Math.min(min.z, vertex.z);
-    
-    max.x = Math.max(max.x, vertex.x);
-    max.y = Math.max(max.y, vertex.y);
-    max.z = Math.max(max.z, vertex.z);
-  });
-  
-  const center = new Vector3().addVectors(min, max).multiplyScalar(0.5);
-  const size = new Vector3().subVectors(max, min);
-  
-  return { min, max, center, size };
-}
-
-/**
- * Center vertices around a point
- */
-export function centerVertices(vertices: Vertex[], center: Vector3): void {
-  vertices.forEach(vertex => {
-    vertex.x -= center.x;
-    vertex.y -= center.y;
-    vertex.z -= center.z;
-  });
-}
-
-/**
- * Scale vertices
- */
-export function scaleVertices(vertices: Vertex[], scale: Vector3): void {
-  vertices.forEach(vertex => {
-    vertex.x *= scale.x;
-    vertex.y *= scale.y;
-    vertex.z *= scale.z;
-  });
-}
-
-/**
- * Rotate vertices around an axis
- */
-export function rotateVertices(
-  vertices: Vertex[],
-  axis: Vector3,
-  angle: number
-): void {
-  vertices.forEach(vertex => {
-    const position = new Vector3(vertex.x, vertex.y, vertex.z);
-    position.applyAxisAngle(axis, angle);
-    vertex.x = position.x;
-    vertex.y = position.y;
-    vertex.z = position.z;
-  });
-}
-
-/**
- * Applies a transformation matrix to all vertices in a mesh.
- * @param mesh - The mesh to transform.
- * @param matrix - The transformation matrix to apply.
- */
-export function transformVertices(mesh: EditableMesh, matrix: Matrix4) {
-  mesh.vertices.forEach(vertex => {
-    const vec = new Vector3(vertex.x, vertex.y, vertex.z);
-    vec.applyMatrix4(matrix);
-    vertex.x = vec.x;
-    vertex.y = vec.y;
-    vertex.z = vec.z;
-  });
-}
-
-/**
- * Create a grid of vertices
- */
-export function createVertexGrid(
-  width: number,
-  height: number,
-  generator: (x: number, y: number) => { x: number; y: number; z: number }
-): Vertex[][] {
-  const grid: Vertex[][] = [];
-  
-  for (let y = 0; y < height; y++) {
-    const row: Vertex[] = [];
-    for (let x = 0; x < width; x++) {
-      const position = generator(x, y);
-      const vertex = new Vertex(position.x, position.y, position.z);
-      row.push(vertex);
-    }
-    grid.push(row);
-  }
-  
-  return grid;
-}
-
-/**
  * Create faces from a vertex grid
  */
 export function createFacesFromGrid(
@@ -595,4 +354,39 @@ export function createFacesFromGrid(
   }
   
   return faces;
+}
+
+/**
+ * Check if a point is inside a triangle
+ */
+function pointInTriangle(point: Vertex, a: Vertex, b: Vertex, c: Vertex): boolean {
+  const v0 = new Vector3(c.x - a.x, c.y - a.y, c.z - a.z);
+  const v1 = new Vector3(b.x - a.x, b.y - a.y, b.z - a.z);
+  const v2 = new Vector3(point.x - a.x, point.y - a.y, point.z - a.z);
+  
+  const dot00 = v0.dot(v0);
+  const dot01 = v0.dot(v1);
+  const dot02 = v0.dot(v2);
+  const dot11 = v1.dot(v1);
+  const dot12 = v1.dot(v2);
+  
+  const invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+  const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+  const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+  
+  return u >= 0 && v >= 0 && u + v <= 1;
+}
+
+/**
+ * Calculate angle at vertex b between edges ba and bc
+ */
+function calculateAngle(a: Vertex, b: Vertex, c: Vertex): number {
+  const ba = new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+  const bc = new Vector3(c.x - b.x, c.y - b.y, c.z - b.z);
+  
+  ba.normalize();
+  bc.normalize();
+  
+  const dot = ba.dot(bc);
+  return Math.acos(Math.max(-1, Math.min(1, dot)));
 } 

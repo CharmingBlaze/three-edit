@@ -14,7 +14,7 @@ export interface CreatePrimitiveOptions {
   /** Whether to center the primitive on origin (true) or align to base (false) */
   centered?: boolean;
   /** UV layout method for the primitive */
-  uvLayout?: 'standard' | 'box' | 'atlas' | 'unwrap' | 'planar' | 'cylindrical' | 'spherical';
+  uvLayout?: 'planar' | 'spherical' | 'cylindrical' | 'box' | 'default';
   /** Whether to generate smooth normals */
   smoothNormals?: boolean;
   /** Whether to validate the primitive after creation */

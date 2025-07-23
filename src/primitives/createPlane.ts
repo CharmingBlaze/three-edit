@@ -1,6 +1,11 @@
 import { EditableMesh } from '../core/EditableMesh';
 import { CreatePlaneOptions } from './types';
-import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { 
+  createPrimitiveContext, 
+  normalizeOptions,
+  createVertexGrid,
+  createFacesFromGrid
+} from './helpers';
 import { validatePrimitive } from './validation';
 
 /**
@@ -45,46 +50,24 @@ export function createPlane(options: CreatePlaneOptions = {}): EditableMesh {
   const offsetX = normalizedOptions.centered ? 0 : normalizedOptions.width / 2;
   const offsetZ = normalizedOptions.centered ? 0 : normalizedOptions.height / 2;
 
-  const grid: number[][] = [];
-
-  // Create vertices with UVs
-  for (let h = 0; h <= normalizedOptions.heightSegments; h++) {
-    const row: number[] = [];
-    const z = offsetZ + (h / normalizedOptions.heightSegments - 0.5) * normalizedOptions.height;
-    
-    for (let w = 0; w <= normalizedOptions.widthSegments; w++) {
-      const x = offsetX + (w / normalizedOptions.widthSegments - 0.5) * normalizedOptions.width;
-      const y = 0;
+  // Create a grid of vertices
+  const grid = createVertexGrid(
+    mesh,
+    normalizedOptions.widthSegments + 1,
+    normalizedOptions.heightSegments + 1,
+    (w, h) => {
       const u = w / normalizedOptions.widthSegments;
       const v = h / normalizedOptions.heightSegments;
+      const x = offsetX + (u - 0.5) * normalizedOptions.width;
+      const z = offsetZ + (v - 0.5) * normalizedOptions.height;
       
-      const uv = { u, v };
-      
-      const result = createVertex(mesh, {
-        x,
-        y,
-        z,
-        uv
-      }, context);
-      row.push(result.id);
-    }
-    grid.push(row);
-  }
+      return { x, y: 0, z, uv: { u, v } };
+    },
+    context
+  );
 
-  // Create faces
-  for (let h = 0; h < normalizedOptions.heightSegments; h++) {
-    for (let w = 0; w < normalizedOptions.widthSegments; w++) {
-      const v1 = grid[h][w];
-      const v2 = grid[h][w + 1];
-      const v3 = grid[h + 1][w + 1];
-      const v4 = grid[h + 1][w];
-      
-      createFace(mesh, {
-        vertexIds: [v1, v2, v3, v4],
-        materialId: normalizedOptions.materialId
-      }, context);
-    }
-  }
+  // Create faces from the grid
+  createFacesFromGrid(mesh, grid, normalizedOptions.materialId, context);
 
   // Validate if requested
   if (normalizedOptions.validate) {

@@ -1,26 +1,30 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-
-// Re-export from modular structure
-export * from './types';
-export * from './planarUVs';
-export * from './cubicUVs';
-export * from './sphericalUVs';
-export * from './cylindricalUVs';
-
-// Legacy exports for backward compatibility
-import { UVProjectionType, GenerateUVsOptions, UVGenerationParams } from './types';
+import { EditableMesh } from '../core/EditableMesh';
 import { generatePlanarUVs } from './planarUVs';
 import { generateCubicUVs } from './cubicUVs';
 import { generateSphericalUVs } from './sphericalUVs';
 import { generateCylindricalUVs } from './cylindricalUVs';
+import { UVCoord } from './types';
 
-export {
-  UVProjectionType
-};
+export enum UVProjectionType {
+  PLANAR = 'planar',
+  CUBIC = 'cubic',
+  SPHERICAL = 'spherical',
+  CYLINDRICAL = 'cylindrical',
+}
 
-export type {
-  GenerateUVsOptions
-};
+export interface UVGenerationParams {
+  scale?: number;
+  offset?: UVCoord;
+  normalize?: boolean;
+  flipU?: boolean;
+  flipV?: boolean;
+  rotation?: number;
+}
+
+export interface GenerateUVsOptions extends UVGenerationParams {
+  projectionType?: UVProjectionType;
+  projectionAxis?: 'x' | 'y' | 'z';
+}
 
 /**
  * Generates UV coordinates for a mesh using the specified projection

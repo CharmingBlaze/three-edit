@@ -1,16 +1,52 @@
 # three-edit
 
-**three-edit** is a modular, headless 3D editing library for Three.js. It provides a set of tools and functionalities to manipulate 3D geometry in a structured and efficient way.
+**three-edit** is a modular, headless 3D editing library for Three.js. It provides a comprehensive set of tools and functionalities to manipulate 3D geometry in a structured and efficient way, including a complete modular helper system for professional 3D modeling tool development.
 
 ## ✨ Features
 
 * **🎯 JavaScript & TypeScript Support**: Works seamlessly with both JavaScript and TypeScript - no TypeScript knowledge required!
-* **Modular Architecture**: The library is designed to be modular, allowing you to use only the parts you need.
-* **Headless by Design**: three-edit is completely headless, meaning it doesn't rely on any specific rendering or UI framework.
-* **Rich Set of Operations**: It provides a wide range of editing operations, including extrusion, beveling, and more.
-* **Advanced Selection System**: A powerful selection system that allows for complex queries and manipulations.
-* **Scene Graph System**: Full hierarchical object system with transform inheritance.
-* **Built with TypeScript**: The library is written in TypeScript, providing strong typing and improved developer experience.
+* **🧩 Modular Architecture**: The library is designed to be modular, allowing you to use only the parts you need.
+* **🎨 Headless by Design**: three-edit is completely headless, meaning it doesn't rely on any specific rendering or UI framework.
+* **🔧 Rich Set of Operations**: It provides a wide range of editing operations, including extrusion, beveling, boolean operations, and more.
+* **🎯 Advanced Selection System**: A powerful selection system that allows for complex queries and manipulations.
+* **🌳 Scene Graph System**: Full hierarchical object system with transform inheritance.
+* **🧮 Complete Helper System**: Modular helper system with math utilities, geometry operations, editor helpers, and primitive creation tools.
+* **🎨 Editor Integration**: Built-in highlight, grid, and overlay systems for professional 3D modeling tools.
+* **📐 UV Mapping**: Comprehensive UV generation and manipulation tools.
+* **🔍 Validation & Debugging**: Mesh validation, integrity checking, and debugging utilities.
+* **⚡ Performance Optimized**: GPU acceleration, LOD systems, and memory optimization tools.
+* **📚 Built with TypeScript**: The library is written in TypeScript, providing strong typing and improved developer experience.
+
+## 🧩 Modular Helper System
+
+three-edit includes a comprehensive modular helper system organized into specialized categories:
+
+### 🧮 Math Utilities
+- **Basic Math**: `clamp`, `lerp`, `roundTo`, `modulo`
+- **Vector Math**: Distance calculations, dot/cross products, vector operations
+- **Triangle Math**: Triangle validation, area calculations, barycentric coordinates
+
+### 📐 Geometry Tools
+- **Core Operations**: Triangulation, vertex merging, face subdivision
+- **Vertex Operations**: Centering, scaling, rotating, grid creation
+- **Face Operations**: Extrusion, grid-based face creation
+
+### 🎨 Editor Helpers
+- **Highlight System**: Vertex, edge, and face highlighting with customizable options
+- **Grid System**: Reference grids, snap grids, and spatial guides
+- **Overlay System**: Measurement lines, axis arrows, bounding boxes
+
+### 🧱 Primitive Helpers
+- **Basic Shapes**: Cube, sphere, cylinder, plane
+- **Complex Shapes**: Torus, cone, pyramid, capsule
+- **Parametric Shapes**: Torus knot, Möbius strip, arrow
+- **Game Primitives**: Stairs, ramp, wedge, handle, greeble blocks
+
+### 🔧 Utility Helpers
+- **UV Operations**: Planar, cylindrical, spherical, and cubic UV generation
+- **Normal Operations**: Face normal calculation, smooth normal generation
+- **Validation**: Mesh validation, integrity checking, repair tools
+- **Debug**: Mesh statistics, debugging utilities
 
 ## 📦 Installation
 
@@ -70,6 +106,38 @@ const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 ```
 
+### Using the Helper System
+
+```typescript
+import { 
+  // Math helpers
+  clamp, lerp, distance3D, isValidTriangle,
+  // Geometry helpers
+  triangulatePolygon, mergeVertices, centerVertices,
+  // Editor helpers
+  createVertexHighlight, createGrid, createMeasurementLine,
+  // Primitive helpers
+  createCube, createSphere, createTorus
+} from 'three-edit';
+
+// Use math utilities
+const clampedValue = clamp(value, 0, 100);
+const interpolated = lerp(start, end, 0.5);
+
+// Use geometry operations
+const triangles = triangulatePolygon(vertices, face);
+const centered = centerVertices(mesh.vertices);
+
+// Use editor helpers
+const highlight = createVertexHighlight(position, { color: 0xff0000 });
+const grid = createGrid({ size: 10, divisions: 20 });
+const measurement = createMeasurementLine(start, end);
+
+// Use primitive helpers
+const cube = createCube({ width: 2, height: 2, depth: 2 });
+const sphere = createSphere({ radius: 1, segments: 32 });
+```
+
 ### Vanilla JavaScript
 
 For vanilla JavaScript users, we provide a simplified API through the `ThreeEditJS` wrapper:
@@ -95,40 +163,116 @@ const mesh = new THREE.Mesh(geometry, material);
 // Add the mesh to your scene
 scene.add(mesh);
 
-// Helper method for applying operations
-const extrudedGeometry = ThreeEditJS.applyOperation(
-    cube, 
-    ThreeEditJS.extrudeFace, 
-    cube.faces[0], 
-    { distance: 1 }
-);
+// Use helper methods
+const helpers = ThreeEditJS.getHelpers();
+const highlight = helpers.editor.createVertexHighlight(position);
+const grid = helpers.editor.createGrid({ size: 10 });
+const math = helpers.math.clamp(value, 0, 100);
 ```
 
-**🎉 No TypeScript required!** The JavaScript wrapper provides all the same functionality with a JavaScript-friendly API.
+## 🎨 Editor Integration Example
+
+```typescript
+import { 
+  createVertexHighlight, 
+  createEdgeHighlight, 
+  createFaceHighlight,
+  createGrid,
+  createAxisArrows,
+  updateHighlightColor
+} from 'three-edit';
+
+// Create editor elements
+const vertexHighlight = createVertexHighlight(vertex.position, {
+  color: 0xff0000,
+  size: 0.1
+});
+
+const edgeHighlight = createEdgeHighlight(edge.start, edge.end, {
+  color: 0x00ff00,
+  lineWidth: 2
+});
+
+const faceHighlight = createFaceHighlight(face.vertices, {
+  color: 0x0000ff,
+  opacity: 0.3
+});
+
+const grid = createGrid({
+  size: 20,
+  divisions: 20,
+  color: 0x888888
+});
+
+const axes = createAxisArrows({
+  size: 5,
+  arrowSize: 0.5
+});
+
+// Add to scene
+scene.add(vertexHighlight);
+scene.add(edgeHighlight);
+scene.add(faceHighlight);
+scene.add(grid);
+scene.add(axes);
+
+// Update highlights
+updateHighlightColor(vertexHighlight, 0xffff00);
+```
 
 ## 📚 Documentation
 
-For more detailed information and examples, please refer to the documentation.
+For detailed documentation, see the [docs](./docs) folder:
 
-### Examples
+- [Getting Started](./docs/getting-started.md) - Basic usage and setup
+- [API Reference](./docs/api-reference.md) - Complete API documentation
+- [Helper System](./docs/helpers.md) - Modular helper system guide
+- [Editor Integration](./docs/editor-integration.md) - Building 3D modeling tools
+- [JavaScript Usage](./docs/javascript-usage.md) - Vanilla JavaScript examples
 
-* [Basic Usage](./examples/basic-cube.html) - Simple cube creation and manipulation
-* [Mesh Editing](./examples/mesh-editing.html) - Advanced mesh editing operations
-* [Scene Graph](./examples/scene-graph-demo.html) - Scene graph system usage
-* [JavaScript Usage](./examples/javascript-usage.html) - JavaScript-specific examples
+## 🔧 Development
 
-### Documentation
+### Building the Library
 
-* [Getting Started](./docs/getting-started.md) - Quick start guide
-* [JavaScript Usage](./docs/javascript-usage.md) - Complete JavaScript guide
-* [API Reference](./docs/api-reference.md) - Full API documentation
-* [Scene Graph](./docs/core.md) - Scene graph system guide
-* [Primitives](./PRIMITIVES.md) - Primitive creation and standards
+```bash
+# Install dependencies
+npm install
+
+# Build the library
+npm run build
+
+# Run tests
+npm test
+
+# Build documentation
+npm run docs
+```
+
+### Project Structure
+
+```
+src/
+├── core/           # Core classes (EditableMesh, Vertex, Edge, Face)
+├── helpers/        # Modular helper system
+│   ├── math/       # Math utilities
+│   ├── geometry/   # Geometry operations
+│   ├── primitives/ # Primitive creation helpers
+│   ├── highlight.ts # Editor highlighting
+│   ├── grid.ts     # Grid system
+│   └── overlay.ts  # Overlay system
+├── editing/        # Editing operations
+├── transform/      # Transform operations
+├── selection/      # Selection system
+├── operations/     # Advanced operations
+├── validation/     # Validation and debugging
+├── js-wrapper/     # JavaScript API wrapper
+└── ...
+```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our contributing guide for details.
+We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.

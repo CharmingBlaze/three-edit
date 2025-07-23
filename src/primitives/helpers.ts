@@ -2,7 +2,7 @@ import { EditableMesh } from '../core/EditableMesh';
 import { Vertex } from '../core/Vertex';
 import { Face } from '../core/Face';
 import { Edge } from '../core/Edge';
-import { Vector3 } from 'three';
+import { Matrix4, Vector2, Vector3 } from 'three';
 import { UVCoord } from '../uv/types';
 import { 
   VertexOptions, 
@@ -17,6 +17,7 @@ import {
   MaterialAssignmentParams
 } from './types';
 import { EdgeKeyCache } from '../topology/edgeKey';
+
 
 /**
  * Create a vertex with standardized options
@@ -51,11 +52,46 @@ export function createFace(
   // Create face
   const face = new Face(options.vertexIds, edgeIds, {
     materialIndex: options.materialId ?? context?.materialId ?? 0,
-    normal: options.normal,
+    faceVertexUvs: options.faceVertexUvs,
     userData: options.userData
   });
   
+  // Calculate and assign the face normal
+  face.normal = calculateFaceNormal(mesh, face);
+
   const id = mesh.addFace(face);
+  return { id, face, edgeIds };
+}
+
+/**
+ * Create a face with its edges, using a cache to avoid duplicates.
+ * This is a more comprehensive, low-level function.
+ */
+export function createFaceWithEdges(
+  mesh: EditableMesh,
+  vertexIds: number[],
+  materialId: number,
+  edgeKeyCache: EdgeKeyCache,
+  faceVertexUvs?: UVCoord[]
+): FaceCreationResult {
+  const edgeIds: number[] = [];
+  edgeKeyCache.setMesh(mesh);
+
+  for (let i = 0; i < vertexIds.length; i++) {
+    const v1 = vertexIds[i];
+    const v2 = vertexIds[(i + 1) % vertexIds.length];
+    const edgeId = edgeKeyCache.getOrCreate(v1, v2);
+    edgeIds.push(edgeId);
+  }
+
+  const face = new Face(vertexIds, edgeIds, {
+    materialIndex: materialId,
+    faceVertexUvs: faceVertexUvs,
+  });
+
+  face.normal = calculateFaceNormal(mesh, face);
+  const id = mesh.addFace(face);
+
   return { id, face, edgeIds };
 }
 
@@ -126,172 +162,33 @@ function generateEdgeKey(v1: Vertex, v2: Vertex): string {
   return `${firstPos}-${secondPos}-${firstUV}-${secondUV}`;
 }
 
-/**
- * Generate UV coordinates for vertices based on layout type
- */
-export function generateUVs(
-  vertices: Vertex[],
-  faces: Face[],
-  params: UVGenerationParams
-): void {
-  switch (params.layout) {
-    case 'planar':
-      generatePlanarUVs(vertices, faces, params);
-      break;
-    case 'cylindrical':
-      generateCylindricalUVs(vertices, faces, params);
-      break;
-    case 'spherical':
-      generateSphericalUVs(vertices, faces, params);
-      break;
-    case 'box':
-      generateBoxUVs(vertices, faces, params);
-      break;
-    default:
-      generateDefaultUVs(vertices, faces);
-  }
-}
 
-/**
- * Generate planar UV coordinates
- */
-function generatePlanarUVs(
-  vertices: Vertex[],
-  faces: Face[],
-  params: UVGenerationParams
-): void {
-  const axis = params.projectionAxis || 'z';
-  const center = params.center || new Vector3(0, 0, 0);
-  const scale = params.scale || new Vector3(1, 1, 1);
-  
-  vertices.forEach(vertex => {
-    let u: number, v: number;
-    
-    switch (axis) {
-      case 'x':
-        u = (vertex.y - center.y) * scale.y;
-        v = (vertex.z - center.z) * scale.z;
-        break;
-      case 'y':
-        u = (vertex.x - center.x) * scale.x;
-        v = (vertex.z - center.z) * scale.z;
-        break;
-      case 'z':
-      default:
-        u = (vertex.x - center.x) * scale.x;
-        v = (vertex.y - center.y) * scale.y;
-        break;
-    }
-    
-    vertex.uv = { u, v };
-  });
-}
-
-/**
- * Generate cylindrical UV coordinates
- */
-function generateCylindricalUVs(
-  vertices: Vertex[],
-  faces: Face[],
-  params: UVGenerationParams
-): void {
-  const center = params.center || new Vector3(0, 0, 0);
-  const scale = params.scale || new Vector3(1, 1, 1);
-  
-  vertices.forEach(vertex => {
-    const dx = vertex.x - center.x;
-    const dy = vertex.y - center.y;
-    const dz = vertex.z - center.z;
-    
-    // Calculate cylindrical coordinates
-    const radius = Math.sqrt(dx * dx + dy * dy);
-    const theta = Math.atan2(dy, dx);
-    const height = dz;
-    
-    // Convert to UV coordinates
-    const u = (theta / (2 * Math.PI) + 0.5) * scale.x;
-    const v = (height + 0.5) * scale.y;
-    
-    vertex.uv = { u, v };
-  });
-}
-
-/**
- * Generate spherical UV coordinates
- */
-function generateSphericalUVs(
-  vertices: Vertex[],
-  faces: Face[],
-  params: UVGenerationParams
-): void {
-  const center = params.center || new Vector3(0, 0, 0);
-  const scale = params.scale || new Vector3(1, 1, 1);
-  
-  vertices.forEach(vertex => {
-    const dx = vertex.x - center.x;
-    const dy = vertex.y - center.y;
-    const dz = vertex.z - center.z;
-    
-    // Calculate spherical coordinates
-    const radius = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    const theta = Math.atan2(dy, dx);
-    const phi = Math.acos(dz / radius);
-    
-    // Convert to UV coordinates
-    const u = (theta / (2 * Math.PI) + 0.5) * scale.x;
-    const v = (phi / Math.PI) * scale.y;
-    
-    vertex.uv = { u, v };
-  });
-}
-
-/**
- * Generate box UV coordinates
- */
-function generateBoxUVs(
-  vertices: Vertex[],
-  faces: Face[],
-  params: UVGenerationParams
-): void {
-  // Box UVs are typically handled per-face, so we'll use planar projection
-  generatePlanarUVs(vertices, faces, params);
-}
-
-/**
- * Generate default UV coordinates
- */
-function generateDefaultUVs(vertices: Vertex[], faces: Face[]): void {
-  vertices.forEach((vertex, index) => {
-    vertex.uv = { u: index / vertices.length, v: 0 };
-  });
-}
 
 /**
  * Calculate normals for vertices and faces
  */
 export function calculateNormals(
-  vertices: Vertex[],
-  faces: Face[],
+  mesh: EditableMesh,
   params: NormalGenerationParams
 ): void {
   if (params.smooth) {
-    calculateSmoothVertexNormals(vertices, faces, params);
+    calculateSmoothVertexNormals(mesh, params);
   } else {
-    calculateFlatVertexNormals(vertices, faces);
+    calculateFlatVertexNormals(mesh);
   }
 }
 
 /**
  * Calculate face normal
  */
-export function calculateFaceNormal(vertices: Vertex[], face: Face): Vector3 {
+function calculateFaceNormal(mesh: EditableMesh, face: Face): Vector3 {
   if (face.vertices.length < 3) {
     return new Vector3(0, 0, 1);
   }
   
-  const v1 = vertices[face.vertices[0]];
-  const v2 = vertices[face.vertices[1]];
-  const v3 = vertices[face.vertices[2]];
+  const v1 = mesh.getVertex(face.vertices[0]);
+  const v2 = mesh.getVertex(face.vertices[1]);
+  const v3 = mesh.getVertex(face.vertices[2]);
   
   if (!v1 || !v2 || !v3) {
     return new Vector3(0, 0, 1);
@@ -307,20 +204,19 @@ export function calculateFaceNormal(vertices: Vertex[], face: Face): Vector3 {
  * Calculate smooth vertex normals
  */
 function calculateSmoothVertexNormals(
-  vertices: Vertex[],
-  faces: Face[],
+  mesh: EditableMesh,
   params: NormalGenerationParams
 ): void {
   // Reset vertex normals
-  vertices.forEach(vertex => {
+  mesh.vertices.forEach(vertex => {
     vertex.normal = new Vector3(0, 0, 0);
   });
   
   // Accumulate face normals
-  faces.forEach(face => {
-    const faceNormal = calculateFaceNormal(vertices, face);
+  mesh.faces.forEach(face => {
+    const faceNormal = calculateFaceNormal(mesh, face);
     face.vertices.forEach(vertexId => {
-      const vertex = vertices[vertexId];
+      const vertex = mesh.getVertex(vertexId);
       if (vertex && vertex.normal) {
         vertex.normal.add(faceNormal);
       }
@@ -328,7 +224,7 @@ function calculateSmoothVertexNormals(
   });
   
   // Normalize vertex normals
-  vertices.forEach(vertex => {
+  mesh.vertices.forEach(vertex => {
     if (vertex.normal && vertex.normal.length() > 0) {
       vertex.normal.normalize();
     }
@@ -338,11 +234,11 @@ function calculateSmoothVertexNormals(
 /**
  * Calculate flat vertex normals
  */
-function calculateFlatVertexNormals(vertices: Vertex[], faces: Face[]): void {
-  faces.forEach(face => {
-    const faceNormal = calculateFaceNormal(vertices, face);
+function calculateFlatVertexNormals(mesh: EditableMesh): void {
+  mesh.faces.forEach(face => {
+    const faceNormal = calculateFaceNormal(mesh, face);
     face.vertices.forEach(vertexId => {
-      const vertex = vertices[vertexId];
+      const vertex = mesh.getVertex(vertexId);
       if (vertex) {
         vertex.normal = faceNormal.clone();
       }
@@ -573,4 +469,19 @@ export function rotateVertices(
     vertex.y = position.y;
     vertex.z = position.z;
   });
-} 
+}
+
+/**
+ * Applies a transformation matrix to all vertices in a mesh.
+ * @param mesh - The mesh to transform.
+ * @param matrix - The transformation matrix to apply.
+ */
+export function transformVertices(mesh: EditableMesh, matrix: Matrix4) {
+  mesh.vertices.forEach(vertex => {
+    const vec = new Vector3(vertex.x, vertex.y, vertex.z);
+    vec.applyMatrix4(matrix);
+    vertex.x = vec.x;
+    vertex.y = vec.y;
+    vertex.z = vec.z;
+  });
+}

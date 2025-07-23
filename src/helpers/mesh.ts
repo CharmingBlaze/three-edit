@@ -6,6 +6,22 @@
 import { Vertex } from '../core/Vertex';
 import { Face } from '../core/Face';
 import { Edge } from '../core/Edge';
+import { EditableMesh } from '../core/EditableMesh';
+import { UVCoord } from '../uv/types';
+import { 
+  VertexOptions, 
+  FaceOptions, 
+  EdgeOptions, 
+  PrimitiveContext,
+  VertexCreationResult,
+  FaceCreationResult,
+  EdgeCreationResult,
+  UVGenerationParams,
+  NormalGenerationParams,
+  MaterialAssignmentParams
+} from '../primitives/types';
+import { EdgeKeyCache } from '../topology/edgeKey';
+import { calculateFaceNormal } from '../utils/mathUtils';
 import { Vector3 } from 'three';
 
 /**
@@ -353,4 +369,149 @@ export function calculateVolume(vertices: Vertex[], faces: Face[]): number {
   }
   
   return Math.abs(totalVolume);
-} 
+}
+
+/**
+ * Create a vertex with standardized options
+ */
+export function createVertex(
+  mesh: EditableMesh,
+  options: VertexOptions,
+  context?: PrimitiveContext
+): VertexCreationResult {
+  const vertex = new Vertex(options.x, options.y, options.z, {
+    uv: options.uv,
+    normal: options.normal,
+    color: options.color,
+    userData: options.userData
+  });
+  
+  const id = mesh.addVertex(vertex);
+  return { id, vertex };
+}
+
+/**
+ * Create a face with standardized options
+ */
+export function createFace(
+  mesh: EditableMesh,
+  options: FaceOptions,
+  context?: PrimitiveContext
+): FaceCreationResult {
+  // Create edges first
+  const edgeIds = createFaceEdges(mesh, options.vertexIds, context);
+  
+  // Create face
+  const face = new Face(options.vertexIds, edgeIds, {
+    materialIndex: options.materialId ?? context?.materialId ?? 0,
+    faceVertexUvs: options.faceVertexUvs,
+    userData: options.userData
+  });
+  
+  // Calculate and assign the face normal
+  face.normal = calculateFaceNormal(mesh, face);
+
+  const id = mesh.addFace(face);
+  return { id, face, edgeIds };
+}
+
+/**
+ * Create a face with its edges, using a cache to avoid duplicates.
+ * This is a more comprehensive, low-level function.
+ */
+export function createFaceWithEdges(
+  mesh: EditableMesh,
+  vertexIds: number[],
+  materialId: number,
+  edgeKeyCache: EdgeKeyCache,
+  faceVertexUvs?: UVCoord[]
+): FaceCreationResult {
+  const edgeIds: number[] = [];
+  edgeKeyCache.setMesh(mesh);
+
+  for (let i = 0; i < vertexIds.length; i++) {
+    const v1 = vertexIds[i];
+    const v2 = vertexIds[(i + 1) % vertexIds.length];
+    const edgeId = edgeKeyCache.getOrCreate(v1, v2);
+    edgeIds.push(edgeId);
+  }
+
+  const face = new Face(vertexIds, edgeIds, {
+    materialIndex: materialId,
+    faceVertexUvs: faceVertexUvs,
+  });
+
+  face.normal = calculateFaceNormal(mesh, face);
+  const id = mesh.addFace(face);
+
+  return { id, face, edgeIds };
+}
+
+/**
+ * Create an edge with standardized options
+ */
+export function createEdge(
+  mesh: EditableMesh,
+  options: EdgeOptions,
+  context?: PrimitiveContext
+): EdgeCreationResult {
+  const edge = new Edge(options.v1, options.v2, {
+    userData: options.userData
+  });
+  
+  const id = mesh.addEdge(edge);
+  return { id, edge };
+}
+
+/**
+ * Create edges for a face using edge key caching
+ */
+export function createFaceEdges(
+  mesh: EditableMesh,
+  vertexIds: number[],
+  context?: PrimitiveContext
+): number[] {
+  const edgeIds: number[] = [];
+  const edgeKeyCache = context?.edgeKeyCache || new EdgeKeyCache();
+  
+  // Set the mesh in the cache
+  edgeKeyCache.setMesh(mesh);
+  
+  for (let i = 0; i < vertexIds.length; i++) {
+    const v1 = vertexIds[i];
+    const v2 = vertexIds[(i + 1) % vertexIds.length];
+    
+    // Get UVs for seam detection
+    const vertex1 = mesh.getVertex(v1);
+    const vertex2 = mesh.getVertex(v2);
+    const uv1 = vertex1?.uv;
+    const uv2 = vertex2?.uv;
+    
+    // Get or create edge using cache
+    const edgeId = edgeKeyCache.getOrCreate(v1, v2, uv1, uv2);
+    edgeIds.push(edgeId);
+  }
+  
+  return edgeIds;
+}
+
+/**
+ * Create a primitive context for sharing options and caches
+ */
+export function createPrimitiveContext(mesh: EditableMesh): PrimitiveContext {
+  return {
+    mesh,
+    edgeKeyCache: new EdgeKeyCache(),
+    materialId: 0,
+    validate: false,
+    uvLayout: 'standard',
+    smoothNormals: false
+  };
+}
+
+/**
+ * Normalize primitive options with default values
+ */
+export function normalizeOptions<T>(options: Partial<T>, defaults: T): T {
+  return { ...defaults, ...options };
+}

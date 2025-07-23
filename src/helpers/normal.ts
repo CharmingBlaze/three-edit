@@ -6,6 +6,7 @@
 import { Vector3 } from 'three';
 import { Vertex } from '../core/Vertex';
 import { Face } from '../core/Face';
+import { EditableMesh } from '../core/EditableMesh';
 import { isValidTriangle, triangleArea } from './math';
 
 export interface NormalGenerationParams {
@@ -65,45 +66,30 @@ export function calculateFaceNormalForFace(face: Face, vertices: Vertex[]): Vect
 }
 
 /**
- * Calculate smooth vertex normals
- */
-export function calculateSmoothNormals(
-  vertices: Vertex[],
-  faces: Face[],
-  params: NormalGenerationParams
-): void {
-  if (params.smooth) {
-    calculateSmoothVertexNormals(vertices, faces, params);
-  } else {
-    calculateFlatVertexNormals(vertices, faces);
-  }
-}
-
-/**
  * Calculate smooth vertex normals by averaging face normals
  */
 function calculateSmoothVertexNormals(
-  vertices: Vertex[],
-  faces: Face[],
+  mesh: EditableMesh,
   params: NormalGenerationParams
 ): void {
+  const { vertices, faces } = mesh;
   // Initialize normal accumulators for each vertex
   const normalAccumulators: Vector3[] = vertices.map(() => new Vector3(0, 0, 0));
   const weights: number[] = vertices.map(() => 0);
-  
+
   // Calculate face normals and accumulate them
   for (const face of faces) {
     if (face.vertices.length < 3) continue;
-    
+
     const faceNormal = calculateFaceNormalForFace(face, vertices);
     let faceWeight = 1.0;
-    
+
     // Use area-weighted normals if requested
     if (params.areaWeighted && face.vertices.length >= 3) {
       const v1 = vertices[face.vertices[0]];
       const v2 = vertices[face.vertices[1]];
       const v3 = vertices[face.vertices[2]];
-      
+
       if (v1 && v2 && v3) {
         faceWeight = triangleArea(
           new Vector3(v1.x, v1.y, v1.z),
@@ -112,16 +98,18 @@ function calculateSmoothVertexNormals(
         );
       }
     }
-    
+
     // Accumulate face normal to each vertex
     for (const vertexIndex of face.vertices) {
       if (vertexIndex >= 0 && vertexIndex < vertices.length) {
-        normalAccumulators[vertexIndex].add(faceNormal.clone().multiplyScalar(faceWeight));
+        normalAccumulators[vertexIndex].add(
+          faceNormal.clone().multiplyScalar(faceWeight)
+        );
         weights[vertexIndex] += faceWeight;
       }
     }
   }
-  
+
   // Normalize accumulated normals
   for (let i = 0; i < vertices.length; i++) {
     if (weights[i] > 0) {
@@ -136,12 +124,13 @@ function calculateSmoothVertexNormals(
 /**
  * Calculate flat vertex normals (each vertex gets the face normal)
  */
-function calculateFlatVertexNormals(vertices: Vertex[], faces: Face[]): void {
+function calculateFlatVertexNormals(mesh: EditableMesh): void {
+  const { vertices, faces } = mesh;
   for (const face of faces) {
     if (face.vertices.length < 3) continue;
-    
+
     const faceNormal = calculateFaceNormalForFace(face, vertices);
-    
+
     // Assign face normal to each vertex of the face
     for (const vertexIndex of face.vertices) {
       if (vertexIndex >= 0 && vertexIndex < vertices.length) {
@@ -154,7 +143,7 @@ function calculateFlatVertexNormals(vertices: Vertex[], faces: Face[]): void {
 /**
  * Calculate angle-weighted vertex normals (better for sharp edges)
  */
-export function calculateAngleWeightedNormals(vertices: Vertex[], faces: Face[]): void {
+function calculateAngleWeightedNormals(vertices: Vertex[], faces: Face[]): void {
   // Initialize normal accumulators for each vertex
   const normalAccumulators: Vector3[] = vertices.map(() => new Vector3(0, 0, 0));
   
@@ -205,6 +194,20 @@ function calculateVertexAngle(v1: Vertex, v2: Vertex, v3: Vertex): number {
   const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
   
   return angle;
+}
+
+/**
+ * Main function to calculate normals based on parameters
+ */
+export function calculateNormals(
+  mesh: EditableMesh,
+  params: NormalGenerationParams
+): void {
+  if (params.smooth) {
+    calculateSmoothVertexNormals(mesh, params);
+  } else {
+    calculateFlatVertexNormals(mesh);
+  }
 }
 
 /**

@@ -347,4 +347,3 @@ export function createCube(options: CreateCubeOptions = {}): EditableMesh {
 
   return mesh;
 }
-

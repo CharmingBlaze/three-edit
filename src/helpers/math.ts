@@ -97,6 +97,13 @@ export function map(value: number, inMin: number, inMax: number, outMin: number,
 }
 
 /**
+ * Modulo operation that handles negative numbers correctly
+ */
+export function modulo(n: number, d: number): number {
+  return ((n % d) + d) % d;
+}
+
+/**
  * Ensure a value is within a valid range, wrapping if necessary
  */
 export function wrap(value: number, min: number, max: number): number {

@@ -5,6 +5,7 @@
 
 import { Vertex } from '../core/Vertex';
 import { Edge } from '../core/Edge';
+import { EditableMesh } from '../core/EditableMesh';
 
 /**
  * Generate a unique edge key for two vertex indices
@@ -153,4 +154,58 @@ export function getEdgeStatistics(edges: Edge[], vertices: Vertex[]): {
     minLength,
     maxLength
   };
+}
+
+/**
+ * Check if an edge is a UV seam
+ */
+export function isEdgeUVSeam(edge: Edge, uvs: any[]): boolean {
+  // This is a simplified implementation - in a real scenario you'd check
+  // if the UV coordinates on either side of the edge are different
+  return false; // Placeholder implementation
+}
+
+/**
+ * Find non-manifold edges in a mesh
+ */
+export function findNonManifoldEdges(mesh: EditableMesh): Edge[] {
+  const nonManifoldEdges: Edge[] = [];
+  const edgeCounts = new Map<string, number>();
+  
+  // Count how many faces use each edge
+  for (const face of mesh.faces) {
+    for (let i = 0; i < face.vertices.length; i++) {
+      const v1 = face.vertices[i];
+      const v2 = face.vertices[(i + 1) % face.vertices.length];
+      const edgeKey = generateEdgeKey(v1, v2);
+      edgeCounts.set(edgeKey, (edgeCounts.get(edgeKey) || 0) + 1);
+    }
+  }
+  
+  // Find edges used by more than 2 faces (non-manifold)
+  for (const edge of mesh.edges) {
+    const edgeKey = generateEdgeKey(edge.v1, edge.v2);
+    const count = edgeCounts.get(edgeKey) || 0;
+    if (count > 2) {
+      nonManifoldEdges.push(edge);
+    }
+  }
+  
+  return nonManifoldEdges;
+}
+
+/**
+ * Get all edges connected to a vertex
+ */
+export function getConnectedEdges(vertexId: number, mesh: EditableMesh): number[] {
+  const connectedEdges: number[] = [];
+  
+  for (let i = 0; i < mesh.edges.length; i++) {
+    const edge = mesh.edges[i];
+    if (edge.v1 === vertexId || edge.v2 === vertexId) {
+      connectedEdges.push(i);
+    }
+  }
+  
+  return connectedEdges;
 } 

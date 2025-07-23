@@ -36,15 +36,22 @@ export { createMobiusStrip } from './primitives/createMobiusStrip';
 export { createHandle } from './primitives/createHandle';
 export { createGreebleBlock } from './primitives/createGreebleBlock';
 export { createBoundingBox } from './primitives/createBoundingBox';
+export { createEmpty } from './primitives/createEmpty';
 
 // Three.js Integration (matching GitHub API)
 export { toBufferGeometry } from './conversion/toBufferGeometry';
 export { fromBufferGeometry } from './conversion/fromBufferGeometry';
+export { toJSON } from './conversion/toJSON';
+export { fromJSON } from './conversion/fromJSON';
 
 // Transform Operations
 export { move } from './transform/move';
 export { rotate } from './transform/rotate';
 export { scale } from './transform/scale';
+export { mirror } from './transform/mirror';
+export { array } from './transform/array';
+export { bend, twist, taper, deform } from './transform/deform';
+export { applyNoise } from './transform/noise';
 
 // Selection System
 export { Selection } from './selection/Selection';
@@ -59,24 +66,41 @@ export { selectSimilar } from './selection/similarSelection';
 // Editing Operations
 export { extrudeFace } from './editing/extrudeFace';
 export { extrudeEdge } from './editing/extrudeEdge';
-export { bevelEdge } from './editing/bevel';
-export { insetFaces } from './editing/inset';
-export { bridgeEdges } from './editing/bridge';
+export { extrudeVertex } from './editing/extrudeVertex';
+export { bevelEdge, bevelVertex, bevelFace, bevel } from './editing/bevel';
+export { insetFaces, insetAllFaces, insetIndividualFaces } from './editing/inset';
+export { bridgeEdges, bridgeEdgeSequence, bridgeFaces, bridgeSelectedEdges } from './editing/bridge';
+export { knifeCut, knifeCutLine, knifeCutPath, knifeCutCircle } from './editing/knife';
+export { cutEdgeLoop, cutMultipleLoops, cutSelectedLoops } from './editing/loopCut';
 
 // Boolean Operations
-export { booleanUnion } from './operations/boolean';
+export { booleanUnion, booleanIntersection, booleanDifference } from './operations/boolean';
+export { csgUnion, csgSubtract, csgIntersect } from './operations/boolean/csgOperations';
+export { applyMorphTargets } from './operations/morphing';
+export { SkeletalAnimation, SkinnedMeshOperations } from './operations/skeletalAnimation';
+export { WeightPaintingBrush, WeightPaintingOperations } from './operations/weightPainting';
 
 // Import/Export
 export { exportGLTF } from './exporters/gltf/exportGLTF';
 export { importGLTF } from './exporters/gltf/importGLTF';
+export { parseOBJ, exportOBJ, loadOBJ, saveOBJ } from './io/obj';
+export { parsePLY, exportPLY, loadPLY, savePLY } from './io/ply';
+export { importSTL, exportSTL, validateSTL, getSTLInfo } from './io/stl';
 
 // Validation
 export { validateMesh } from './validation/validateMesh';
 export { validateGeometryIntegrity } from './validation/validateGeometryIntegrity';
+export { repairMesh } from './validation/repairMesh';
+export { fixWindingOrder } from './validation/fixWindingOrder';
 
 // Utilities
-export { calculateFaceNormal } from './utils/mathUtils';
+export { calculateFaceNormal, calculateFaceCenter } from './utils/mathUtils';
 export { generateUVs } from './uv/generateUVs';
+export { generatePlanarUVs } from './uv/generatePlanarUVs';
+export { generateCylindricalUVs } from './uv/cylindricalUVs';
+export { generateSphericalUVs } from './uv/sphericalUVs';
+export { generateCubicUVs } from './uv/cubicUVs';
+export { transformUVs } from './uv/transformUVs';
 
 // Types
 export type { CreatePrimitiveOptions, PrimitiveResult } from './primitives/types';
@@ -95,3 +119,13 @@ export { assignMaterial } from './materials/assignMaterial';
 
 // History System
 export { CommandHistory } from './history/CommandHistory';
+export { CommandFactory } from './history/CommandFactory';
+
+// Query System
+export { queryGeometry } from './query/queryGeometry';
+export { findNearestElement, findNearestVertex, findNearestEdge, findNearestFace } from './query/queryNearest';
+export { querySelection } from './query/querySelection';
+export { queryTopology } from './query/queryTopology';
+
+// Helper Functions
+export { mergeVertices, triangulatePolygon, subdivideFace, extrudeFace as extrudeFaceHelper, createVertexGrid, createFacesFromGrid } from './helpers/geometry';
