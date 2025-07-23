@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Edit JavaScript Usage</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .demo-section h2 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 4px;
+            margin: 15px 0;
+            position: relative;
+        }
+        
+        .info {
+            background: #333;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .code-example {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            border-left: 3px solid #4CAF50;
+        }
+        
+        .status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Three-Edit JavaScript Usage Examples</h1>
+        
+        <div class="demo-section">
+            <h2>🎯 Basic Usage</h2>
+            <p>Three-edit works seamlessly with vanilla JavaScript. No TypeScript required!</p>
+            
+            <div class="code-example">
+// Import the JavaScript wrapper
+import ThreeEditJS from 'three-edit/js-wrapper';
+
+// Create a basic cube
+const mesh = ThreeEditJS.createCube({
+    width: 2,
+    height: 2,
+    depth: 2
+});
+
+// Convert to Three.js geometry
+const geometry = ThreeEditJS.toBufferGeometry(mesh);
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🧱 Primitive Creation</h2>
+            <p>Create various 3D primitives with JavaScript</p>
+            
+            <div class="controls">
+                <button onclick="createCube()">Create Cube</button>
+                <button onclick="createSphere()">Create Sphere</button>
+                <button onclick="createCylinder()">Create Cylinder</button>
+                <button onclick="createCone()">Create Cone</button>
+                <button onclick="createArrow()">Create Arrow</button>
+            </div>
+            
+            <div class="canvas-container" id="primitives-canvas">
+                <div class="status">Ready</div>
+            </div>
+            
+            <div class="info" id="primitives-info">
+                Click a button to create a primitive. The mesh will be displayed in the canvas above.
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔧 Mesh Editing</h2>
+            <p>Perform editing operations on meshes</p>
+            
+            <div class="controls">
+                <button onclick="extrudeMesh()">Extrude Face</button>
+                <button onclick="bevelEdge()">Bevel Edge</button>
+                <button onclick="subdivideMesh()">Subdivide</button>
+                <button onclick="resetMesh()">Reset</button>
+            </div>
+            
+            <div class="canvas-container" id="editing-canvas">
+                <div class="status">Ready</div>
+            </div>
+            
+            <div class="info" id="editing-info">
+                Create a mesh first, then apply editing operations.
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎨 Scene Graph Usage</h2>
+            <p>Use the scene graph system with JavaScript</p>
+            
+            <div class="controls">
+                <button onclick="createScene()">Create Scene</button>
+                <button onclick="addChild()">Add Child</button>
+                <button onclick="transformNode()">Transform</button>
+                <button onclick="exportScene()">Export to Three.js</button>
+            </div>
+            
+            <div class="canvas-container" id="scene-canvas">
+                <div class="status">Ready</div>
+            </div>
+            
+            <div class="info" id="scene-info">
+                Scene graph operations with hierarchical transforms.
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>📁 Import/Export</h2>
+            <p>Convert between Three.js and EditableMesh</p>
+            
+            <div class="controls">
+                <button onclick="importFromThree()">Import from Three.js</button>
+                <button onclick="exportToThree()">Export to Three.js</button>
+                <button onclick="exportToJSON()">Export to JSON</button>
+                <button onclick="importFromJSON()">Import from JSON</button>
+            </div>
+            
+            <div class="info" id="io-info">
+                Seamless conversion between Three.js BufferGeometry and EditableMesh.
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔍 Selection Examples</h2>
+            <p>Advanced selection operations</p>
+            
+            <div class="code-example">
+// Ray-based selection
+const selectedFaces = ThreeEditJS.selectByRay(mesh, ray, camera);
+
+// Box selection
+const selectedVertices = ThreeEditJS.selectByBox(mesh, box);
+
+// Connected selection
+const connectedFaces = ThreeEditJS.selectConnected(mesh, startFace);
+
+// Similar selection
+const similarFaces = ThreeEditJS.selectSimilar(mesh, face, 'normal');
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>⚡ Performance Tips</h2>
+            <p>Best practices for JavaScript usage</p>
+            
+            <div class="code-example">
+// ✅ Good: Reuse mesh instances
+const mesh = ThreeEditJS.createCube();
+ThreeEditJS.extrudeFace(mesh, face1);
+ThreeEditJS.extrudeFace(mesh, face2);
+
+// ✅ Good: Use applyOperation helper
+const geometry = ThreeEditJS.applyOperation(mesh, ThreeEditJS.bevelEdge, edge);
+
+// ❌ Avoid: Creating new meshes for each operation
+const mesh1 = ThreeEditJS.createCube();
+const mesh2 = ThreeEditJS.createCube(); // Unnecessary
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // This would be the actual implementation
+        // For demo purposes, we'll show the structure
+        
+        // Mock ThreeEditJS for demonstration
+        const ThreeEditJS = {
+            createCube: (options = {}) => {
+                console.log('Creating cube with options:', options);
+                return { type: 'cube', ...options };
+            },
+            createSphere: (options = {}) => {
+                console.log('Creating sphere with options:', options);
+                return { type: 'sphere', ...options };
+            },
+            createCylinder: (options = {}) => {
+                console.log('Creating cylinder with options:', options);
+                return { type: 'cylinder', ...options };
+            },
+            createCone: (options = {}) => {
+                console.log('Creating cone with options:', options);
+                return { type: 'cone', ...options };
+            },
+            createArrow: (options = {}) => {
+                console.log('Creating arrow with options:', options);
+                return { type: 'arrow', ...options };
+            },
+            extrudeFace: (mesh, face, options = {}) => {
+                console.log('Extruding face:', face, 'with options:', options);
+            },
+            bevelEdge: (mesh, edge, options = {}) => {
+                console.log('Beveling edge:', edge, 'with options:', options);
+            },
+            subdivideSurface: (mesh, options = {}) => {
+                console.log('Subdividing mesh with options:', options);
+            }
+        };
+
+        // Global functions for demo
+        window.createCube = () => {
+            const mesh = ThreeEditJS.createCube({ width: 2, height: 2, depth: 2 });
+            document.getElementById('primitives-info').textContent = 
+                `Created cube: ${JSON.stringify(mesh, null, 2)}`;
+        };
+
+        window.createSphere = () => {
+            const mesh = ThreeEditJS.createSphere({ radius: 1, segments: 32 });
+            document.getElementById('primitives-info').textContent = 
+                `Created sphere: ${JSON.stringify(mesh, null, 2)}`;
+        };
+
+        window.createCylinder = () => {
+            const mesh = ThreeEditJS.createCylinder({ radius: 1, height: 2, segments: 16 });
+            document.getElementById('primitives-info').textContent = 
+                `Created cylinder: ${JSON.stringify(mesh, null, 2)}`;
+        };
+
+        window.createCone = () => {
+            const mesh = ThreeEditJS.createCone({ radius: 1, height: 2, segments: 16 });
+            document.getElementById('primitives-info').textContent = 
+                `Created cone: ${JSON.stringify(mesh, null, 2)}`;
+        };
+
+        window.createArrow = () => {
+            const mesh = ThreeEditJS.createArrow({ length: 2, headLength: 0.5 });
+            document.getElementById('primitives-info').textContent = 
+                `Created arrow: ${JSON.stringify(mesh, null, 2)}`;
+        };
+
+        window.extrudeMesh = () => {
+            ThreeEditJS.extrudeFace({}, { id: 1 }, { distance: 1 });
+            document.getElementById('editing-info').textContent = 
+                'Extruded face with distance: 1';
+        };
+
+        window.bevelEdge = () => {
+            ThreeEditJS.bevelEdge({}, { id: 1 }, { distance: 0.2 });
+            document.getElementById('editing-info').textContent = 
+                'Beveled edge with distance: 0.2';
+        };
+
+        window.subdivideMesh = () => {
+            ThreeEditJS.subdivideSurface({}, { iterations: 1 });
+            document.getElementById('editing-info').textContent = 
+                'Subdivided mesh with 1 iteration';
+        };
+
+        window.resetMesh = () => {
+            document.getElementById('editing-info').textContent = 
+                'Mesh reset to original state';
+        };
+
+        // Scene graph functions
+        window.createScene = () => {
+            document.getElementById('scene-info').textContent = 
+                'Created scene graph with root node';
+        };
+
+        window.addChild = () => {
+            document.getElementById('scene-info').textContent = 
+                'Added child node to scene graph';
+        };
+
+        window.transformNode = () => {
+            document.getElementById('scene-info').textContent = 
+                'Applied transform to node';
+        };
+
+        window.exportScene = () => {
+            document.getElementById('scene-info').textContent = 
+                'Exported scene to Three.js Scene object';
+        };
+
+        // IO functions
+        window.importFromThree = () => {
+            document.getElementById('io-info').textContent = 
+                'Imported Three.js BufferGeometry to EditableMesh';
+        };
+
+        window.exportToThree = () => {
+            document.getElementById('io-info').textContent = 
+                'Exported EditableMesh to Three.js BufferGeometry';
+        };
+
+        window.exportToJSON = () => {
+            document.getElementById('io-info').textContent = 
+                'Exported mesh to JSON format';
+        };
+
+        window.importFromJSON = () => {
+            document.getElementById('io-info').textContent = 
+                'Imported mesh from JSON format';
+        };
+    </script>
+</body>
+</html> 
