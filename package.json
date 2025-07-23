@@ -1,6 +1,6 @@
 {
   "name": "three-edit",
-  "version": "0.2.0-alpha",
+  "version": "0.2.0",
   "description": "Modular headless 3D editing library for Three.js",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
