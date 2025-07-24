@@ -176,8 +176,8 @@ export function validateGeometryIntegrity(mesh: EditableMesh): GeometryIntegrity
       const uvStrings = vertices.map(v => v.uv ? `${v.uv.u.toFixed(6)},${v.uv.v.toFixed(6)}` : 'no-uv');
       const uniqueUVs = new Set(uvStrings);
       
-      // Only flag as duplicates if they have the same UV coordinates
-      if (uniqueUVs.size === 1 && uvStrings[0] !== 'no-uv') {
+      // Flag as duplicates if they have the same UV coordinates or no UVs
+      if (uniqueUVs.size === 1) {
         result.duplicateVertices.push(indices);
         result.issues.push(`Duplicate vertices found at position ${key}: ${indices.join(', ')}`);
         result.valid = false;

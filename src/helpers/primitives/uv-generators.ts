@@ -4,7 +4,9 @@
  */
 
 import { Vector2 } from 'three';
-import { Vertex } from '../../core';
+import { UVCoord } from '../../uv/types';
+import { EditableMesh } from '../../core/EditableMesh';
+import { Vertex } from '../../core/Vertex';
 
 /**
  * Generate planar UV coordinates for vertices
@@ -33,7 +35,7 @@ export function generatePlanarUVs(
         break;
     }
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -50,7 +52,7 @@ export function generateCylindricalUVs(
     const u = (angle + Math.PI) / (2 * Math.PI);
     const v = (vertex.y + height / 2) / height;
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -68,7 +70,7 @@ export function generateSphericalUVs(
     const u = (theta + Math.PI) / (2 * Math.PI);
     const v = phi / Math.PI;
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -100,7 +102,7 @@ export function generateCubicUVs(
       v = vertex.y / size + 0.5;
     }
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -122,7 +124,7 @@ export function generateTorusUVs(
     const u = (majorAngle + Math.PI) / (2 * Math.PI);
     const v = (minorAngle + Math.PI) / (2 * Math.PI);
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -138,7 +140,7 @@ export function generateGridUVs(
     const u = (vertex.x + width / 2) / width;
     const v = (vertex.z + height / 2) / height;
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -156,7 +158,7 @@ export function generateCircleUVs(
     const u = (angle + Math.PI) / (2 * Math.PI);
     const v = distance / radius;
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -188,7 +190,7 @@ export function generateTriplanarUVs(
       v = vertex.y * scale.y;
     }
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -222,7 +224,7 @@ export function generateBoxUVs(
       v = (vertex.y + height / 2) / height;
     }
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -238,7 +240,7 @@ export function generateSeamlessUVs(
     const u = (vertex.x * scale.x + offset.x) % 1;
     const v = (vertex.z * scale.y + offset.y) % 1;
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -254,7 +256,7 @@ export function generateCheckerboardUVs(
     const u = ((vertex.x * scale.x) % tiles.x) / tiles.x;
     const v = ((vertex.z * scale.y) % tiles.y) / tiles.y;
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 }
 
@@ -275,6 +277,6 @@ export function generatePolarUVs(
     const u = (angle + Math.PI) / (2 * Math.PI);
     const v = distance;
     
-    vertex.uv = new Vector2(u, v);
+    vertex.uv = { u, v };
   });
 } 

@@ -6,13 +6,21 @@
 import { Vector3, Vector2 } from 'three';
 import { Vertex } from '../../core';
 import { VertexOptions } from './types';
+import { UVCoord } from '../../uv/types';
 
 /**
  * Create a basic vertex with position
  */
 export function createVertex(x: number, y: number, z: number, options?: VertexOptions): Vertex {
+  // Convert Vector2 UV to UVCoord if needed
+  const uv = options?.uv ? 
+    (typeof options.uv === 'object' && 'u' in options.uv && 'v' in options.uv) ? 
+      { u: (options.uv as any).u, v: (options.uv as any).v } : 
+      { u: (options.uv as any).x, v: (options.uv as any).y } : 
+    undefined;
+    
   return new Vertex(x, y, z, {
-    uv: options?.uv,
+    uv,
     normal: options?.normal,
     color: options?.color,
     userData: options?.userData || {}
@@ -32,7 +40,7 @@ export function createVertexWithUV(
 ): Vertex {
   return createVertex(x, y, z, {
     ...options,
-    uv: new Vector2(u, v)
+    uv: { u, v } as UVCoord
   });
 }
 

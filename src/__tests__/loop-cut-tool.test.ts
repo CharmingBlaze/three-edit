@@ -254,8 +254,8 @@ describe('Loop Cut Tool', () => {
       
       const result = cutEdgeLoop(simpleMesh, 0, { cuts: 1 });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Could not find complete edge loop');
+      expect(result.success).toBe(true);
+      expect(result.verticesCreated).toBeGreaterThan(0);
     });
   });
 

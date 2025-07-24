@@ -143,13 +143,15 @@ export class MaterialManager {
     let alreadyAssigned = 0;
     let failed = 0;
 
-    // Validate material index
+    // Create slot if it doesn't exist
     if (!this.slots.has(materialIndex)) {
-      return {
-        assignedFaces: 0,
-        alreadyAssigned: 0,
-        failed: selection.faces.size
-      };
+      this.slots.set(materialIndex, {
+        id: `material_${materialIndex}`,
+        name: `Material ${materialIndex}`,
+        index: materialIndex,
+        active: true
+      });
+      this.nextMaterialIndex = Math.max(this.nextMaterialIndex, materialIndex + 1);
     }
 
     // Assign material to selected faces

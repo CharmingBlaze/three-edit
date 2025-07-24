@@ -73,7 +73,7 @@ export function bridgeEdges(
     preserveMaterials = true,
     material = null,
     smooth = false,
-    smoothingFactor = 0.5
+    smoothingFactor = Math.max(0, Math.min(1, options.smoothingFactor ?? 0.5)) // Clamp to 0-1
   } = options;
 
   try {
@@ -109,10 +109,10 @@ export function bridgeEdges(
     const v4 = mesh.vertices[edge2.v2];
 
     // Create bridge vertices (interpolated positions)
-    const v1Pos = v1.toVector3();
-    const v2Pos = v2.toVector3();
-    const v3Pos = v3.toVector3();
-    const v4Pos = v4.toVector3();
+    const v1Pos = v1.getPosition();
+    const v2Pos = v2.getPosition();
+    const v3Pos = v3.getPosition();
+    const v4Pos = v4.getPosition();
     
     const bridgeV1 = new Vertex(
       v1Pos.x + (v3Pos.x - v1Pos.x) * smoothingFactor,
@@ -197,7 +197,7 @@ export function bridgeEdges(
         const avgNormal = new Vector3();
         
         for (const neighborIndex of neighbors1) {
-          const neighborPos = mesh.vertices[neighborIndex].toVector3();
+          const neighborPos = mesh.vertices[neighborIndex].getPosition();
           avgPosition.add(neighborPos);
           if (mesh.vertices[neighborIndex].normal) {
             avgNormal.add(mesh.vertices[neighborIndex].normal!);
@@ -213,11 +213,12 @@ export function bridgeEdges(
           bridgeV1.z + (avgPosition.z - bridgeV1.z) * smoothingFactor
         );
         if (bridgeV1.normal && avgNormal.length() > 0) {
-          bridgeV1.setNormal(
+          const newNormal = new Vector3(
             bridgeV1.normal.x + (avgNormal.x - bridgeV1.normal.x) * smoothingFactor,
             bridgeV1.normal.y + (avgNormal.y - bridgeV1.normal.y) * smoothingFactor,
             bridgeV1.normal.z + (avgNormal.z - bridgeV1.normal.z) * smoothingFactor
           );
+          bridgeV1.setNormal(newNormal);
         }
       }
       
@@ -226,7 +227,7 @@ export function bridgeEdges(
         const avgNormal = new Vector3();
         
         for (const neighborIndex of neighbors2) {
-          const neighborPos = mesh.vertices[neighborIndex].toVector3();
+          const neighborPos = mesh.vertices[neighborIndex].getPosition();
           avgPosition.add(neighborPos);
           if (mesh.vertices[neighborIndex].normal) {
             avgNormal.add(mesh.vertices[neighborIndex].normal!);
@@ -242,11 +243,12 @@ export function bridgeEdges(
           bridgeV2.z + (avgPosition.z - bridgeV2.z) * smoothingFactor
         );
         if (bridgeV2.normal && avgNormal.length() > 0) {
-          bridgeV2.setNormal(
+          const newNormal = new Vector3(
             bridgeV2.normal.x + (avgNormal.x - bridgeV2.normal.x) * smoothingFactor,
             bridgeV2.normal.y + (avgNormal.y - bridgeV2.normal.y) * smoothingFactor,
             bridgeV2.normal.z + (avgNormal.z - bridgeV2.normal.z) * smoothingFactor
           );
+          bridgeV2.setNormal(newNormal);
         }
       }
     }
@@ -511,10 +513,10 @@ function findBestEdgePairs(
         continue;
       }
       
-      const v1 = mesh.vertices[edge1.v1].toVector3();
-      const v2 = mesh.vertices[edge1.v2].toVector3();
-      const v3 = mesh.vertices[edge2.v1].toVector3();
-      const v4 = mesh.vertices[edge2.v2].toVector3();
+      const v1 = mesh.vertices[edge1.v1].getPosition();
+      const v2 = mesh.vertices[edge1.v2].getPosition();
+      const v3 = mesh.vertices[edge2.v1].getPosition();
+      const v4 = mesh.vertices[edge2.v2].getPosition();
       
       // Calculate edge centers
       const center1 = new Vector3().addVectors(v1, v2).multiplyScalar(0.5);
@@ -568,10 +570,10 @@ function groupEdgesByProximity(
       const edge2 = mesh.edges[otherIndex];
       
       // Check if edges are close enough
-      const v1 = mesh.vertices[edge1.v1].toVector3();
-      const v2 = mesh.vertices[edge1.v2].toVector3();
-      const v3 = mesh.vertices[edge2.v1].toVector3();
-      const v4 = mesh.vertices[edge2.v2].toVector3();
+      const v1 = mesh.vertices[edge1.v1].getPosition();
+      const v2 = mesh.vertices[edge1.v2].getPosition();
+      const v3 = mesh.vertices[edge2.v1].getPosition();
+      const v4 = mesh.vertices[edge2.v2].getPosition();
       
       const center1 = new Vector3().addVectors(v1, v2).multiplyScalar(0.5);
       const center2 = new Vector3().addVectors(v3, v4).multiplyScalar(0.5);

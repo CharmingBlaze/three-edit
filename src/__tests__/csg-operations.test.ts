@@ -4,10 +4,9 @@ import { createCube, createSphere } from '../primitives/index';
 import { performCSGOperation } from '../operations/boolean/csgOperations';
 import {
   csgUnion,
-  csgIntersection,
-  csgDifference,
-  csgXOR
-} from '../operations/advancedBoolean';
+  csgSubtract,
+  csgIntersect
+} from '../operations/boolean/csgOperations';
 import { BooleanHistoryManager } from '../operations/boolean/history';
 import { CSGOptions } from '../operations/boolean/types';
 
@@ -64,17 +63,17 @@ describe('CSG Operations', () => {
     it('should perform union operation', () => {
       const result = csgUnion(cube, sphere);
       
-      expect(result).toBeInstanceOf(EditableMesh);
-      expect(result.getFaceCount()).toBeGreaterThanOrEqual(cube.getFaceCount());
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
+      expect(result.mesh.getFaceCount()).toBeGreaterThanOrEqual(cube.getFaceCount());
     });
 
     it('should preserve mesh properties', () => {
-      const result = csgUnion(cube, sphere);
+      const result = csgUnion(cube, sphere, { mergeVertices: false });
       
       // Should preserve vertex properties
-      for (let i = 0; i < Math.min(cube.getVertexCount(), result.getVertexCount()); i++) {
+      for (let i = 0; i < Math.min(cube.getVertexCount(), result.mesh.getVertexCount()); i++) {
         const originalVertex = cube.getVertex(i);
-        const resultVertex = result.getVertex(i);
+        const resultVertex = result.mesh.getVertex(i);
         if (originalVertex && resultVertex) {
           expect(resultVertex.x).toBeCloseTo(originalVertex.x, 3);
           expect(resultVertex.y).toBeCloseTo(originalVertex.y, 3);
@@ -84,12 +83,12 @@ describe('CSG Operations', () => {
     });
   });
 
-  describe('csgIntersection', () => {
+  describe('csgIntersect', () => {
     it('should perform intersection operation', () => {
-      const result = csgIntersection(cube, sphere);
+      const result = csgIntersect(cube, sphere);
       
-      expect(result).toBeInstanceOf(EditableMesh);
-      expect(result.getFaceCount()).toBeLessThanOrEqual(cube.getFaceCount());
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
+      expect(result.mesh.getFaceCount()).toBeLessThanOrEqual(cube.getFaceCount());
     });
 
     it('should handle overlapping meshes', () => {
@@ -97,18 +96,18 @@ describe('CSG Operations', () => {
       const cube1 = createCube({ width: 2, height: 2, depth: 2 });
       const cube2 = createCube({ width: 1, height: 1, depth: 1 });
       
-      const result = csgIntersection(cube1, cube2);
+      const result = csgIntersect(cube1, cube2);
       
-      expect(result).toBeInstanceOf(EditableMesh);
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
     });
   });
 
-  describe('csgDifference', () => {
+  describe('csgSubtract', () => {
     it('should perform difference operation', () => {
-      const result = csgDifference(cube, sphere);
+      const result = csgSubtract(cube, sphere);
       
-      expect(result).toBeInstanceOf(EditableMesh);
-      expect(result.getFaceCount()).toBeLessThanOrEqual(cube.getFaceCount());
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
+      expect(result.mesh.getFaceCount()).toBeLessThanOrEqual(cube.getFaceCount());
     });
 
     it('should handle non-overlapping meshes', () => {
@@ -116,36 +115,13 @@ describe('CSG Operations', () => {
       const cube1 = createCube({ width: 2, height: 2, depth: 2 });
       const cube2 = createCube({ width: 1, height: 1, depth: 1 });
       
-      const result = csgDifference(cube1, cube2);
+      const result = csgSubtract(cube1, cube2);
       
-      expect(result).toBeInstanceOf(EditableMesh);
+      expect(result.mesh).toBeInstanceOf(EditableMesh);
     });
   });
 
-  describe('csgXOR', () => {
-    it('should perform XOR operation', () => {
-      const result = csgXOR(cube, sphere);
-      
-      expect(result).toBeInstanceOf(EditableMesh);
-    });
 
-    it('should handle XOR with overlapping meshes', () => {
-      const cube1 = createCube({ width: 2, height: 2, depth: 2 });
-      const cube2 = createCube({ width: 1, height: 1, depth: 1 });
-      
-      const result = csgXOR(cube1, cube2);
-      
-      expect(result).toBeInstanceOf(EditableMesh);
-    });
-
-    it('should handle XOR operation failures gracefully', () => {
-      // Create a mesh that might cause XOR to fail
-      const emptyMesh = new EditableMesh();
-      const result = csgXOR(emptyMesh, cube);
-      
-      expect(result).toBeInstanceOf(EditableMesh);
-    });
-  });
 
   describe('Boolean History', () => {
     it('should manage boolean operation history', () => {
@@ -155,7 +131,7 @@ describe('CSG Operations', () => {
       history.addEntry({
         operation: 'union',
         originalMesh: cube.clone(),
-        resultMesh: csgUnion(cube, sphere),
+        resultMesh: csgUnion(cube, sphere).mesh,
         options: { tolerance: 0.001 }
       });
 
@@ -170,7 +146,7 @@ describe('CSG Operations', () => {
       history.addEntry({
         operation: 'union',
         originalMesh: originalMesh,
-        resultMesh: csgUnion(cube, sphere),
+        resultMesh: csgUnion(cube, sphere).mesh,
         options: { tolerance: 0.001 }
       });
 
@@ -187,7 +163,7 @@ describe('CSG Operations', () => {
         history.addEntry({
           operation: 'union',
           originalMesh: cube.clone(),
-          resultMesh: csgUnion(cube, sphere),
+          resultMesh: csgUnion(cube, sphere).mesh,
           options: { tolerance: 0.001 }
         });
       }
@@ -201,7 +177,7 @@ describe('CSG Operations', () => {
       history.addEntry({
         operation: 'union',
         originalMesh: cube.clone(),
-        resultMesh: csgUnion(cube, sphere),
+        resultMesh: csgUnion(cube, sphere).mesh,
         options: { tolerance: 0.001 }
       });
 

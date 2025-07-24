@@ -152,8 +152,8 @@ function createDistanceText(
   
   const text = `${distance.toFixed(options.precision)}`;
   
-  context.fillStyle = `#${options.textColor.toString(16).padStart(6, '0')}`;
-  context.font = `${options.fontSize * 100}px Arial`;
+  context.fillStyle = `#${(options.textColor ?? 0xffffff).toString(16).padStart(6, '0')}`;
+  context.font = `${(options.fontSize ?? 0.1) * 100}px Arial`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.fillText(text, canvas.width / 2, canvas.height / 2);
@@ -168,7 +168,7 @@ function createDistanceText(
   
   const sprite = new THREE.Sprite(material);
   sprite.position.copy(position);
-  sprite.scale.setScalar(options.fontSize);
+  sprite.scale.setScalar(options.fontSize ?? 0.1);
   
   return sprite;
 }
@@ -253,8 +253,8 @@ function createAngleText(
   
   const text = `${(angle * 180 / Math.PI).toFixed(options.precision)}°`;
   
-  context.fillStyle = `#${options.textColor.toString(16).padStart(6, '0')}`;
-  context.font = `${options.fontSize * 100}px Arial`;
+  context.fillStyle = `#${(options.textColor ?? 0xffffff).toString(16).padStart(6, '0')}`;
+  context.font = `${(options.fontSize ?? 0.1) * 100}px Arial`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.fillText(text, canvas.width / 2, canvas.height / 2);
@@ -269,7 +269,7 @@ function createAngleText(
   
   const sprite = new THREE.Sprite(material);
   sprite.position.copy(position);
-  sprite.scale.setScalar(options.fontSize);
+  sprite.scale.setScalar(options.fontSize ?? 0.1);
   
   return sprite;
 }
@@ -387,7 +387,7 @@ function createAxisLabel(
   canvas.height = 64;
   
   context.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
-  context.font = `${options.labelSize * 100}px Arial`;
+  context.font = `${(options.labelSize ?? 0.1) * 100}px Arial`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.fillText(text, canvas.width / 2, canvas.height / 2);
@@ -402,7 +402,7 @@ function createAxisLabel(
   
   const sprite = new THREE.Sprite(material);
   sprite.position.copy(position);
-  sprite.scale.setScalar(options.labelSize);
+  sprite.scale.setScalar(options.labelSize ?? 0.1);
   
   return sprite;
 }

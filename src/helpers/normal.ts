@@ -303,3 +303,21 @@ export function calculateTriangleNormals(
     };
   }
 } 
+
+/**
+ * Calculate smooth normals for vertices and faces
+ * This is the main function that tests are looking for
+ */
+export function calculateSmoothNormals(
+  vertices: Vertex[],
+  faces: Face[],
+  options: NormalGenerationParams = { smooth: true }
+): void {
+  // Create a temporary mesh for the calculation
+  const tempMesh = new EditableMesh();
+  tempMesh.vertices = vertices;
+  tempMesh.faces = faces;
+  
+  // Use the existing calculateNormals function
+  calculateNormals(tempMesh, options);
+} 

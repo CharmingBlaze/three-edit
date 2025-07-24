@@ -36,13 +36,14 @@ describe('Performance Optimization Features', () => {
     it('should find faces near point', () => {
       const octree = new Octree(mesh);
       const point = new Vector3(0, 0, 0);
-      const radius = 2.0;
+      const radius = 1.0;
+      const maxResults = mesh.faces.length;
       
-      const nearbyFaces = octree.findFacesNearPoint(point, { radius });
+      const nearbyFaces = octree.findFacesNearPoint(point, { radius, maxResults });
       
       expect(nearbyFaces.length).toBeGreaterThan(0);
-      // Allow for face indexing to return more faces than expected due to spatial overlap
-      expect(nearbyFaces.length).toBeLessThanOrEqual(mesh.faces.length * 8);
+      // For a small mesh like a cube, the octree should return faces within the radius
+      expect(nearbyFaces.length).toBeLessThanOrEqual(mesh.faces.length);
     });
 
     it('should handle empty mesh', () => {

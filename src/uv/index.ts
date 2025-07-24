@@ -1,20 +1,15 @@
-// Export from modular UV system
-export * from './types';
-export * from './planarUVs';
-export * from './cubicUVs';
-export * from './sphericalUVs';
-export * from './cylindricalUVs';
+// Core types
+export type { UVCoord, FaceVertexUVs, UVGenerationParams, UVProjectionType, GenerateUVsOptions } from './types';
 
-// Core UV functions
-export * from './generateUVs';
-export * from './generatePlanarUVs';
-export * from './transformUVs';
-export * from './UVCoord';
-
-// Main UV functions
+// Main UV generation functions
 export { generateUVs } from './generateUVs';
-export { generatePlanarUVs } from './planarUVs';
+export { generatePlanarUVs } from './generatePlanarUVs';
 export { generateCubicUVs } from './cubicUVs';
 export { generateSphericalUVs } from './sphericalUVs';
 export { generateCylindricalUVs } from './cylindricalUVs';
-export type { UVProjectionType, GenerateUVsOptions } from './types'; 
+
+// UV transformation functions
+export { transformUVs, scaleUVs, rotateUVs, translateUVs } from './transformUVs';
+
+// UV coordinate utilities
+export { createUV, cloneUV, addUV, subtractUV, multiplyUV, distanceUV, lerpUV, wrapUV, clampUV, equalsUV } from './UVCoord'; 

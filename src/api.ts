@@ -32,7 +32,7 @@ import { createEmpty as createEmptyPrimitive } from './primitives/createEmpty';
 import { toBufferGeometry } from './conversion/toBufferGeometry';
 import { fromBufferGeometry } from './conversion/fromBufferGeometry';
 import { validateMesh as validateMeshFunction } from './validation/validateMesh';
-import { exportGLTF } from './exporters/gltf/exportGLTF';
+import { exportGLTF } from './io/gltf';
 import { MaterialManager } from './materials/MaterialManager';
 import { SceneGraph } from './scene/SceneGraph';
 import { CommandHistory } from './history/CommandHistory';

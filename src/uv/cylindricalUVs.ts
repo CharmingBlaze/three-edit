@@ -32,7 +32,7 @@ export function generateCylindricalUVs(
     let v = height; // Use height directly
     
     // Apply rotation if specified
-    if (rotation !== 0) {
+    if (rotation && rotation !== 0) {
       const rad = (rotation * Math.PI) / 180;
       const cos = Math.cos(rad);
       const sin = Math.sin(rad);
@@ -69,8 +69,8 @@ export function generateCylindricalUVs(
       if (flipV) v = 1 - v;
       
       // Apply scale and offset
-      u = u * scale + offset.u;
-      v = v * scale + offset.v;
+      u = u * (scale ?? 1) + (offset?.u ?? 0);
+      v = v * (scale ?? 1) + (offset?.v ?? 0);
       
       // Update UV
       vertex.uv = { u, v };
@@ -88,8 +88,8 @@ export function generateCylindricalUVs(
       if (flipV) v = -v;
       
       // Apply scale and offset
-      u = u * scale + offset.u;
-      v = v * scale + offset.v;
+      u = u * (scale ?? 1) + (offset?.u ?? 0);
+      v = v * (scale ?? 1) + (offset?.v ?? 0);
       
       // Update UV
       vertex.uv = { u, v };

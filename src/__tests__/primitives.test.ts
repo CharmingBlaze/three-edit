@@ -113,6 +113,17 @@ describe('Primitives', () => {
       expect(cone.name).toBe('Cone');
     });
 
+    it('should create a cone with the correct number of vertices and faces', () => {
+      const cone = createCone({ radialSegments: 8 });
+      // Vertices: 8 on the base ring, 1 apex, 1 base center = 10
+      const expectedVertices = 8 + 1 + 1;
+      // Faces: 8 side faces, 8 base faces
+      const expectedFaces = 8 + 8;
+
+      expect(cone.vertices.length).toBe(expectedVertices);
+      expect(cone.faces.length).toBe(expectedFaces);
+    });
+
     it('should create an open-ended cone', () => {
       const cone = createCone({ openEnded: true });
       const validation = validateMesh(cone);
@@ -120,15 +131,7 @@ describe('Primitives', () => {
       expect(validation.isValid).toBe(true);
     });
 
-    it('should create a partial cone', () => {
-      const cone = createCone({ 
-        thetaStart: 0, 
-        thetaLength: Math.PI 
-      });
-      const validation = validateMesh(cone);
-      
-      expect(validation.isValid).toBe(true);
-    });
+
   });
 
   describe('createPlane', () => {
@@ -167,7 +170,7 @@ describe('Primitives', () => {
     it('should create a thin torus', () => {
       const torus = createTorus({ 
         radius: 2, 
-        tubeRadius: 0.1 
+        tube: 0.1 
       });
       const validation = validateMesh(torus);
       

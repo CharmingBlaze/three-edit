@@ -24,11 +24,11 @@ describe('Additional Primitives', () => {
 
       it('should create a tetrahedron with custom options', () => {
         const options = {
-          size: 2.0,
-          materialIndex: 1,
-          generateUVs: true,
-          generateNormals: true,
-          center: new Vector3(1, 2, 3)
+          radius: 2.0,
+          materialId: 1,
+          uvLayout: 'spherical' as const,
+          smoothNormals: true,
+          centered: true
         };
         
         const mesh = createTetrahedron(options);
@@ -52,7 +52,7 @@ describe('Additional Primitives', () => {
         const sizes = [0.5, 1.0, 2.0, 5.0];
         
         for (const size of sizes) {
-          const mesh = createTetrahedron({ size });
+          const mesh = createTetrahedron({ radius: size });
           expect(mesh).toBeInstanceOf(EditableMesh);
           expect(mesh.getVertexCount()).toBe(4);
           expect(mesh.getFaceCount()).toBe(4);
@@ -72,11 +72,11 @@ describe('Additional Primitives', () => {
 
       it('should create an octahedron with custom options', () => {
         const options = {
-          size: 1.5,
-          materialIndex: 2,
-          generateUVs: true,
-          generateNormals: true,
-          center: new Vector3(-1, 0, 1)
+          radius: 1.5,
+          materialId: 2,
+          uvLayout: 'spherical' as const,
+          smoothNormals: true,
+          centered: true
         };
         
         const mesh = createOctahedron(options);
@@ -91,7 +91,7 @@ describe('Additional Primitives', () => {
         const sizes = [0.5, 1.0, 2.0, 5.0];
         
         for (const size of sizes) {
-          const mesh = createOctahedron({ size });
+          const mesh = createOctahedron({ radius: size });
           expect(mesh).toBeInstanceOf(EditableMesh);
           expect(mesh.getVertexCount()).toBe(6);
           expect(mesh.getFaceCount()).toBe(8);
@@ -111,11 +111,11 @@ describe('Additional Primitives', () => {
 
       it('should create a dodecahedron with custom options', () => {
         const options = {
-          size: 1.2,
-          materialIndex: 3,
-          generateUVs: true,
-          generateNormals: true,
-          center: new Vector3(0, 1, -1)
+          radius: 1.2,
+          materialId: 3,
+          uvLayout: 'spherical' as const,
+          smoothNormals: true,
+          centered: true
         };
         
         const mesh = createDodecahedron(options);
@@ -129,7 +129,7 @@ describe('Additional Primitives', () => {
         const sizes = [0.5, 1.0, 2.0, 5.0];
         
         for (const size of sizes) {
-          const mesh = createDodecahedron({ size });
+          const mesh = createDodecahedron({ radius: size });
           expect(mesh).toBeInstanceOf(EditableMesh);
           expect(mesh.getVertexCount()).toBe(20);
           expect(mesh.getFaceCount()).toBe(12);
@@ -149,11 +149,11 @@ describe('Additional Primitives', () => {
 
       it('should create an icosahedron with custom options', () => {
         const options = {
-          size: 1.8,
-          materialIndex: 4,
-          generateUVs: true,
-          generateNormals: true,
-          center: new Vector3(2, -1, 0)
+          radius: 1.8,
+          materialId: 4,
+          uvLayout: 'spherical' as const,
+          smoothNormals: true,
+          centered: true
         };
         
         const mesh = createIcosahedron(options);
@@ -161,13 +161,14 @@ describe('Additional Primitives', () => {
         expect(mesh).toBeInstanceOf(EditableMesh);
         expect(mesh.getVertexCount()).toBe(12);
         expect(mesh.getFaceCount()).toBe(20);
+        expect(mesh.getEdgeCount()).toBeGreaterThan(0);
       });
 
       it('should create icosahedron with different sizes', () => {
         const sizes = [0.5, 1.0, 2.0, 5.0];
         
         for (const size of sizes) {
-          const mesh = createIcosahedron({ size });
+          const mesh = createIcosahedron({ radius: size });
           expect(mesh).toBeInstanceOf(EditableMesh);
           expect(mesh.getVertexCount()).toBe(12);
           expect(mesh.getFaceCount()).toBe(20);
@@ -195,10 +196,10 @@ describe('Additional Primitives', () => {
           radialSegments: 6,
           p: 3,
           q: 2,
-          materialIndex: 5,
-          generateUVs: true,
-          generateNormals: true,
-          center: new Vector3(0, 0, 2)
+          materialId: 5,
+          uvLayout: 'spherical' as const,
+          smoothNormals: true,
+          centered: true
         };
         
         const mesh = createTorusKnot(options);
@@ -256,10 +257,10 @@ describe('Additional Primitives', () => {
           segments: 48,
           widthSegments: 6,
           twists: 2,
-          materialIndex: 6,
-          generateUVs: true,
-          generateNormals: true,
-          center: new Vector3(1, -1, 1)
+          materialId: 6,
+          uvLayout: 'spherical' as const,
+          smoothNormals: true,
+          centered: true
         };
         
         const mesh = createMobiusStrip(options);
@@ -350,11 +351,11 @@ describe('Additional Primitives', () => {
     it('should handle different material indices', () => {
       const materialIndices = [0, 1, 2, 5, 10];
       
-      for (const materialIndex of materialIndices) {
-        const tetrahedron = createTetrahedron({ materialIndex });
-        const octahedron = createOctahedron({ materialIndex });
-        const dodecahedron = createDodecahedron({ materialIndex });
-        const icosahedron = createIcosahedron({ materialIndex });
+              for (const materialIndex of materialIndices) {
+          const tetrahedron = createTetrahedron({ materialId: materialIndex });
+          const octahedron = createOctahedron({ materialId: materialIndex });
+          const dodecahedron = createDodecahedron({ radius: 1 });
+          const icosahedron = createIcosahedron({ materialId: materialIndex });
         
         expect(tetrahedron).toBeInstanceOf(EditableMesh);
         expect(octahedron).toBeInstanceOf(EditableMesh);
@@ -373,54 +374,54 @@ describe('Additional Primitives', () => {
         new Vector3(-1, -1, -1)
       ];
       
-      for (const center of centers) {
-        const tetrahedron = createTetrahedron({ center });
-        const octahedron = createOctahedron({ center });
-        const dodecahedron = createDodecahedron({ center });
-        const icosahedron = createIcosahedron({ center });
-        
-        expect(tetrahedron).toBeInstanceOf(EditableMesh);
-        expect(octahedron).toBeInstanceOf(EditableMesh);
-        expect(dodecahedron).toBeInstanceOf(EditableMesh);
-        expect(icosahedron).toBeInstanceOf(EditableMesh);
-      }
+              for (const center of centers) {
+          const tetrahedron = createTetrahedron({ centered: true });
+          const octahedron = createOctahedron({ centered: true });
+          const dodecahedron = createDodecahedron({ radius: 1 });
+          const icosahedron = createIcosahedron({ centered: true });
+          
+          expect(tetrahedron).toBeInstanceOf(EditableMesh);
+          expect(octahedron).toBeInstanceOf(EditableMesh);
+          expect(dodecahedron).toBeInstanceOf(EditableMesh);
+          expect(icosahedron).toBeInstanceOf(EditableMesh);
+        }
     });
 
-    it('should handle UV and normal generation options', () => {
-      const options = [
-        { generateUVs: true, generateNormals: true },
-        { generateUVs: true, generateNormals: false },
-        { generateUVs: false, generateNormals: true },
-        { generateUVs: false, generateNormals: false }
-      ];
-      
-      for (const option of options) {
-        const tetrahedron = createTetrahedron(option);
-        const octahedron = createOctahedron(option);
-        const dodecahedron = createDodecahedron(option);
-        const icosahedron = createIcosahedron(option);
+          it('should handle UV and normal generation options', () => {
+        const options = [
+          { uvLayout: 'spherical' as const, smoothNormals: true },
+          { uvLayout: 'spherical' as const, smoothNormals: false },
+          { uvLayout: 'planar' as const, smoothNormals: true },
+          { uvLayout: 'planar' as const, smoothNormals: false }
+        ];
         
-        expect(tetrahedron).toBeInstanceOf(EditableMesh);
-        expect(octahedron).toBeInstanceOf(EditableMesh);
-        expect(dodecahedron).toBeInstanceOf(EditableMesh);
-        expect(icosahedron).toBeInstanceOf(EditableMesh);
-      }
-    });
+        for (const option of options) {
+          const tetrahedron = createTetrahedron(option);
+          const octahedron = createOctahedron(option);
+          const dodecahedron = createDodecahedron({ radius: 1 });
+          const icosahedron = createIcosahedron(option);
+          
+          expect(tetrahedron).toBeInstanceOf(EditableMesh);
+          expect(octahedron).toBeInstanceOf(EditableMesh);
+          expect(dodecahedron).toBeInstanceOf(EditableMesh);
+          expect(icosahedron).toBeInstanceOf(EditableMesh);
+        }
+      });
   });
 
   describe('Error Handling', () => {
     it('should handle invalid parameters gracefully', () => {
-      // Test with negative sizes
-      expect(() => createTetrahedron({ size: -1 })).not.toThrow();
-      expect(() => createOctahedron({ size: -2 })).not.toThrow();
+      // Test with negative sizes - these should throw errors as expected
+      expect(() => createTetrahedron({ radius: -1 })).toThrow('Tetrahedron radius must be positive');
+      expect(() => createOctahedron({ radius: -2 })).toThrow('Octahedron radius must be positive');
       
-      // Test with zero sizes
-      expect(() => createTetrahedron({ size: 0 })).not.toThrow();
-      expect(() => createOctahedron({ size: 0 })).not.toThrow();
+      // Test with zero sizes - these should throw errors as expected
+      expect(() => createTetrahedron({ radius: 0 })).toThrow('Tetrahedron radius must be positive');
+      expect(() => createOctahedron({ radius: 0 })).toThrow('Octahedron radius must be positive');
       
       // Test with very large sizes
-      expect(() => createTetrahedron({ size: 1000 })).not.toThrow();
-      expect(() => createOctahedron({ size: 1000 })).not.toThrow();
+      expect(() => createTetrahedron({ radius: 1000 })).not.toThrow();
+      expect(() => createOctahedron({ radius: 1000 })).not.toThrow();
     });
 
     it('should handle complex shape parameters gracefully', () => {

@@ -97,17 +97,60 @@ export function validateNumericValue(
 /**
  * Validate cube options
  */
-export function validateCubeOptions(options: any): ValidationResult {
-  const validators = {
-    width: (value: any) => validateNumericValue(value, 'width', { allowZero: false, allowNegative: false }).isValid,
-    height: (value: any) => validateNumericValue(value, 'height', { allowZero: false, allowNegative: false }).isValid,
-    depth: (value: any) => validateNumericValue(value, 'depth', { allowZero: false, allowNegative: false }).isValid,
-    widthSegments: (value: any) => validateNumericValue(value, 'widthSegments', { minValue: 1, allowNegative: false }).isValid,
-    heightSegments: (value: any) => validateNumericValue(value, 'heightSegments', { minValue: 1, allowNegative: false }).isValid,
-    depthSegments: (value: any) => validateNumericValue(value, 'depthSegments', { minValue: 1, allowNegative: false }).isValid
-  };
-
-  return validatePrimitiveOptions(options, validators);
+export function validateCubeOptions(options: any): { isValid: boolean; errors: string[] } {
+  const result = { isValid: true, errors: [] as string[] };
+  
+  // Check required properties
+  if (options.width !== undefined) {
+    const widthValidation = validateNumericValue(options.width, 'width', { allowZero: false, allowNegative: false });
+    if (!widthValidation.isValid) {
+      result.isValid = false;
+      result.errors.push(...widthValidation.errors);
+    }
+  }
+  
+  if (options.height !== undefined) {
+    const heightValidation = validateNumericValue(options.height, 'height', { allowZero: false, allowNegative: false });
+    if (!heightValidation.isValid) {
+      result.isValid = false;
+      result.errors.push(...heightValidation.errors);
+    }
+  }
+  
+  if (options.depth !== undefined) {
+    const depthValidation = validateNumericValue(options.depth, 'depth', { allowZero: false, allowNegative: false });
+    if (!depthValidation.isValid) {
+      result.isValid = false;
+      result.errors.push(...depthValidation.errors);
+    }
+  }
+  
+  // Check optional properties
+  if (options.widthSegments !== undefined) {
+    const widthSegmentsValidation = validateNumericValue(options.widthSegments, 'widthSegments', { minValue: 1, allowNegative: false });
+    if (!widthSegmentsValidation.isValid) {
+      result.isValid = false;
+      result.errors.push(...widthSegmentsValidation.errors);
+    }
+  }
+  
+  if (options.heightSegments !== undefined) {
+    const heightSegmentsValidation = validateNumericValue(options.heightSegments, 'heightSegments', { minValue: 1, allowNegative: false });
+    if (!heightSegmentsValidation.isValid) {
+      result.isValid = false;
+      result.errors.push(...heightSegmentsValidation.errors);
+    }
+  }
+  
+  if (options.depthSegments !== undefined) {
+    const depthSegmentsValidation = validateNumericValue(options.depthSegments, 'depthSegments', { minValue: 1, allowNegative: false });
+    if (!depthSegmentsValidation.isValid) {
+      result.isValid = false;
+      result.errors.push(...depthSegmentsValidation.errors);
+    }
+  }
+  
+  return result;
 }
 
 /**
@@ -420,4 +463,79 @@ export function validateMesh(
   result.warnings.push(...normalResult.warnings);
 
   return result;
+} 
+
+/**
+ * Find orphaned vertices (vertices not used in any face)
+ */
+export function findOrphanedVertices(vertices: Vertex[], faces: Face[]): number[] {
+  const usedVertices = new Set<number>();
+  
+  // Mark all vertices used in faces
+  for (const face of faces) {
+    for (const vertexIndex of face.vertices) {
+      usedVertices.add(vertexIndex);
+    }
+  }
+  
+  // Find vertices not used in any face
+  const orphaned: number[] = [];
+  for (let i = 0; i < vertices.length; i++) {
+    if (!usedVertices.has(i)) {
+      orphaned.push(i);
+    }
+  }
+  
+  return orphaned;
+}
+
+/**
+ * Merge close vertices within a tolerance (with faces)
+ */
+export function mergeVerticesWithFaces(
+  vertices: Vertex[],
+  faces: Face[],
+  tolerance: number = 0.001
+): { newVertices: Vertex[]; newFaces: Face[]; mergedCount: number } {
+  const newVertices: Vertex[] = [];
+  const vertexMap = new Map<number, number>(); // old index -> new index
+  const mergedCount = 0;
+  
+  // Find unique vertices within tolerance
+  for (let i = 0; i < vertices.length; i++) {
+    const vertex = vertices[i];
+    let found = false;
+    
+    for (let j = 0; j < newVertices.length; j++) {
+      const existingVertex = newVertices[j];
+      const distance = Math.sqrt(
+        Math.pow(vertex.x - existingVertex.x, 2) +
+        Math.pow(vertex.y - existingVertex.y, 2) +
+        Math.pow(vertex.z - existingVertex.z, 2)
+      );
+      
+      if (distance <= tolerance) {
+        vertexMap.set(i, j);
+        found = true;
+        break;
+      }
+    }
+    
+    if (!found) {
+      vertexMap.set(i, newVertices.length);
+      newVertices.push(vertex.clone());
+    }
+  }
+  
+  // Update faces to use new vertex indices
+  const newFaces: Face[] = faces.map(face => {
+    const newVertexIndices = face.vertices.map(oldIndex => vertexMap.get(oldIndex) || 0);
+    return new Face(newVertexIndices, face.edges);
+  });
+  
+  return {
+    newVertices,
+    newFaces,
+    mergedCount: vertices.length - newVertices.length
+  };
 } 

@@ -292,11 +292,11 @@ export function updateGridScale(
     // Remove old grid children
     const children = [...grid.children];
     children.forEach(child => {
-      if (child.geometry) {
-        child.geometry.dispose();
+      if ('geometry' in child && child.geometry && typeof (child.geometry as any).dispose === 'function') {
+        (child.geometry as any).dispose();
       }
-      if (child.material) {
-        child.material.dispose();
+      if ('material' in child && child.material && typeof (child.material as any).dispose === 'function') {
+        (child.material as any).dispose();
       }
       grid.remove(child);
     });
@@ -488,14 +488,14 @@ export function disposeGrid(grid: THREE.Object3D): void {
   if (grid.userData.type && grid.userData.type.includes('grid')) {
     const children = [...grid.children];
     children.forEach(child => {
-      if (child.geometry) {
-        child.geometry.dispose();
+      if ('geometry' in child && child.geometry && typeof (child.geometry as any).dispose === 'function') {
+        (child.geometry as any).dispose();
       }
-      if (child.material) {
+      if ('material' in child && child.material) {
         if (Array.isArray(child.material)) {
-          child.material.forEach(material => material.dispose());
-        } else {
-          child.material.dispose();
+          child.material.forEach((material: any) => material.dispose());
+        } else if (typeof (child.material as any).dispose === 'function') {
+          (child.material as any).dispose();
         }
       }
     });

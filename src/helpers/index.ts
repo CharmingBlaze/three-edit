@@ -97,7 +97,7 @@ export * from './uv-additional'; // Additional UV functions with exact signature
 export * from './edge';
 export * from './normal';
 export * from './validation';
-export * from './mesh';
+// Note: mesh.ts exports are included in validation.ts, so we don't need to export mesh separately
 export * from './debug';
 
 // Editor helper modules

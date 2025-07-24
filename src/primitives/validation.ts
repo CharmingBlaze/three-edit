@@ -146,7 +146,9 @@ export function validatePrimitive(mesh: EditableMesh, primitiveType: string): Pr
       vertexCount: mesh.vertices.length,
       edgeCount: mesh.edges.length,
       faceCount: mesh.faces.length,
-      materialCount: materialIds.size
+      materialCount: materialIds.size,
+      uvCount: mesh.vertices.filter(v => v.uv).length,
+      normalCount: mesh.vertices.filter(v => v.normal).length
     }
   };
 }

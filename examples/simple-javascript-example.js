@@ -25,33 +25,56 @@ const sphere = ThreeEditJS.createSphere({
 });
 console.log('Sphere created:', sphere);
 
-// Example 3: Convert to Three.js geometry
+// Example 3: Create a cylinder
+console.log('\n=== Creating a Cylinder ===');
+const cylinder = ThreeEditJS.createCylinder({
+    radius: 1,
+    height: 2,
+    segments: 16
+});
+console.log('Cylinder created:', cylinder);
+
+// Example 4: Create a plane
+console.log('\n=== Creating a Plane ===');
+const plane = ThreeEditJS.createPlane({
+    width: 4,
+    height: 4,
+    widthSegments: 4,
+    heightSegments: 4
+});
+console.log('Plane created:', plane);
+
+// Example 5: Convert to Three.js geometry
 console.log('\n=== Converting to Three.js ===');
 const geometry = ThreeEditJS.toBufferGeometry(cube);
 console.log('Three.js geometry created:', geometry);
 
-// Example 4: Import from Three.js geometry
+// Example 6: Import from Three.js geometry
 console.log('\n=== Importing from Three.js ===');
 const importedMesh = ThreeEditJS.createFromThreeGeometry(geometry);
 console.log('Imported mesh:', importedMesh);
 
-// Example 5: Apply operations
+// Example 7: Apply operations
 console.log('\n=== Applying Operations ===');
 const mesh = ThreeEditJS.createCube();
 
 // Extrude a face
-ThreeEditJS.extrudeFace(mesh, mesh.faces[0], { distance: 1 });
-console.log('Face extruded');
+if (mesh.faces.length > 0) {
+    ThreeEditJS.extrudeFace(mesh, mesh.faces[0], { distance: 1 });
+    console.log('Face extruded');
+}
 
 // Bevel an edge
-ThreeEditJS.bevelEdge(mesh, mesh.edges[0], { distance: 0.2 });
-console.log('Edge beveled');
+if (mesh.edges.length > 0) {
+    ThreeEditJS.bevelEdge(mesh, mesh.edges[0], { distance: 0.2 });
+    console.log('Edge beveled');
+}
 
 // Convert back to Three.js
 const resultGeometry = ThreeEditJS.toBufferGeometry(mesh);
 console.log('Final geometry:', resultGeometry);
 
-// Example 6: Using the applyOperation helper
+// Example 8: Using the applyOperation helper
 console.log('\n=== Using applyOperation Helper ===');
 const simpleMesh = ThreeEditJS.createCube();
 const finalGeometry = ThreeEditJS.applyOperation(
@@ -62,52 +85,61 @@ const finalGeometry = ThreeEditJS.applyOperation(
 );
 console.log('Operation applied and geometry returned:', finalGeometry);
 
-// Example 7: Selection operations
-console.log('\n=== Selection Operations ===');
-const selectionMesh = ThreeEditJS.createCube();
+// Example 9: Using helper functions
+console.log('\n=== Using Helper Functions ===');
+const helpers = ThreeEditJS.getHelpers();
 
-// Select faces by ray (simulated)
-const ray = { origin: { x: 0, y: 0, z: 5 }, direction: { x: 0, y: 0, z: -1 } };
-const camera = { position: { x: 0, y: 0, z: 5 } };
-const selectedFaces = ThreeEditJS.selectByRay(selectionMesh, ray, camera);
-console.log('Faces selected by ray:', selectedFaces);
+// Math helpers
+const math = helpers.math;
+console.log('Math helpers available:', Object.keys(math));
 
-// Select connected faces
-const connectedFaces = ThreeEditJS.selectConnected(selectionMesh, selectionMesh.faces[0]);
-console.log('Connected faces:', connectedFaces);
+// Geometry helpers
+const geometryHelpers = helpers.geometry;
+console.log('Geometry helpers available:', Object.keys(geometryHelpers));
 
-// Example 8: Utility functions
-console.log('\n=== Utility Functions ===');
-const face = selectionMesh.faces[0];
+// Editor helpers
+const editorHelpers = helpers.editor;
+console.log('Editor helpers available:', Object.keys(editorHelpers));
+
+// Utility helpers
+const utilityHelpers = helpers.utilities;
+console.log('Utility helpers available:', Object.keys(utilityHelpers));
+
+// Example 10: Using primitives helper
+console.log('\n=== Using Primitives Helper ===');
+const primitives = ThreeEditJS.getPrimitives();
+console.log('Available primitives:', Object.keys(primitives));
+
+// Example 11: Using operations helper
+console.log('\n=== Using Operations Helper ===');
+const operations = ThreeEditJS.getOperations();
+console.log('Available operations:', Object.keys(operations));
+
+// Example 12: Validation and debugging
+console.log('\n=== Validation and Debugging ===');
+const testMesh = ThreeEditJS.createCube();
+
+// Validate mesh
+const validation = ThreeEditJS.validateMesh(testMesh);
+console.log('Mesh validation:', validation);
+
+// Debug mesh
+ThreeEditJS.getHelpers().utilities.debugMesh(testMesh);
+
+// Example 13: Face operations
+console.log('\n=== Face Operations ===');
+const faceMesh = ThreeEditJS.createCube();
+const face = faceMesh.faces[0];
+
+// Calculate face normal
 const normal = ThreeEditJS.calculateFaceNormal(face);
-const center = ThreeEditJS.calculateFaceCenter(face);
 console.log('Face normal:', normal);
+
+// Calculate face center
+const center = ThreeEditJS.calculateFaceCenter(face);
 console.log('Face center:', center);
 
-// Example 9: Scene Graph usage (if available)
-console.log('\n=== Scene Graph Usage ===');
-try {
-    // Import scene graph functionality
-    const { SceneGraph, SceneNode } = await import('three-edit/scene');
-    
-    // Create a scene graph
-    const sceneGraph = new SceneGraph();
-    const rootNode = new SceneNode('root');
-    const childNode = new SceneNode('child');
-    
-    // Add child to root
-    sceneGraph.addNode(rootNode);
-    sceneGraph.addNode(childNode, rootNode);
-    
-    console.log('Scene graph created with hierarchy');
-    console.log('Root node:', rootNode);
-    console.log('Child node:', childNode);
-    
-} catch (error) {
-    console.log('Scene graph not available in this version');
-}
-
-// Example 10: Performance tips
+// Example 14: Performance tips
 console.log('\n=== Performance Tips ===');
 
 // ✅ Good: Reuse mesh instances
@@ -129,5 +161,30 @@ console.log('One-off operation completed');
 // const mesh1 = ThreeEditJS.createCube();
 // const mesh2 = ThreeEditJS.createCube(); // Unnecessary
 
+// Example 15: UV generation
+console.log('\n=== UV Generation ===');
+const uvMesh = ThreeEditJS.createCube();
+
+// Generate planar UVs
+ThreeEditJS.getHelpers().utilities.generatePlanarUVs(uvMesh.vertices, {
+    projection: 'xy',
+    scale: { x: 1, y: 1 },
+    offset: { x: 0, y: 0 }
+});
+console.log('Generated planar UVs for cube');
+
+// Example 16: Geometry operations
+console.log('\n=== Geometry Operations ===');
+const geoMesh = ThreeEditJS.createCube();
+
+// Merge vertices
+const mergedVertices = ThreeEditJS.getHelpers().geometry.mergeVertices(geoMesh.vertices, 0.001);
+console.log(`Merged vertices: ${geoMesh.vertices.length} -> ${mergedVertices.length}`);
+
+// Center vertices
+ThreeEditJS.getHelpers().geometry.centerVertices(geoMesh.vertices);
+console.log('Centered vertices around origin');
+
 console.log('\n=== JavaScript Example Complete ===');
-console.log('Three-edit works perfectly with vanilla JavaScript!'); 
+console.log('Three-edit works perfectly with vanilla JavaScript!');
+console.log('All features are available through the JavaScript wrapper.'); 

@@ -172,9 +172,9 @@ describe('Game Development Primitives', () => {
     it('should create an arrow with custom dimensions', () => {
       const arrow = createArrow({ 
         shaftLength: 3, 
-        shaftWidth: 0.2, 
+        shaftRadius: 0.2, 
         headLength: 1, 
-        headWidth: 0.5 
+        headRadius: 0.5 
       });
       const validation = validateMesh(arrow);
       
@@ -183,8 +183,8 @@ describe('Game Development Primitives', () => {
 
     it('should create a segmented arrow', () => {
       const arrow = createArrow({ 
-        shaftSegments: 4, 
-        headSegments: 2 
+        radialSegments: 4, 
+        heightSegments: 2 
       });
       const validation = validateMesh(arrow);
       
@@ -193,8 +193,8 @@ describe('Game Development Primitives', () => {
 
     it('should handle thin arrows', () => {
       const arrow = createArrow({ 
-        shaftWidth: 0.05, 
-        shaftHeight: 0.05 
+        shaftRadius: 0.05, 
+        headRadius: 0.05 
       });
       const validation = validateMesh(arrow);
       

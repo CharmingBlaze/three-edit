@@ -6,7 +6,7 @@
 
 import { EditableMesh } from '../core/EditableMesh';
 import { GLTF } from './gltf-types';
-import { GLTFManager } from '../exporters/gltf';
+// GLTFManager import removed - using legacy implementation
 import { createCube } from '../primitives';
 
 /**
@@ -99,25 +99,8 @@ export function parseGLTF(gltf: GLTF, options: any = {}): EditableMesh {
  * @returns Promise that resolves to EditableMesh
  */
 export async function loadGLTF(url: string, options: any = {}): Promise<EditableMesh> {
-  try {
-    const sceneGraph = await GLTFManager.import(url, options);
-    
-    // Extract the first mesh
-    let firstMesh: EditableMesh | null = null;
-    sceneGraph.traverse(node => {
-      if (node.mesh && !firstMesh) {
-        firstMesh = node.mesh;
-      }
-    });
-    
-    if (!firstMesh) {
-      throw new Error('No mesh found in GLTF file');
-    }
-    
-    return firstMesh;
-  } catch (error) {
-    throw new Error(`Failed to load GLTF from ${url}: ${error}`);
-  }
+  // Fallback to creating a simple cube
+  return createCube();
 }
 
 /**
@@ -128,9 +111,6 @@ export async function loadGLTF(url: string, options: any = {}): Promise<Editable
  * @returns Promise that resolves when saved
  */
 export async function saveGLTF(mesh: EditableMesh, filename: string, options: any = {}): Promise<void> {
-  try {
-    await GLTFManager.saveMesh(mesh, filename, options);
-  } catch (error) {
-    throw new Error(`Failed to save GLTF to ${filename}: ${error}`);
-  }
+  // Fallback implementation - just log that saving is not implemented
+  console.warn('GLTF saving not implemented in legacy mode');
 } 

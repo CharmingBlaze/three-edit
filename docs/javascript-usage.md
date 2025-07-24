@@ -19,7 +19,7 @@ This guide covers how to use three-edit with vanilla JavaScript, including all t
     <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
     
     <!-- Include Three-Edit -->
-    <script src="path/to/three-edit/browser/three-edit.js"></script>
+    <script src="path/to/three-edit/dist/umd/index.umd.js"></script>
     
     <script>
         // ThreeEdit is available as a global variable

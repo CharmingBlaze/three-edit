@@ -81,8 +81,7 @@ export { SkeletalAnimation, SkinnedMeshOperations } from './operations/skeletalA
 export { WeightPaintingBrush, WeightPaintingOperations } from './operations/weightPainting';
 
 // Import/Export
-export { exportGLTF } from './exporters/gltf/exportGLTF';
-export { importGLTF } from './exporters/gltf/importGLTF';
+export { exportGLTF } from './io/gltf';
 export { parseOBJ, exportOBJ, loadOBJ, saveOBJ } from './io/obj';
 export { parsePLY, exportPLY, loadPLY, savePLY } from './io/ply';
 export { importSTL, exportSTL, validateSTL, getSTLInfo } from './io/stl';

@@ -3,22 +3,13 @@ import { generatePlanarUVs } from './planarUVs';
 import { generateCubicUVs } from './cubicUVs';
 import { generateSphericalUVs } from './sphericalUVs';
 import { generateCylindricalUVs } from './cylindricalUVs';
-import { UVCoord } from './types';
+import { UVCoord, UVGenerationParams } from './types';
 
 export enum UVProjectionType {
   PLANAR = 'planar',
   CUBIC = 'cubic',
   SPHERICAL = 'spherical',
   CYLINDRICAL = 'cylindrical',
-}
-
-export interface UVGenerationParams {
-  scale?: number;
-  offset?: UVCoord;
-  normalize?: boolean;
-  flipU?: boolean;
-  flipV?: boolean;
-  rotation?: number;
 }
 
 export interface GenerateUVsOptions extends UVGenerationParams {

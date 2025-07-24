@@ -4,12 +4,13 @@
 
 import { Vector3, Vector2 } from 'three';
 import { Vertex, Face } from '../../core';
+import { UVCoord } from '../../uv/types';
 
 /**
  * Options for creating vertices
  */
 export interface VertexOptions {
-  uv?: Vector2;
+  uv?: Vector2 | UVCoord;
   normal?: Vector3;
   color?: Vector3;
   userData?: Record<string, any>;

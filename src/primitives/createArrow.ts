@@ -21,17 +21,15 @@ export function createArrow(options: CreateArrowOptions = {}): EditableMesh {
     headRadius = 0.2,
     headLength = 0.4,
     radialSegments = 16,
-    heightSegments = 1,
+    heightSegments = 4,
     name = 'Arrow',
   } = options;
 
   const mesh = new EditableMesh({ name });
   const edgeMap: { [key: string]: number } = {};
 
-  const addRotatedVertex = (v: Vertex): number => {
-    // Rotate around X-axis by -90 degrees to point along Z-axis
-    const rotatedV = new Vertex(v.x, v.z, -v.y, { uv: v.uv });
-    return mesh.addVertex(rotatedV);
+  const addVertex = (v: Vertex): number => {
+    return mesh.addVertex(v);
   };
 
   const addFace = (vertIds: number[], uvs: { u: number; v: number }[], matIndex: number) => {
@@ -63,7 +61,7 @@ export function createArrow(options: CreateArrowOptions = {}): EditableMesh {
       const v = h / heightSegments;
       
       const vertex = new Vertex(x, y, z, { uv: { u, v } });
-      row.push(addRotatedVertex(vertex));
+      row.push(addVertex(vertex));
     }
     shaftGrid.push(row);
   }
@@ -88,7 +86,7 @@ export function createArrow(options: CreateArrowOptions = {}): EditableMesh {
   // --- Head ---
   const headBaseIds = shaftGrid[heightSegments];
   const tipVertex = new Vertex(0, shaftLength + headLength, 0, { uv: { u: 0.5, v: 1 } });
-  const tipId = addRotatedVertex(tipVertex);
+  const tipId = addVertex(tipVertex);
 
   for (let r = 0; r < radialSegments; r++) {
     const r1 = (r + 1) % radialSegments;
@@ -104,12 +102,12 @@ export function createArrow(options: CreateArrowOptions = {}): EditableMesh {
 
   // --- Base Cap ---
   const baseCenterVertex = new Vertex(0, 0, 0, { uv: { u: 0.5, v: 0.5 } });
-  const baseCenterId = addRotatedVertex(baseCenterVertex);
+  const baseCenterId = addVertex(baseCenterVertex);
   for (let r = 0; r < radialSegments; r++) {
     const r1 = (r + 1) % radialSegments;
     const v1 = shaftGrid[0][r1];
     const v2 = shaftGrid[0][r];
-    const getUv = (v: Vertex) => ({ u: (v.x / shaftRadius + 1) / 2, v: (v.y / shaftRadius + 1) / 2 });
+    const getUv = (v: Vertex) => ({ u: (v.x / shaftRadius + 1) / 2, v: (v.z / shaftRadius + 1) / 2 });
     const uvs = [getUv(mesh.getVertex(v1)!), getUv(mesh.getVertex(v2)!), { u: 0.5, v: 0.5 }];
     addFace([v1, v2, baseCenterId], uvs, 0);
   }

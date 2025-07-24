@@ -46,50 +46,38 @@ export function createCone(options: CreateConeOptions = {}): EditableMesh {
   const offsetY = normalizedOptions.centered ? 0 : normalizedOptions.height / 2;
   const halfHeight = normalizedOptions.height / 2;
 
-  const grid: number[][] = [];
+  const apex = createVertex(mesh, {
+    x: 0,
+    y: offsetY + halfHeight,
+    z: 0,
+    uv: { u: 0.5, v: 1 }
+  }, context);
 
-  // Create vertices with UVs
-  for (let h = 0; h <= normalizedOptions.heightSegments; h++) {
-    const y = offsetY + (h / normalizedOptions.heightSegments - 0.5) * normalizedOptions.height;
-    const row: number[] = [];
-    
-    for (let r = 0; r <= normalizedOptions.radialSegments; r++) {
-      const theta = (r / normalizedOptions.radialSegments) * Math.PI * 2;
-      
-      // Interpolate radius from base to tip
-      const radius = normalizedOptions.radius * (1 - h / normalizedOptions.heightSegments);
-      
-      const x = Math.cos(theta) * radius;
-      const z = Math.sin(theta) * radius;
-      const u = r / normalizedOptions.radialSegments;
-      const v = h / normalizedOptions.heightSegments;
-      
-      const uv = { u, v };
-      
-      const result = createVertex(mesh, {
-        x,
-        y,
-        z,
-        uv
-      }, context);
-      row.push(result.id);
-    }
-    grid.push(row);
+  const baseVertices: number[] = [];
+  for (let r = 0; r < normalizedOptions.radialSegments; r++) {
+    const theta = (r / normalizedOptions.radialSegments) * Math.PI * 2;
+    const x = Math.cos(theta) * normalizedOptions.radius;
+    const z = Math.sin(theta) * normalizedOptions.radius;
+    const u = r / normalizedOptions.radialSegments;
+    const v = 0;
+
+    const result = createVertex(mesh, {
+      x,
+      y: offsetY - halfHeight,
+      z,
+      uv: { u, v }
+    }, context);
+    baseVertices.push(result.id);
   }
 
   // Create side faces
-  for (let h = 0; h < normalizedOptions.heightSegments; h++) {
-    for (let r = 0; r < normalizedOptions.radialSegments; r++) {
-      const v1 = grid[h][r];
-      const v2 = grid[h + 1][r];
-      const v3 = grid[h + 1][r + 1];
-      const v4 = grid[h][r + 1];
-      
-      createFace(mesh, {
-        vertexIds: [v1, v2, v3, v4],
-        materialId: normalizedOptions.materialId
-      }, context);
-    }
+  for (let r = 0; r < normalizedOptions.radialSegments; r++) {
+    const v1 = baseVertices[r];
+    const v2 = baseVertices[(r + 1) % normalizedOptions.radialSegments];
+    createFace(mesh, {
+      vertexIds: [v1, v2, apex.id],
+      materialId: normalizedOptions.materialId
+    }, context);
   }
 
   // Create base cap if not open-ended
@@ -102,9 +90,8 @@ export function createCone(options: CreateConeOptions = {}): EditableMesh {
     }, context);
 
     for (let r = 0; r < normalizedOptions.radialSegments; r++) {
-      const v1 = grid[0][r];
-      const v2 = grid[0][r + 1];
-      
+      const v1 = baseVertices[r];
+      const v2 = baseVertices[(r + 1) % normalizedOptions.radialSegments];
       createFace(mesh, {
         vertexIds: [baseCenterVertex.id, v2, v1],
         materialId: normalizedOptions.materialId

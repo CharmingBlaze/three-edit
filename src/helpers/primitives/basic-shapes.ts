@@ -8,6 +8,8 @@ import { PrimitiveResult } from './types';
 import * as builders from './geometry-builders';
 import * as transforms from './transform-helpers';
 import * as uvs from './uv-generators';
+import { Vertex } from '../../core/Vertex';
+import { Face } from '../../core/Face';
 
 /**
  * Create a simple cube

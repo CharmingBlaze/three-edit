@@ -78,7 +78,7 @@ export function insetFaces(
     validate = true,
     repair = false,
     preserveMaterials = true,
-    mergeVertices = true,
+    mergeVertices = false,
     materialIndex,
     individual = false
   } = options;
@@ -105,11 +105,10 @@ export function insetFaces(
       };
     }
 
-    const inputStats = {
-      inputVertices: mesh.vertices.length,
-      inputEdges: mesh.edges.length,
-      inputFaces: mesh.faces.length
-    };
+    // Store input statistics before processing
+    const inputVertices = mesh.vertices.length;
+    const inputEdges = mesh.edges.length;
+    const inputFaces = mesh.faces.length;
 
     let verticesCreated = 0;
     let edgesCreated = 0;
@@ -161,7 +160,9 @@ export function insetFaces(
       facesCreated,
       validation,
       statistics: {
-        ...inputStats,
+        inputVertices,
+        inputEdges,
+        inputFaces,
         outputVertices: mesh.vertices.length,
         outputEdges: mesh.edges.length,
         outputFaces: mesh.faces.length,
@@ -205,8 +206,10 @@ function insetSingleFace(
   let edgesCreated = 0;
   let facesCreated = 0;
 
-  // Calculate face normal
-  const faceNormal = calculateFaceNormal(face, mesh);
+  // Calculate face normal if not present
+  if (!face.normal) {
+    face.normal = calculateFaceNormal(face, mesh);
+  }
 
   // Create inset vertices by moving along face edges inward
   const insetVertices: number[] = [];
@@ -222,8 +225,8 @@ function insetSingleFace(
     if (!currentVertex || !nextVertex || !prevVertex) continue;
 
     // Calculate edge vectors
-    const edge1 = new Vector3().subVectors(currentVertex.toVector3(), prevVertex.toVector3()).normalize();
-    const edge2 = new Vector3().subVectors(nextVertex.toVector3(), currentVertex.toVector3()).normalize();
+    const edge1 = new Vector3().subVectors(currentVertex.getPosition(), prevVertex.getPosition()).normalize();
+    const edge2 = new Vector3().subVectors(nextVertex.getPosition(), currentVertex.getPosition()).normalize();
     
     // Calculate inward direction (average of edge normals)
     const inwardDir = new Vector3().addVectors(edge1, edge2).normalize();
@@ -231,12 +234,12 @@ function insetSingleFace(
     // Project inward direction onto face plane
     const projectedInward = new Vector3().subVectors(
       inwardDir, 
-      faceNormal.clone().multiplyScalar(inwardDir.dot(faceNormal))
+      face.normal.clone().multiplyScalar(inwardDir.dot(face.normal))
     ).normalize();
     
     // Create inset vertex
     const insetPosition = new Vector3().addVectors(
-      currentVertex.toVector3(),
+      currentVertex.getPosition(),
       projectedInward.multiplyScalar(distance)
     );
 
@@ -247,6 +250,13 @@ function insetSingleFace(
       insetVertex.uv = { u: currentVertex.uv.u, v: currentVertex.uv.v };
     } else {
       insetVertex.uv = { u: 0, v: 0 };
+    }
+    
+    // Copy normal from original vertex or use face normal
+    if (currentVertex.normal) {
+      insetVertex.normal = currentVertex.normal.clone();
+    } else {
+      insetVertex.normal = face.normal.clone();
     }
     
     const newVertexIndex = mesh.addVertex(insetVertex);
@@ -285,40 +295,24 @@ function insetSingleFace(
       const originalV2 = face.vertices[nextI];
       const insetV1 = insetVertices[i];
       const insetV2 = insetVertices[nextI];
-
-      // Create edges for the connecting face
-      const connectingFaceEdges: number[] = [];
       
-      // Edge 1: originalV1 to originalV2
-      const edge1 = new Edge(originalV1, originalV2);
-      const edge1Index = mesh.addEdge(edge1);
-      connectingFaceEdges.push(edge1Index);
-      edgesCreated++;
-      
-      // Edge 2: originalV2 to insetV2
+      // Create connecting edges if they don't exist
+      const edge1 = new Edge(originalV1, insetV1);
       const edge2 = new Edge(originalV2, insetV2);
+      const edge1Index = mesh.addEdge(edge1);
       const edge2Index = mesh.addEdge(edge2);
-      connectingFaceEdges.push(edge2Index);
-      edgesCreated++;
+      edgesCreated += 2;
       
-      // Edge 3: insetV2 to insetV1
-      const edge3 = new Edge(insetV2, insetV1);
-      const edge3Index = mesh.addEdge(edge3);
-      connectingFaceEdges.push(edge3Index);
-      edgesCreated++;
+      // Create quad face
+      const connectingFace = new Face(
+        [originalV1, originalV2, insetV2, insetV1],
+        [face.edges[i], edge2Index, mesh.edges.length - 1, edge1Index],
+        {
+          materialIndex: preserveMaterials ? face.materialIndex : materialIndex
+        }
+      );
       
-      // Edge 4: insetV1 to originalV1
-      const edge4 = new Edge(insetV1, originalV1);
-      const edge4Index = mesh.addEdge(edge4);
-      connectingFaceEdges.push(edge4Index);
-      edgesCreated++;
-
-      // Create connecting face with proper winding order and edge associations
-      const connectingFace = new Face([originalV1, originalV2, insetV2, insetV1], connectingFaceEdges, {
-        materialIndex: preserveMaterials ? face.materialIndex : materialIndex
-      });
-      
-      // Calculate and assign normal to connecting face
+      // Calculate and assign normal
       const connectingFaceNormal = calculateFaceNormal(connectingFace, mesh);
       connectingFace.normal = connectingFaceNormal;
       
