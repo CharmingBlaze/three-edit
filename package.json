@@ -1,0 +1,39 @@
+{
+  "name": "three-edit",
+  "version": "0.1.0",
+  "description": "Headless, modular editing core for building Three.js-based 3D editors (half-edge, attributes, ops, adapters)",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -w -p tsconfig.build.json",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "three": ">=0.155.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^7.18.0",
+    "@types/node": "^20.12.7",
+    "@types/three": "^0.169.0",
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5",
+    "three": "^0.169.0"
+  }
+}
