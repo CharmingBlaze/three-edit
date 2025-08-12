@@ -66,16 +66,16 @@ export function createIcosahedron(options: CreateIcosahedronOptions = {}): Edita
 
   // Create the 20 triangular faces (icosahedrons naturally have triangular faces)
   const faceDefinitions = [
-    [vertices[0], vertices[1], vertices[4]], [vertices[0], vertices[4], vertices[8]],
-    [vertices[0], vertices[8], vertices[9]], [vertices[0], vertices[9], vertices[1]],
-    [vertices[1], vertices[9], vertices[6]], [vertices[1], vertices[6], vertices[4]],
-    [vertices[4], vertices[6], vertices[10]], [vertices[4], vertices[10], vertices[8]],
-    [vertices[8], vertices[10], vertices[2]], [vertices[8], vertices[2], vertices[9]],
-    [vertices[9], vertices[2], vertices[6]], [vertices[6], vertices[2], vertices[10]],
-    [vertices[3], vertices[7], vertices[5]], [vertices[3], vertices[5], vertices[11]],
-    [vertices[3], vertices[11], vertices[7]], [vertices[7], vertices[11], vertices[5]],
-    [vertices[5], vertices[7], vertices[1]], [vertices[5], vertices[1], vertices[0]],
-    [vertices[5], vertices[0], vertices[11]], [vertices[11], vertices[0], vertices[7]]
+    [vertices[0]!, vertices[1]!, vertices[4]!], [vertices[0]!, vertices[4]!, vertices[8]!],
+    [vertices[0]!, vertices[8]!, vertices[9]!], [vertices[0]!, vertices[9]!, vertices[1]!],
+    [vertices[1]!, vertices[9]!, vertices[6]!], [vertices[1]!, vertices[6]!, vertices[4]!],
+    [vertices[4]!, vertices[6]!, vertices[10]!], [vertices[4]!, vertices[10]!, vertices[8]!],
+    [vertices[8]!, vertices[10]!, vertices[2]!], [vertices[8]!, vertices[2]!, vertices[9]!],
+    [vertices[9]!, vertices[2]!, vertices[6]!], [vertices[6]!, vertices[2]!, vertices[10]!],
+    [vertices[3]!, vertices[7]!, vertices[5]!], [vertices[3]!, vertices[5]!, vertices[11]!],
+    [vertices[3]!, vertices[11]!, vertices[7]!], [vertices[7]!, vertices[11]!, vertices[5]!],
+    [vertices[5]!, vertices[7]!, vertices[1]!], [vertices[5]!, vertices[1]!, vertices[0]!],
+    [vertices[5]!, vertices[0]!, vertices[11]!], [vertices[11]!, vertices[0]!, vertices[7]!]
   ];
 
   for (const vertexIds of faceDefinitions) {

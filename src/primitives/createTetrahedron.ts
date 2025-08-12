@@ -52,10 +52,10 @@ export function createTetrahedron(options: CreateTetrahedronOptions = {}): Edita
 
   // Create the 4 triangular faces
   const faceDefinitions = [
-    [vertices[0], vertices[1], vertices[2]], // base
-    [vertices[0], vertices[2], vertices[3]], // side 1
-    [vertices[0], vertices[3], vertices[1]], // side 2
-    [vertices[1], vertices[3], vertices[2]]  // side 3
+    [vertices[0]!, vertices[1]!, vertices[2]!], // base
+    [vertices[0]!, vertices[2]!, vertices[3]!], // side 1
+    [vertices[0]!, vertices[3]!, vertices[1]!], // side 2
+    [vertices[1]!, vertices[3]!, vertices[2]!]  // side 3
   ];
 
   for (const vertexIds of faceDefinitions) {

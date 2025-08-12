@@ -79,10 +79,10 @@ export function createTorus(options: CreateTorusOptions = {}): EditableMesh {
   // Create faces
   for (let i = 0; i < normalizedOptions.radialSegments; i++) {
     for (let j = 0; j < normalizedOptions.tubularSegments; j++) {
-      const v1 = grid[i][j];
-      const v2 = grid[i + 1][j];
-      const v3 = grid[i + 1][j + 1];
-      const v4 = grid[i][j + 1];
+      const v1 = grid[i]![j]!;
+      const v2 = grid[i + 1]![j]!;
+      const v3 = grid[i + 1]![j + 1]!;
+      const v4 = grid[i]![j + 1]!;
       
       createFace(mesh, {
         vertexIds: [v1, v2, v3, v4],

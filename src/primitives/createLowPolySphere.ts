@@ -64,10 +64,10 @@ export function createLowPolySphere(options: CreateLowPolySphereOptions = {}): E
   // Create quad faces
   for (let ring = 0; ring < rings; ring++) {
     for (let i = 0; i < segments; i++) {
-      const v1 = grid[ring][i];
-      const v2 = grid[ring][i + 1];
-      const v3 = grid[ring + 1][i + 1];
-      const v4 = grid[ring + 1][i];
+      const v1 = grid[ring]![i]!;
+      const v2 = grid[ring]![i + 1]!;
+      const v3 = grid[ring + 1]![i + 1]!;
+      const v4 = grid[ring + 1]![i]!;
 
       const edge1 = addEdge(v1, v2);
       const edge2 = addEdge(v2, v3);

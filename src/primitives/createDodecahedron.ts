@@ -35,9 +35,9 @@ export function createDodecahedron(options: CreateDodecahedronOptions = {}): Edi
   ];
 
   const vertexIds = vertices.map(v => {
-    const x = v[0] * radius;
-    const y = v[1] * radius;
-    const z = v[2] * radius;
+    const x = v[0]! * radius;
+    const y = v[1]! * radius;
+    const z = v[2]! * radius;
     const u = Math.atan2(z, x) / (2 * Math.PI) + 0.5;
     const v_uv = Math.asin(y / radius) / Math.PI + 0.5;
     
@@ -50,17 +50,17 @@ export function createDodecahedron(options: CreateDodecahedronOptions = {}): Edi
     [7, 6, 18, 19, 15], [15, 19, 5, 14, 14], [5, 9, 1, 12, 14],
     [1, 17, 13, 12, 12], [12, 13, 17, 2, 10], [2, 16, 0, 8, 10],
     [0, 12, 1, 9, 8], [8, 9, 5, 14, 4], [4, 18, 6, 10, 8],
-  ].map(f => [f[0], f[1], f[2], f[3], f[4]]);
+  ].map(f => [f[0]!, f[1]!, f[2]!, f[3]!, f[4]!]);
 
   const edgeMap: { [key: string]: number } = {};
 
   for (const faceIndices of faces) {
-    const faceVertexIds = faceIndices.map(i => vertexIds[i]);
+    const faceVertexIds = faceIndices.map(i => vertexIds[i]!);
     const edgeIds: number[] = [];
 
     for (let i = 0; i < faceVertexIds.length; i++) {
-      const id1 = faceVertexIds[i];
-      const id2 = faceVertexIds[(i + 1) % faceVertexIds.length];
+      const id1 = faceVertexIds[i]!;
+      const id2 = faceVertexIds[(i + 1) % faceVertexIds.length]!;
       const key = id1 < id2 ? `${id1}-${id2}` : `${id2}-${id1}`;
       if (edgeMap[key] === undefined) {
         edgeMap[key] = mesh.addEdge(new Edge(id1, id2));

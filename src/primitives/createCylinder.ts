@@ -98,8 +98,8 @@ export function createCylinder(options: CreateCylinderOptions = {}): EditableMes
       }, context);
 
       for (let r = 0; r < normalizedOptions.radialSegments; r++) {
-        const v1 = grid[0][r];
-        const v2 = grid[0][r + 1];
+        const v1 = grid[0]![r]!;
+        const v2 = grid[0]![r + 1]!;
         
         createFace(mesh, {
           vertexIds: [bottomCenterVertex.id, v1, v2],
@@ -118,8 +118,8 @@ export function createCylinder(options: CreateCylinderOptions = {}): EditableMes
       }, context);
 
       for (let r = 0; r < normalizedOptions.radialSegments; r++) {
-        const v1 = grid[normalizedOptions.heightSegments][r];
-        const v2 = grid[normalizedOptions.heightSegments][r + 1];
+        const v1 = grid[normalizedOptions.heightSegments]![r]!;
+        const v2 = grid[normalizedOptions.heightSegments]![r + 1]!;
         
         createFace(mesh, {
           vertexIds: [topCenterVertex.id, v2, v1],
@@ -133,9 +133,9 @@ export function createCylinder(options: CreateCylinderOptions = {}): EditableMes
   mesh.faces.forEach(face => {
     if (face.normal) {
       // Recalculate normal to ensure it's correct
-      const v1 = mesh.getVertex(face.vertices[0]);
-      const v2 = mesh.getVertex(face.vertices[1]);
-      const v3 = mesh.getVertex(face.vertices[2]);
+      const v1 = mesh.getVertex(face.vertices[0]!);
+      const v2 = mesh.getVertex(face.vertices[1]!);
+      const v3 = mesh.getVertex(face.vertices[2]!);
       
       if (v1 && v2 && v3) {
         const edge1 = new Vector3(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);

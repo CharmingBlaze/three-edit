@@ -71,7 +71,7 @@ export function createCircle(options: CreateCircleOptions = {}): EditableMesh {
   // Create triangle faces (triangle fan)
   for (let i = 0; i < perimeterVertices.length - 1; i++) {
     createFace(mesh, {
-      vertexIds: [centerVertex.id, perimeterVertices[i], perimeterVertices[i + 1]],
+      vertexIds: [centerVertex.id, perimeterVertices[i]!, perimeterVertices[i + 1]!],
       materialId: normalizedOptions.materialId
     }, context);
   }

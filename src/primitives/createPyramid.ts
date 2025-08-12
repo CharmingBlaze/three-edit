@@ -73,12 +73,12 @@ export function createPyramid(options: CreatePyramidOptions = {}): EditableMesh 
   // Create faces
   const faceDefinitions = [
     // Base face (quad)
-    [vertices[0], vertices[1], vertices[2], vertices[3]],
+    [vertices[0]!, vertices[1]!, vertices[2]!, vertices[3]!],
     // Side faces (triangles)
-    [vertices[0], vertices[1], vertices[4]], // front
-    [vertices[1], vertices[2], vertices[4]], // right
-    [vertices[2], vertices[3], vertices[4]], // back
-    [vertices[3], vertices[0], vertices[4]]  // left
+    [vertices[0]!, vertices[1]!, vertices[4]!], // front
+    [vertices[1]!, vertices[2]!, vertices[4]!], // right
+    [vertices[2]!, vertices[3]!, vertices[4]!], // back
+    [vertices[3]!, vertices[0]!, vertices[4]!]  // left
   ];
 
   for (const vertexIds of faceDefinitions) {

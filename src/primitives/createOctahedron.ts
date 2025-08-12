@@ -55,14 +55,14 @@ export function createOctahedron(options: CreateOctahedronOptions = {}): Editabl
 
   // Create the 8 triangular faces (octahedrons naturally have triangular faces)
   const faceDefinitions = [
-    [vertices[0], vertices[2], vertices[4]], // +X, +Y, +Z
-    [vertices[0], vertices[4], vertices[3]], // +X, +Z, -Y
-    [vertices[0], vertices[3], vertices[5]], // +X, -Y, -Z
-    [vertices[0], vertices[5], vertices[2]], // +X, -Z, +Y
-    [vertices[1], vertices[2], vertices[5]], // -X, +Y, -Z
-    [vertices[1], vertices[5], vertices[3]], // -X, -Z, -Y
-    [vertices[1], vertices[3], vertices[4]], // -X, -Y, +Z
-    [vertices[1], vertices[4], vertices[2]]  // -X, +Z, +Y
+    [vertices[0]!, vertices[2]!, vertices[4]!], // +X, +Y, +Z
+    [vertices[0]!, vertices[4]!, vertices[3]!], // +X, +Z, -Y
+    [vertices[0]!, vertices[3]!, vertices[5]!], // +X, -Y, -Z
+    [vertices[0]!, vertices[5]!, vertices[2]!], // +X, -Z, +Y
+    [vertices[1]!, vertices[2]!, vertices[5]!], // -X, +Y, -Z
+    [vertices[1]!, vertices[5]!, vertices[3]!], // -X, -Z, -Y
+    [vertices[1]!, vertices[3]!, vertices[4]!], // -X, -Y, +Z
+    [vertices[1]!, vertices[4]!, vertices[2]!]  // -X, +Z, +Y
   ];
 
   for (const vertexIds of faceDefinitions) {

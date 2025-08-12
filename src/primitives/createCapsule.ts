@@ -74,16 +74,16 @@ export function createCapsule(options: CreateCapsuleOptions = {}): EditableMesh 
   // Create faces
   for (let i = 0; i < totalSegments; i++) {
     for (let j = 0; j < radialSegments; j++) {
-      const v1 = grid[i][j];
-      const v2 = grid[i + 1][j];
-      const v3 = grid[i + 1][j + 1];
-      const v4 = grid[i][j + 1];
+      const v1 = grid[i]![j]!;
+      const v2 = grid[i + 1]![j]!;
+      const v3 = grid[i + 1]![j + 1]!;
+      const v4 = grid[i]![j + 1]!;
       const faceVertexIds = [v1, v2, v3, v4];
 
       const edgeIds: number[] = [];
       for (let k = 0; k < faceVertexIds.length; k++) {
-        const id1 = faceVertexIds[k];
-        const id2 = faceVertexIds[(k + 1) % faceVertexIds.length];
+        const id1 = faceVertexIds[k]!;
+        const id2 = faceVertexIds[(k + 1) % faceVertexIds.length]!;
         const key = id1 < id2 ? `${id1}-${id2}` : `${id2}-${id1}`;
         if (edgeMap[key] === undefined) {
           edgeMap[key] = mesh.addEdge(new Edge(id1, id2));
