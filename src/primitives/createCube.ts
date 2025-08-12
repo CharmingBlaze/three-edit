@@ -108,37 +108,37 @@ export function createCube(options: CreateCubeOptions = {}): EditableMesh {
 
   // Front face (Z = depth/2) - quad
   createFace(mesh, {
-    vertexIds: [vertices[0], vertices[1], vertices[2], vertices[3]],
+    vertexIds: [vertices[0]!, vertices[1]!, vertices[2]!, vertices[3]!],
     materialId: faceMaterialId
   }, context);
 
   // Back face (Z = -depth/2) - quad
   createFace(mesh, {
-    vertexIds: [vertices[4], vertices[7], vertices[6], vertices[5]],
+    vertexIds: [vertices[4]!, vertices[7]!, vertices[6]!, vertices[5]!],
     materialId: faceMaterialId
   }, context);
 
   // Left face (X = -width/2) - quad
   createFace(mesh, {
-    vertexIds: [vertices[4], vertices[0], vertices[3], vertices[7]],
+    vertexIds: [vertices[4]!, vertices[0]!, vertices[3]!, vertices[7]!],
     materialId: faceMaterialId
   }, context);
 
   // Right face (X = width/2) - quad
   createFace(mesh, {
-    vertexIds: [vertices[1], vertices[5], vertices[6], vertices[2]],
+    vertexIds: [vertices[1]!, vertices[5]!, vertices[6]!, vertices[2]!],
     materialId: faceMaterialId
   }, context);
 
   // Top face (Y = height/2) - quad
   createFace(mesh, {
-    vertexIds: [vertices[3], vertices[2], vertices[6], vertices[7]],
+    vertexIds: [vertices[3]!, vertices[2]!, vertices[6]!, vertices[7]!],
     materialId: faceMaterialId
   }, context);
 
   // Bottom face (Y = -height/2) - quad
   createFace(mesh, {
-    vertexIds: [vertices[4], vertices[5], vertices[1], vertices[0]],
+    vertexIds: [vertices[4]!, vertices[5]!, vertices[1]!, vertices[0]!],
     materialId: faceMaterialId
   }, context);
 

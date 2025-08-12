@@ -172,11 +172,17 @@ export class Face {
     
     // Get previous vertex (wrap around if needed)
     const prevIndex = (index - 1 + vertexCount) % vertexCount;
-    result.push(this.vertices[prevIndex]);
+    const prevVertex = this.vertices[prevIndex];
+    if (prevVertex !== undefined) {
+      result.push(prevVertex);
+    }
     
     // Get next vertex (wrap around if needed)
     const nextIndex = (index + 1) % vertexCount;
-    result.push(this.vertices[nextIndex]);
+    const nextVertex = this.vertices[nextIndex];
+    if (nextVertex !== undefined) {
+      result.push(nextVertex);
+    }
     
     return result;
   }
@@ -188,7 +194,8 @@ export class Face {
    */
   getVertexAt(index: number): number {
     if (index >= 0 && index < this.vertices.length) {
-      return this.vertices[index];
+      const vertex = this.vertices[index];
+      return vertex !== undefined ? vertex : -1;
     }
     return -1;
   }
@@ -200,7 +207,8 @@ export class Face {
    */
   getEdgeAt(index: number): number {
     if (index >= 0 && index < this.edges.length) {
-      return this.edges[index];
+      const edge = this.edges[index];
+      return edge !== undefined ? edge : -1;
     }
     return -1;
   }
@@ -216,7 +224,9 @@ export class Face {
     for (let i = 0; i < vertexCount; i++) {
       const v1 = this.vertices[i];
       const v2 = this.vertices[(i + 1) % vertexCount];
-      pairs.push([v1, v2]);
+      if (v1 !== undefined && v2 !== undefined) {
+        pairs.push([v1, v2]);
+      }
     }
     
     return pairs;

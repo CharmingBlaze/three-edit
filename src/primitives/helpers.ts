@@ -373,11 +373,11 @@ export function createFacesFromGrid(
   const faceIds: number[] = [];
   
   for (let y = 0; y < grid.length - 1; y++) {
-    for (let x = 0; x < grid[y].length - 1; x++) {
-      const v1 = grid[y][x];
-      const v2 = grid[y][x + 1];
-      const v3 = grid[y + 1][x + 1];
-      const v4 = grid[y + 1][x];
+    for (let x = 0; x < grid[y]!.length - 1; x++) {
+      const v1 = grid[y]![x]!;
+      const v2 = grid[y]![x + 1]!;
+      const v3 = grid[y + 1]![x + 1]!;
+      const v4 = grid[y + 1]![x]!;
       
       // Create a single quad face instead of two triangles
       const face = createFace(mesh, {
