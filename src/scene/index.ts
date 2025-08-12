@@ -54,4 +54,9 @@ export {
 } from './toThreeScene';
 
 // Re-export Three.js types for convenience
-export type { Matrix4, Vector3, Quaternion, Euler } from 'three'; 
+export type { Matrix4, Vector3, Quaternion, Euler } from 'three';
+
+// New exports from origin/master
+export * from "./Materials";
+export * from "./SelectionSets";
+export * from "./Modifiers";

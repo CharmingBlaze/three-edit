@@ -4,6 +4,7 @@ import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 
 export default defineConfig({
+  root: "demo",
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -37,5 +38,15 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       reportsDirectory: './coverage',
     },
+  },
+  server: {
+    port: 5173,
+    // Allow Vite to pick the next available port instead of exiting.
+    strictPort: false,
+  },
+  preview: {
+    port: 5173,
+    // Allow preview to pick the next available port as well.
+    strictPort: false,
   },
 });

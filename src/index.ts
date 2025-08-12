@@ -175,3 +175,10 @@ export { queryTopology } from './query/queryTopology';
 
 // Helper Functions (from geometry module)
 export { mergeVertices, triangulatePolygon, subdivideFace, createVertexGrid, createFacesFromGrid } from './geometry';
+
+// New module exports for compatibility
+export * as core from "./core";
+export * as ops from "./ops";
+export * as io from "./io";
+export * as scene from "./scene";
+export * as easy from "./easy";

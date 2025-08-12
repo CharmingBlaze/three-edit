@@ -1,4 +1,7 @@
 import { SceneNode } from './SceneNode';
+import { EditableMesh } from "../core/topology/EditableMesh";
+
+export type NodeId = number;
 
 export interface SceneGraphConfig {
   name?: string;
@@ -320,4 +323,4 @@ export class SceneGraph {
     // Remove this node
     this._nodes.delete(node.id);
   }
-} 
+}

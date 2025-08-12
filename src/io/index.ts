@@ -23,4 +23,9 @@ export * from './stl';
 // 3DS format support
 export * from './3ds';
 
-// GLTF system - using legacy for stability 
+// GLTF system - using legacy for stability
+
+// New module exports from origin/master
+export * as three from "./three";
+export * as export_ from "./export";
+export * as import_ from "./import";
