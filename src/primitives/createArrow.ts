@@ -66,6 +66,7 @@ export function createArrow(options: CreateArrowOptions = {}): EditableMesh {
     shaftGrid.push(row);
   }
 
+  // Create quad faces for shaft
   for (let h = 0; h < heightSegments; h++) {
     for (let r = 0; r < radialSegments; r++) {
       const r1 = (r + 1) % radialSegments;

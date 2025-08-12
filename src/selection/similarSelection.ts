@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Selection } from './Selection.ts';
-import { SimilarSelectionOptions } from './types.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Selection } from './Selection';
+import { SimilarSelectionOptions } from './types';
 
 /**
  * Select similar elements

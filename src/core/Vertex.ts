@@ -1,8 +1,10 @@
 import { Vector3 } from 'three';
 import { UVCoord } from '../uv/types';
+import { UserData, VertexOptions } from '../types/core';
 
 /**
- * Vertex data structure
+ * Vertex data structure for backward compatibility
+ * @deprecated Use VertexOptions instead
  */
 export interface VertexData {
   /** Vertex position */
@@ -16,11 +18,12 @@ export interface VertexData {
   /** Vertex color */
   color?: Vector3;
   /** Custom user data */
-  userData?: Record<string, any>;
+  userData?: UserData;
 }
 
 /**
  * Vertex class representing a 3D point in space
+ * A vertex is the fundamental building block of a mesh, containing position and optional attributes
  */
 export class Vertex {
   public x: number;
@@ -29,16 +32,16 @@ export class Vertex {
   public normal?: Vector3;
   public uv?: UVCoord;
   public color?: Vector3;
-  public userData: Record<string, any>;
+  public userData: UserData;
 
-  constructor(x: number, y: number, z: number, data?: Partial<VertexData>) {
+  constructor(x: number, y: number, z: number, options?: Partial<VertexOptions>) {
     this.x = x;
     this.y = y;
     this.z = z;
-    this.normal = data?.normal;
-    this.uv = data?.uv;
-    this.color = data?.color;
-    this.userData = data?.userData || {};
+    this.normal = options?.normal;
+    this.uv = options?.uv;
+    this.color = options?.color;
+    this.userData = options?.userData || {};
   }
 
   /**

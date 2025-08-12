@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { EditableMesh, Vertex } from '../../core/index.ts';
+import { EditableMesh, Vertex } from '../../core/index';
 import { MemoryOptimizationOptions, VertexOptimizationResult } from './types';
 
 /**

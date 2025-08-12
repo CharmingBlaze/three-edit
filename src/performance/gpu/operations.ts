@@ -1,4 +1,4 @@
-import { EditableMesh } from '../../core/index.ts';
+import { EditableMesh } from '../../core/index';
 import { GPUOperationResult, TransformOperation, NoiseType, NoiseOptions } from './types';
 
 /**

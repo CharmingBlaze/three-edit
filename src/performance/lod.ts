@@ -1,5 +1,5 @@
 // Legacy exports for backward compatibility
-import { EditableMesh } from '../core/index.ts';
+import { EditableMesh } from '../core/index';
 import { LODLevel, LODOptions, LODSelectionOptions, LODStatistics } from './lod/types';
 import { simplifyMeshForLOD } from './lod/meshSimplification';
 import { selectLODLevel, calculateOptimalDistance, calculateErrorMetric } from './lod/selection';

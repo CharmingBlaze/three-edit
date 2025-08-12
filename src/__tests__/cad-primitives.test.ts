@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
-import { createWedge } from '../primitives/createWedge.ts';
-import { createNGon } from '../primitives/createNGon.ts';
-import { createPipe } from '../primitives/createPipe.ts';
-import { createRoundedBox } from '../primitives/createRoundedBox.ts';
-import { validateMesh } from '../validation/validateMesh.ts';
-import { toBufferGeometry } from '../conversion/toBufferGeometry.ts';
+import { createWedge } from '../primitives/createWedge';
+import { createNGon } from '../primitives/createNGon';
+import { createPipe } from '../primitives/createPipe';
+import { createRoundedBox } from '../primitives/createRoundedBox';
+import { validateMesh } from '../validation/validateMesh';
+import { toBufferGeometry } from '../conversion/toBufferGeometry';
 
 describe('CAD Primitives', () => {
   describe('createWedge', () => {

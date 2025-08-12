@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../../core/index.ts';
+import { EditableMesh } from '../../core/index';
 import { LODLevel, LODSelectionOptions } from './types';
 
 /**

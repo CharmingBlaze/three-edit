@@ -1,6 +1,6 @@
 import { Quaternion, Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Selection } from '../selection/Selection.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Selection } from '../selection/Selection';
 import { getAffectedVertices, calculatePivotPoint, TransformOptions } from './transform';
 
 /**

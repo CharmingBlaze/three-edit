@@ -1,7 +1,10 @@
 import { Vector3 } from 'three';
+import { UVCoord } from '../uv/types';
+import { UserData, FaceOptions } from '../types/core';
 
 /**
  * Represents a 2D UV coordinate
+ * @deprecated Use UVCoord from '../uv/types' instead
  */
 export interface UV {
   u: number;
@@ -9,7 +12,17 @@ export interface UV {
 }
 
 /**
+ * Face types for better categorization
+ */
+export enum FaceType {
+  TRIANGLE = 'triangle',
+  QUAD = 'quad',
+  NGON = 'ngon'
+}
+
+/**
  * Represents a face in the mesh, defined by vertices and edges
+ * Supports triangles (3 vertices), quads (4 vertices), and n-gons (5+ vertices)
  */
 export class Face {
   /** Indices of vertices that form the face */
@@ -19,7 +32,7 @@ export class Face {
   edges: number[];
 
   /** UV coordinates for each vertex in the face */
-  faceVertexUvs: UV[];
+  faceVertexUvs: UVCoord[];
 
   /** Material index for the face */
   materialIndex: number;
@@ -28,23 +41,18 @@ export class Face {
   normal?: Vector3;
 
   /** Custom user data for storing additional information */
-  userData: Record<string, any>;
+  userData: UserData;
 
   /**
    * Creates a new Face
    * @param vertices Indices of vertices that form the face
    * @param edges Indices of edges that form the face
-   * @param options Optional parameters
+   * @param options Optional parameters for face creation
    */
   constructor(
     vertices: number[] = [],
     edges: number[] = [],
-    options: {
-      faceVertexUvs?: UV[];
-      materialIndex?: number;
-      normal?: Vector3;
-      userData?: Record<string, any>;
-    } = {}
+    options: FaceOptions = {}
   ) {
     this.vertices = vertices;
     this.edges = edges;
@@ -52,6 +60,67 @@ export class Face {
     this.materialIndex = options.materialIndex ?? 0;
     this.normal = options.normal;
     this.userData = options.userData || {};
+  }
+  
+  /**
+   * Gets the type of face based on vertex count
+   * @returns FaceType enum value
+   */
+  getFaceType(): FaceType {
+    const vertexCount = this.vertices.length;
+    if (vertexCount === 3) return FaceType.TRIANGLE;
+    if (vertexCount === 4) return FaceType.QUAD;
+    return FaceType.NGON;
+  }
+
+  /**
+   * Gets the number of vertices in the face
+   * @returns Number of vertices
+   */
+  getVertexCount(): number {
+    return this.vertices.length;
+  }
+
+  /**
+   * Checks if the face is a triangle
+   * @returns True if the face has exactly 3 vertices
+   */
+  isTriangle(): boolean {
+    return this.vertices.length === 3;
+  }
+
+  /**
+   * Checks if the face is a quad
+   * @returns True if the face has exactly 4 vertices
+   */
+  isQuad(): boolean {
+    return this.vertices.length === 4;
+  }
+
+  /**
+   * Checks if the face is an n-gon (5+ vertices)
+   * @returns True if the face has 5 or more vertices
+   */
+  isNgon(): boolean {
+    return this.vertices.length >= 5;
+  }
+
+  /**
+   * Validates that the face has valid topology
+   * @returns True if the face is valid
+   */
+  isValid(): boolean {
+    // Must have at least 3 vertices
+    if (this.vertices.length < 3) return false;
+    
+    // Vertices and edges arrays should have matching lengths
+    if (this.vertices.length !== this.edges.length) return false;
+    
+    // No duplicate vertices
+    const uniqueVertices = new Set(this.vertices);
+    if (uniqueVertices.size !== this.vertices.length) return false;
+    
+    return true;
   }
   
   /**
@@ -111,6 +180,47 @@ export class Face {
     
     return result;
   }
+
+  /**
+   * Gets the vertex at a specific position in the face
+   * @param index The position in the face (0-based)
+   * @returns The vertex index at the specified position, or -1 if out of bounds
+   */
+  getVertexAt(index: number): number {
+    if (index >= 0 && index < this.vertices.length) {
+      return this.vertices[index];
+    }
+    return -1;
+  }
+
+  /**
+   * Gets the edge at a specific position in the face
+   * @param index The position in the face (0-based)
+   * @returns The edge index at the specified position, or -1 if out of bounds
+   */
+  getEdgeAt(index: number): number {
+    if (index >= 0 && index < this.edges.length) {
+      return this.edges[index];
+    }
+    return -1;
+  }
+
+  /**
+   * Gets all edges in the face as vertex pairs
+   * @returns Array of [vertex1, vertex2] pairs representing edges
+   */
+  getEdgesAsVertexPairs(): [number, number][] {
+    const pairs: [number, number][] = [];
+    const vertexCount = this.vertices.length;
+    
+    for (let i = 0; i < vertexCount; i++) {
+      const v1 = this.vertices[i];
+      const v2 = this.vertices[(i + 1) % vertexCount];
+      pairs.push([v1, v2]);
+    }
+    
+    return pairs;
+  }
   
   /**
    * Sets the normal vector for the face
@@ -126,5 +236,14 @@ export class Face {
       this.normal.set(x, y, z);
     }
     return this;
+  }
+
+  /**
+   * Converts the face to a string representation for debugging
+   * @returns String representation of the face
+   */
+  toString(): string {
+    const type = this.getFaceType();
+    return `Face(${type}, vertices: [${this.vertices.join(', ')}], edges: [${this.edges.join(', ')}])`;
   }
 }

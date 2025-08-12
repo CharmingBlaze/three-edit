@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { Vertex, Face } from '../../core/index.ts';
+import { Vertex, Face } from '../../core/index';
 
 /**
  * Octree node structure

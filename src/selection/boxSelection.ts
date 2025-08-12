@@ -1,5 +1,5 @@
 import { Vector3, Box3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { EditableMesh } from '../core/EditableMesh';
 import { Selection } from './Selection';
 import { BoxSelectionOptions } from './types';
 

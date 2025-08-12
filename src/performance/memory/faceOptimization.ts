@@ -1,4 +1,4 @@
-import { EditableMesh, Face } from '../../core/index.ts';
+import { EditableMesh, Face } from '../../core/index';
 import { MemoryOptimizationOptions } from './types';
 
 export interface FaceOptimizationOptions {

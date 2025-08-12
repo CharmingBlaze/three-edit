@@ -157,30 +157,42 @@ export function bridgeEdges(
     // Create bridge faces
     let facesCreated = 0;
     if (createQuads) {
-      // Create quad faces
-      const quad1 = new Face([edge1.v1, bridgeV1Index, bridgeV2Index, edge2.v1], [edge1Index, bridgeEdge1Index, bridgeEdge2Index, bridgeEdge3Index]);
-      const quad2 = new Face([edge1.v2, bridgeV2Index, bridgeV1Index, edge2.v2], [bridgeEdge4Index, bridgeEdge5Index, edge2Index, bridgeEdge2Index]);
-      
-      if (material) {
-        quad1.materialIndex = 0; // Use material index 0 for new material
-        quad2.materialIndex = 0;
-      }
+      // Create quad faces with proper edge ordering
+      const quad1 = new Face(
+        [edge1.v1, bridgeV1Index, bridgeV2Index, edge2.v1], 
+        [edge1Index, bridgeEdge1Index, bridgeEdge2Index, bridgeEdge3Index],
+        { materialIndex: material ? 0 : 0 }
+      );
+      const quad2 = new Face(
+        [edge1.v2, bridgeV2Index, bridgeV1Index, edge2.v2], 
+        [bridgeEdge4Index, bridgeEdge5Index, edge2Index, bridgeEdge2Index],
+        { materialIndex: material ? 0 : 0 }
+      );
       
       mesh.faces.push(quad1, quad2);
       facesCreated = 2;
     } else {
-      // Create triangle faces
-      const tri1 = new Face([edge1.v1, bridgeV1Index, bridgeV2Index], [edge1Index, bridgeEdge1Index, bridgeEdge2Index]);
-      const tri2 = new Face([bridgeV2Index, bridgeV1Index, edge2.v1], [bridgeEdge2Index, bridgeEdge3Index, edge2Index]);
-      const tri3 = new Face([edge1.v2, bridgeV2Index, bridgeV1Index], [bridgeEdge4Index, bridgeEdge5Index, bridgeEdge2Index]);
-      const tri4 = new Face([bridgeV1Index, bridgeV2Index, edge2.v2], [bridgeEdge2Index, bridgeEdge5Index, edge2Index]);
-      
-      if (material) {
-        tri1.materialIndex = 0;
-        tri2.materialIndex = 0;
-        tri3.materialIndex = 0;
-        tri4.materialIndex = 0;
-      }
+      // Create triangle faces with proper edge ordering
+      const tri1 = new Face(
+        [edge1.v1, bridgeV1Index, bridgeV2Index], 
+        [edge1Index, bridgeEdge1Index, bridgeEdge2Index],
+        { materialIndex: material ? 0 : 0 }
+      );
+      const tri2 = new Face(
+        [bridgeV2Index, bridgeV1Index, edge2.v1], 
+        [bridgeEdge2Index, bridgeEdge3Index, edge2Index],
+        { materialIndex: material ? 0 : 0 }
+      );
+      const tri3 = new Face(
+        [edge1.v2, bridgeV2Index, bridgeV1Index], 
+        [bridgeEdge4Index, bridgeEdge5Index, bridgeEdge2Index],
+        { materialIndex: material ? 0 : 0 }
+      );
+      const tri4 = new Face(
+        [bridgeV1Index, bridgeV2Index, edge2.v2], 
+        [bridgeEdge2Index, bridgeEdge5Index, edge2Index],
+        { materialIndex: material ? 0 : 0 }
+      );
       
       mesh.faces.push(tri1, tri2, tri3, tri4);
       facesCreated = 4;

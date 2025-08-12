@@ -1,5 +1,5 @@
 // Legacy exports for backward compatibility
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { EditableMesh } from '../core/EditableMesh';
 import { VertexNoiseOptions, FaceDisplacementOptions, NoiseOptions } from './noise/types';
 import { applyVertexNoise, applyFractalNoise } from './noise/vertexNoise';
 import { applyFaceDisplacement, applyCellularNoise, applyTurbulenceNoise } from './noise/faceNoise';

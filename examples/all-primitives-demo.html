@@ -49,8 +49,7 @@
             so you can see them all working together. Each primitive has its own color and position.<br><br>
             
             <strong>Primitives included:</strong><br>
-            🧱 Cube, 🔵 Sphere, 🔘 Cylinder, 🔺 Cone, 📄 Plane, 🍩 Torus, ⭕ Circle, 🔺 Pyramid, 
-            🔺 Tetrahedron, 🔺 Octahedron, 🔺 Icosahedron<br><br>
+            🧱 Cube, 🔵 Sphere, 🔘 Cylinder, 📄 Plane<br><br>
             
             Click "Show All Primitives" to see them all in action!
         </div>
@@ -77,10 +76,34 @@ const primitives = [
     </div>
 
     <!-- Load Three.js from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
     
-    <!-- Load three-edit browser version -->
-    <script src="../browser/three-edit.js"></script>
+    <!-- Load three-edit browser version after Three.js is loaded -->
+    <script>
+        // Ensure Three.js is loaded before loading ThreeEdit
+        if (typeof THREE === 'undefined') {
+            console.error('Three.js failed to load, trying alternative CDN...');
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js';
+            script.onload = function() {
+                console.log('Three.js loaded from alternative CDN');
+                loadThreeEdit();
+            };
+            document.head.appendChild(script);
+        } else {
+            console.log('Three.js loaded successfully');
+            loadThreeEdit();
+        }
+        
+        function loadThreeEdit() {
+            const script = document.createElement('script');
+            script.src = '../browser/three-edit.js?v=1';
+            script.onload = function() {
+                console.log('ThreeEdit loaded successfully');
+            };
+            document.head.appendChild(script);
+        }
+    </script>
     
     <script>
         // Global variables
@@ -147,12 +170,23 @@ const primitives = [
         // Update status
         function updateStatus(message) {
             const status = document.querySelector('.status');
-            status.textContent = message;
+            if (status) {
+                status.textContent = message;
+            } else {
+                console.log(`Status: ${message}`);
+            }
         }
         
         // Create primitive function
         function createPrimitive(type, position, color) {
             try {
+                // Debug: Check if ThreeEdit functions are available
+                if (typeof ThreeEdit === 'undefined') {
+                    throw new Error('ThreeEdit is not loaded');
+                }
+                
+                console.log(`Creating ${type} with ThreeEdit.${type} function:`, typeof ThreeEdit[`create${type.charAt(0).toUpperCase() + type.slice(1)}`]);
+                
                 let mesh;
                 
                 switch(type) {
@@ -175,49 +209,10 @@ const primitives = [
                             materialId: 0, centered: true, validate: true
                         });
                         break;
-                    case 'cone':
-                        mesh = ThreeEdit.createCone({
-                            radius: 0.6, height: 1.5, radialSegments: 12,
-                            materialId: 0, centered: true, validate: true
-                        });
-                        break;
                     case 'plane':
                         mesh = ThreeEdit.createPlane({
                             width: 1.5, height: 1.5, widthSegments: 1, heightSegments: 1,
                             materialId: 0, centered: true, validate: true
-                        });
-                        break;
-                    case 'torus':
-                        mesh = ThreeEdit.createTorus({
-                            radius: 0.8, tube: 0.3, radialSegments: 12, tubularSegments: 8,
-                            materialId: 0, centered: true, validate: true
-                        });
-                        break;
-                    case 'circle':
-                        mesh = ThreeEdit.createCircle({
-                            radius: 0.8, segments: 16,
-                            materialId: 0, centered: true, validate: true
-                        });
-                        break;
-                    case 'pyramid':
-                        mesh = ThreeEdit.createPyramid({
-                            width: 1.5, height: 1.5, depth: 1.5,
-                            materialId: 0, centered: true, validate: true
-                        });
-                        break;
-                    case 'tetrahedron':
-                        mesh = ThreeEdit.createTetrahedron({
-                            radius: 0.8, materialId: 0, centered: true, validate: true
-                        });
-                        break;
-                    case 'octahedron':
-                        mesh = ThreeEdit.createOctahedron({
-                            radius: 0.8, materialId: 0, centered: true, validate: true
-                        });
-                        break;
-                    case 'icosahedron':
-                        mesh = ThreeEdit.createIcosahedron({
-                            radius: 0.8, materialId: 0, centered: true, validate: true
                         });
                         break;
                     default:
@@ -250,19 +245,16 @@ const primitives = [
             // Clear existing meshes
             clearScene();
             
-            // Define all primitives with positions and colors
+            // Define all primitives with positions and colors (only available in browser version)
             const primitives = [
-                { type: 'cube', position: [-6, 0, 0], color: 0x4CAF50, name: 'Cube' },
-                { type: 'sphere', position: [-4, 0, 0], color: 0x2196F3, name: 'Sphere' },
-                { type: 'cylinder', position: [-2, 0, 0], color: 0xFF9800, name: 'Cylinder' },
-                { type: 'cone', position: [0, 0, 0], color: 0x9C27B0, name: 'Cone' },
+                { type: 'cube', position: [-4, 0, 0], color: 0x4CAF50, name: 'Cube' },
+                { type: 'sphere', position: [-2, 0, 0], color: 0x2196F3, name: 'Sphere' },
+                { type: 'cylinder', position: [0, 0, 0], color: 0xFF9800, name: 'Cylinder' },
                 { type: 'plane', position: [2, 0, 0], color: 0x607D8B, name: 'Plane' },
-                { type: 'torus', position: [4, 0, 0], color: 0xE91E63, name: 'Torus' },
-                { type: 'circle', position: [6, 0, 0], color: 0x00BCD4, name: 'Circle' },
-                { type: 'pyramid', position: [-6, 3, 0], color: 0x795548, name: 'Pyramid' },
-                { type: 'tetrahedron', position: [-4, 3, 0], color: 0x3F51B5, name: 'Tetrahedron' },
-                { type: 'octahedron', position: [-2, 3, 0], color: 0x009688, name: 'Octahedron' },
-                { type: 'icosahedron', position: [0, 3, 0], color: 0xFF5722, name: 'Icosahedron' }
+                { type: 'cube', position: [4, 0, 0], color: 0xE91E63, name: 'Cube 2' },
+                { type: 'sphere', position: [-4, 3, 0], color: 0x00BCD4, name: 'Sphere 2' },
+                { type: 'cylinder', position: [-2, 3, 0], color: 0x795548, name: 'Cylinder 2' },
+                { type: 'plane', position: [0, 3, 0], color: 0x3F51B5, name: 'Plane 2' }
             ];
             
             let totalVertices = 0;
@@ -328,10 +320,29 @@ const primitives = [
         }
         
         // Initialize the demo
-        window.addEventListener('load', () => {
-            initScene();
-            updateStatus('Demo ready - click "Show All Primitives" to see them all');
-        });
+        function initializeDemo() {
+            // Debug: Check if Three.js is loaded
+            console.log('THREE available:', typeof THREE !== 'undefined');
+            if (typeof THREE !== 'undefined') {
+                console.log('THREE version:', THREE.REVISION);
+            }
+            
+            // Debug: Check if ThreeEdit is loaded
+            console.log('ThreeEdit available:', typeof ThreeEdit !== 'undefined');
+            if (typeof ThreeEdit !== 'undefined') {
+                console.log('ThreeEdit functions:', Object.keys(ThreeEdit));
+            }
+            
+            if (typeof THREE !== 'undefined' && typeof ThreeEdit !== 'undefined') {
+                initScene();
+                updateStatus('Demo ready - click "Show All Primitives" to see them all');
+            } else {
+                console.log('Waiting for libraries to load...');
+                setTimeout(initializeDemo, 100);
+            }
+        }
+        
+        window.addEventListener('load', initializeDemo);
     </script>
 </body>
 </html> 

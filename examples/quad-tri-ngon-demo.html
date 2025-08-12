@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Edit: Quad/Tri/N-gon Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        
+        .container {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+        
+        .viewport {
+            flex: 1;
+            background: #2a2a2a;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .controls {
+            width: 300px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group h3 {
+            margin: 0 0 10px 0;
+            color: #4CAF50;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 4px;
+            background: #3a3a3a;
+            color: #fff;
+        }
+        
+        button {
+            background: #4CAF50;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button.secondary {
+            background: #2196F3;
+        }
+        
+        button.secondary:hover {
+            background: #1976D2;
+        }
+        
+        .info {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .stats {
+            background: #333;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .stats h4 {
+            margin: 0 0 10px 0;
+            color: #4CAF50;
+        }
+        
+        .stats div {
+            margin-bottom: 5px;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="viewport">
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <h2>Quad/Tri/N-gon Demo</h2>
+            
+            <div class="info">
+                This demo showcases the new quad/tri/n-gon editing system. 
+                Primitives now create quads by default, and exports preserve face types.
+            </div>
+            
+            <div class="stats" id="stats">
+                <h4>Mesh Statistics</h4>
+                <div id="vertexCount">Vertices: 0</div>
+                <div id="faceCount">Faces: 0</div>
+                <div id="quadCount">Quads: 0</div>
+                <div id="triCount">Triangles: 0</div>
+                <div id="ngonCount">N-gons: 0</div>
+            </div>
+            
+            <div class="control-group">
+                <h3>Create Primitives</h3>
+                <button onclick="createCube()">Create Cube (Quads)</button>
+                <button onclick="createPlane()">Create Plane (Quads)</button>
+                <button onclick="createTetrahedron()">Create Tetrahedron (Tris)</button>
+                <button onclick="createSphere()">Create Sphere (Mixed)</button>
+            </div>
+            
+            <div class="control-group">
+                <h3>Export Options</h3>
+                <button onclick="exportOBJ()" class="secondary">Export OBJ (Preserve Quads)</button>
+                <button onclick="exportGLTF()" class="secondary">Export GLTF (Triangulate)</button>
+                <button onclick="triangulateMesh()" class="secondary">Triangulate for Export</button>
+            </div>
+            
+            <div class="control-group">
+                <h3>View Options</h3>
+                <label for="showWireframe">Show Wireframe:</label>
+                <input type="checkbox" id="showWireframe" onchange="toggleWireframe()">
+                
+                <label for="showFaceTypes">Show Face Types:</label>
+                <input type="checkbox" id="showFaceTypes" onchange="toggleFaceTypes()">
+            </div>
+            
+            <div class="control-group">
+                <h3>Camera Controls</h3>
+                <button onclick="resetCamera()">Reset Camera</button>
+                <button onclick="focusOnMesh()">Focus on Mesh</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../browser/three-edit.browser.iife.js"></script>
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let wireframeMesh = null;
+        let faceTypeMesh = null;
+        
+        // Initialize the scene
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+            
+            // Create renderer
+            const canvas = document.getElementById('canvas');
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            // Add grid helper
+            const gridHelper = new THREE.GridHelper(10, 10);
+            scene.add(gridHelper);
+            
+            // Add axis helper
+            const axisHelper = new THREE.AxesHelper(2);
+            scene.add(axisHelper);
+            
+            // Start animation loop
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        
+        function onWindowResize() {
+            const canvas = document.getElementById('canvas');
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        }
+        
+        // Create primitives
+        function createCube() {
+            clearScene();
+            currentMesh = ThreeEdit.createCube({ width: 2, height: 2, depth: 2 });
+            addMeshToScene(currentMesh);
+            updateStats();
+        }
+        
+        function createPlane() {
+            clearScene();
+            currentMesh = ThreeEdit.createPlane({ width: 4, height: 4, widthSegments: 4, heightSegments: 4 });
+            addMeshToScene(currentMesh);
+            updateStats();
+        }
+        
+        function createTetrahedron() {
+            clearScene();
+            currentMesh = ThreeEdit.createTetrahedron({ size: 2 });
+            addMeshToScene(currentMesh);
+            updateStats();
+        }
+        
+        function createSphere() {
+            clearScene();
+            currentMesh = ThreeEdit.createSphere({ radius: 1, widthSegments: 8, heightSegments: 6 });
+            addMeshToScene(currentMesh);
+            updateStats();
+        }
+        
+        function addMeshToScene(mesh) {
+            if (!mesh) return;
+            
+            // Convert to Three.js geometry
+            const geometry = ThreeEdit.toBufferGeometry(mesh);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x4CAF50,
+                side: THREE.DoubleSide
+            });
+            
+            const threeMesh = new THREE.Mesh(geometry, material);
+            threeMesh.castShadow = true;
+            threeMesh.receiveShadow = true;
+            scene.add(threeMesh);
+            
+            // Store reference to original mesh
+            threeMesh.userData.originalMesh = mesh;
+        }
+        
+        function clearScene() {
+            // Remove existing meshes
+            const meshesToRemove = [];
+            scene.traverse((child) => {
+                if (child instanceof THREE.Mesh && child.userData.originalMesh) {
+                    meshesToRemove.push(child);
+                }
+            });
+            
+            meshesToRemove.forEach(mesh => {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            
+            currentMesh = null;
+        }
+        
+        function updateStats() {
+            if (!currentMesh) {
+                document.getElementById('vertexCount').textContent = 'Vertices: 0';
+                document.getElementById('faceCount').textContent = 'Faces: 0';
+                document.getElementById('quadCount').textContent = 'Quads: 0';
+                document.getElementById('triCount').textContent = 'Triangles: 0';
+                document.getElementById('ngonCount').textContent = 'N-gons: 0';
+                return;
+            }
+            
+            const vertexCount = currentMesh.getVertexCount();
+            const faceCount = currentMesh.getFaceCount();
+            
+            let quadCount = 0;
+            let triCount = 0;
+            let ngonCount = 0;
+            
+            for (let i = 0; i < faceCount; i++) {
+                const face = currentMesh.getFace(i);
+                if (face) {
+                    if (face.isQuad()) quadCount++;
+                    else if (face.isTriangle()) triCount++;
+                    else if (face.isNgon()) ngonCount++;
+                }
+            }
+            
+            document.getElementById('vertexCount').textContent = `Vertices: ${vertexCount}`;
+            document.getElementById('faceCount').textContent = `Faces: ${faceCount}`;
+            document.getElementById('quadCount').textContent = `Quads: ${quadCount}`;
+            document.getElementById('triCount').textContent = `Triangles: ${triCount}`;
+            document.getElementById('ngonCount').textContent = `N-gons: ${ngonCount}`;
+        }
+        
+        function toggleWireframe() {
+            const showWireframe = document.getElementById('showWireframe').checked;
+            
+            if (wireframeMesh) {
+                scene.remove(wireframeMesh);
+                wireframeMesh.geometry.dispose();
+                wireframeMesh.material.dispose();
+                wireframeMesh = null;
+            }
+            
+            if (showWireframe && currentMesh) {
+                const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+                const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+                wireframeMesh = new THREE.LineSegments(
+                    new THREE.WireframeGeometry(geometry),
+                    wireframeMaterial
+                );
+                scene.add(wireframeMesh);
+            }
+        }
+        
+        function toggleFaceTypes() {
+            const showFaceTypes = document.getElementById('showFaceTypes').checked;
+            
+            if (faceTypeMesh) {
+                scene.remove(faceTypeMesh);
+                faceTypeMesh.geometry.dispose();
+                faceTypeMesh.material.dispose();
+                faceTypeMesh = null;
+            }
+            
+            if (showFaceTypes && currentMesh) {
+                // Create colored faces based on type
+                const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+                const materials = [];
+                
+                for (let i = 0; i < currentMesh.getFaceCount(); i++) {
+                    const face = currentMesh.getFace(i);
+                    if (face) {
+                        let color;
+                        if (face.isQuad()) color = 0x4CAF50; // Green for quads
+                        else if (face.isTriangle()) color = 0x2196F3; // Blue for tris
+                        else color = 0xFF9800; // Orange for n-gons
+                        
+                        materials.push(new THREE.MeshBasicMaterial({ color }));
+                    }
+                }
+                
+                faceTypeMesh = new THREE.Group();
+                for (let i = 0; i < materials.length; i++) {
+                    const faceGeometry = new THREE.BufferGeometry();
+                    // Extract face geometry (simplified)
+                    faceTypeMesh.add(new THREE.Mesh(geometry, materials[i]));
+                }
+                scene.add(faceTypeMesh);
+            }
+        }
+        
+        function exportOBJ() {
+            if (!currentMesh) {
+                alert('No mesh to export!');
+                return;
+            }
+            
+            const objData = ThreeEdit.exportOBJ(currentMesh);
+            downloadFile(objData, 'mesh.obj', 'text/plain');
+        }
+        
+        function exportGLTF() {
+            if (!currentMesh) {
+                alert('No mesh to export!');
+                return;
+            }
+            
+            const gltfData = ThreeEdit.exportGLTF(currentMesh);
+            const jsonData = JSON.stringify(gltfData, null, 2);
+            downloadFile(jsonData, 'mesh.gltf', 'application/json');
+        }
+        
+        function triangulateMesh() {
+            if (!currentMesh) {
+                alert('No mesh to triangulate!');
+                return;
+            }
+            
+            const result = ThreeEdit.triangulateForExport(currentMesh);
+            console.log('Triangulation result:', result.stats);
+            
+            // Replace current mesh with triangulated version
+            clearScene();
+            currentMesh = result.mesh;
+            addMeshToScene(currentMesh);
+            updateStats();
+            
+            alert(`Triangulated: ${result.stats.quadsTriangulated} quads, ${result.stats.ngonsTriangulated} n-gons`);
+        }
+        
+        function resetCamera() {
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+        }
+        
+        function focusOnMesh() {
+            if (!currentMesh) return;
+            
+            // Simple focus - could be improved with bounding box calculation
+            camera.position.set(3, 3, 3);
+            camera.lookAt(0, 0, 0);
+        }
+        
+        function downloadFile(content, filename, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html> 

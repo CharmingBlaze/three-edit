@@ -1,4 +1,4 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { EditableMesh } from '../core/EditableMesh';
 import { Selection } from './Selection';
 import { ConnectedSelectionOptions } from './types';
 

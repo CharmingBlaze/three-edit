@@ -1,4 +1,4 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { EditableMesh } from '../core/EditableMesh';
 
 /**
  * Result of a topology query

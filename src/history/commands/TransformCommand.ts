@@ -1,7 +1,7 @@
 import { Vector3, Matrix4 } from 'three';
-import { EditableMesh } from '../../core/EditableMesh.ts';
-import { Selection } from '../../selection/Selection.ts';
-import { BaseSerializableCommand } from '../Command.ts';
+import { EditableMesh } from '../../core/EditableMesh';
+import { Selection } from '../../selection/Selection';
+import { BaseSerializableCommand } from '../Command';
 
 /**
  * Command to transform selected vertices in a mesh

@@ -1,7 +1,7 @@
 import { BufferGeometry, Float32BufferAttribute, Uint32BufferAttribute } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Face } from '../core/Face.ts';
-import { triangulateFace } from '../utils/mathUtils.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Face } from '../core/Face';
+import { triangulateFace } from '../utils/mathUtils';
 
 /**
  * Options for converting to BufferGeometry

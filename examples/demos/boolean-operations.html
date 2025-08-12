@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boolean Operations Demo - Three-Edit</title>
+    <link rel="stylesheet" href="demo-styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1>Boolean Operations</h1>
+            <p>Combine meshes using CSG (Constructive Solid Geometry) operations</p>
+            <a href="index.html" class="back-link">← Back to Demos</a>
+        </div>
+
+        <div class="demo-nav">
+            <div class="nav-section">
+                <button class="nav-button active" onclick="showSection('union')">Union</button>
+                <button class="nav-button" onclick="showSection('intersection')">Intersection</button>
+                <button class="nav-button" onclick="showSection('difference')">Difference</button>
+                <button class="nav-button" onclick="showSection('advanced')">Advanced</button>
+            </div>
+            <div class="nav-section">
+                <button class="nav-button" onclick="resetScene()">Reset</button>
+                <button class="nav-button" onclick="toggleWireframe()">Wireframe</button>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="code-panel">
+                <div id="union-code" class="code-section">
+                    <h3>Union Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Union two meshes</span>
+<span class="code-keyword">const</span> unionResult = <span class="code-function">ThreeEdit</span>.<span class="code-function">booleanUnion</span>(mesh1, mesh2);
+
+<span class="code-comment">// Union with options</span>
+<span class="code-keyword">const</span> unionWithOptions = <span class="code-function">ThreeEdit</span>.<span class="code-function">booleanUnion</span>(mesh1, mesh2, {
+    tolerance: <span class="code-number">0.001</span>,
+    smooth: <span class="code-keyword">true</span>,
+    preserveMaterials: <span class="code-keyword">true</span>
+});
+
+<span class="code-comment">// Union multiple meshes</span>
+<span class="code-keyword">const</span> meshes = [mesh1, mesh2, mesh3];
+<span class="code-keyword">const</span> multiUnion = <span class="code-function">ThreeEdit</span>.<span class="code-function">booleanUnionMultiple</span>(meshes);
+                    </div>
+                </div>
+
+                <div id="intersection-code" class="code-section hidden">
+                    <h3>Intersection Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Intersection of two meshes</span>
+<span class="code-keyword">const</span> intersectionResult = <span class="code-function">ThreeEdit</span>.<span class="code-function">booleanIntersection</span>(mesh1, mesh2);
+
+<span class="code-comment">// Intersection with options</span>
+<span class="code-keyword">const</span> intersectionWithOptions = <span class="code-function">ThreeEdit</span>.<span class="code-function">booleanIntersection</span>(mesh1, mesh2, {
+    tolerance: <span class="code-number">0.001</span>,
+    smooth: <span class="code-keyword">false</span>,
+    preserveMaterials: <span class="code-keyword">true</span>
+});
+
+<span class="code-comment">// Intersection of multiple meshes</span>
+<span class="code-keyword">const</span> multiIntersection = <span class="code-function">ThreeEdit</span>.<span class="code-function">booleanIntersectionMultiple</span>(meshes);
+                    </div>
+                </div>
+
+                <div id="difference-code" class="code-section hidden">
+                    <h3>Difference Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Difference (subtraction)</span>
+<span class="code-keyword">const</span> differenceResult = <span class="code-function">ThreeEdit</span>.<span class="code-function">booleanDifference</span>(mesh1, mesh2);
+
+<span class="code-comment">// Difference with options</span>
+<span class="code-keyword">const</span> differenceWithOptions = <span class="code-function">ThreeEdit</span>.<span class="code-function">booleanDifference</span>(mesh1, mesh2, {
+    tolerance: <span class="code-number">0.001</span>,
+    smooth: <span class="code-keyword">true</span>,
+    preserveMaterials: <span class="code-keyword">true</span>
+});
+
+<span class="code-comment">// Multiple differences</span>
+<span class="code-keyword">const</span> multiDifference = <span class="code-function">ThreeEdit</span>.<span class="code-function">booleanDifferenceMultiple</span>(mesh1, [mesh2, mesh3]);
+                    </div>
+                </div>
+
+                <div id="advanced-code" class="code-section hidden">
+                    <h3>Advanced Boolean Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Boolean modifier with history</span>
+<span class="code-keyword">const</span> modifier = <span class="code-keyword">new</span> <span class="code-function">ThreeEdit</span>.<span class="code-function">BooleanModifier</span>(mesh1);
+modifier.<span class="code-function">addOperation</span>(<span class="code-string">'union'</span>, mesh2);
+modifier.<span class="code-function">addOperation</span>(<span class="code-string">'difference'</span>, mesh3);
+<span class="code-keyword">const</span> result = modifier.<span class="code-function">apply</span>();
+
+<span class="code-comment">// Boolean validation</span>
+<span class="code-keyword">const</span> validation = <span class="code-function">ThreeEdit</span>.<span class="code-function">validateBoolean</span>(result);
+console.<span class="code-function">log</span>(<span class="code-string">'Is valid:'</span>, validation.<span class="code-function">isValid</span>);
+
+<span class="code-comment">// Boolean repair</span>
+<span class="code-keyword">if</span> (!validation.<span class="code-function">isValid</span>) {
+    <span class="code-function">ThreeEdit</span>.<span class="code-function">repairBoolean</span>(result);
+}
+                    </div>
+                </div>
+            </div>
+
+            <div class="viewport-panel">
+                <div class="viewport-container" id="viewport">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading 3D Scene...
+                    </div>
+                </div>
+                <div class="viewport-info">
+                    <div id="boolean-info">Select meshes and apply boolean operations</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <h4>Mesh A</h4>
+                    <div class="control-item">
+                        <label for="mesh-a-type">Type:</label>
+                        <select id="mesh-a-type" onchange="updateMeshA()">
+                            <option value="cube">Cube</option>
+                            <option value="sphere">Sphere</option>
+                            <option value="cylinder">Cylinder</option>
+                            <option value="torus">Torus</option>
+                        </select>
+                    </div>
+                    <div class="control-item">
+                        <label for="mesh-a-x">X Position:</label>
+                        <input type="range" id="mesh-a-x" min="-3" max="3" step="0.1" value="0" onchange="updateMeshA()">
+                        <span id="a-x-value">0.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="mesh-a-y">Y Position:</label>
+                        <input type="range" id="mesh-a-y" min="-3" max="3" step="0.1" value="0" onchange="updateMeshA()">
+                        <span id="a-y-value">0.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="mesh-a-z">Z Position:</label>
+                        <input type="range" id="mesh-a-z" min="-3" max="3" step="0.1" value="0" onchange="updateMeshA()">
+                        <span id="a-z-value">0.0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Mesh B</h4>
+                    <div class="control-item">
+                        <label for="mesh-b-type">Type:</label>
+                        <select id="mesh-b-type" onchange="updateMeshB()">
+                            <option value="sphere">Sphere</option>
+                            <option value="cube">Cube</option>
+                            <option value="cylinder">Cylinder</option>
+                            <option value="torus">Torus</option>
+                        </select>
+                    </div>
+                    <div class="control-item">
+                        <label for="mesh-b-x">X Position:</label>
+                        <input type="range" id="mesh-b-x" min="-3" max="3" step="0.1" value="1" onchange="updateMeshB()">
+                        <span id="b-x-value">1.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="mesh-b-y">Y Position:</label>
+                        <input type="range" id="mesh-b-y" min="-3" max="3" step="0.1" value="0" onchange="updateMeshB()">
+                        <span id="b-y-value">0.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="mesh-b-z">Z Position:</label>
+                        <input type="range" id="mesh-b-z" min="-3" max="3" step="0.1" value="0" onchange="updateMeshB()">
+                        <span id="b-z-value">0.0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Boolean Settings</h4>
+                    <div class="control-item">
+                        <label for="boolean-tolerance">Tolerance:</label>
+                        <input type="range" id="boolean-tolerance" min="0.0001" max="0.01" step="0.0001" value="0.001" onchange="updateBooleanSettings()">
+                        <span id="tolerance-value">0.001</span>
+                    </div>
+                    <div class="control-item">
+                        <label>
+                            <input type="checkbox" id="boolean-smooth" checked onchange="updateBooleanSettings()"> Smooth Result
+                        </label>
+                    </div>
+                    <div class="control-item">
+                        <label>
+                            <input type="checkbox" id="preserve-materials" checked onchange="updateBooleanSettings()"> Preserve Materials
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Display Options</h4>
+                    <div class="control-item">
+                        <label>
+                            <input type="checkbox" id="show-mesh-a" checked onchange="toggleMeshDisplay()"> Show Mesh A
+                        </label>
+                    </div>
+                    <div class="control-item">
+                        <label>
+                            <input type="checkbox" id="show-mesh-b" checked onchange="toggleMeshDisplay()"> Show Mesh B
+                        </label>
+                    </div>
+                    <div class="control-item">
+                        <label>
+                            <input type="checkbox" id="show-result" checked onchange="toggleMeshDisplay()"> Show Result
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="applyUnion()">Union</button>
+                <button class="btn btn-primary" onclick="applyIntersection()">Intersection</button>
+                <button class="btn btn-primary" onclick="applyDifference()">Difference</button>
+                <button class="btn btn-secondary" onclick="validateResult()">Validate</button>
+                <button class="btn btn-success" onclick="createMeshes()">Create Meshes</button>
+                <button class="btn btn-danger" onclick="clearScene()">Clear Scene</button>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator" id="status-indicator"></div>
+                <span id="status-text">Ready</span>
+            </div>
+            <div class="status-item">
+                <span id="mesh-info">Mesh A: 0 vertices | Mesh B: 0 vertices | Result: 0 vertices</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let meshA = null;
+        let meshB = null;
+        let resultMesh = null;
+        let meshObjects = [];
+        let booleanSettings = {
+            tolerance: 0.001,
+            smooth: true,
+            preserveMaterials: true
+        };
+
+        // Initialize the scene
+        function initScene() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x2c3e50);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            camera.position.set(8, 8, 8);
+
+            // Create renderer
+            const container = document.getElementById('viewport');
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            // Add controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+
+            // Add grid
+            const gridHelper = new THREE.GridHelper(10, 10);
+            scene.add(gridHelper);
+
+            // Start animation loop
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('viewport');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Section navigation
+        function showSection(sectionName) {
+            // Hide all code sections
+            document.querySelectorAll('.code-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Show selected section
+            document.getElementById(sectionName + '-code').classList.remove('hidden');
+
+            // Update navigation buttons
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            updateStatus('Showing ' + sectionName + ' operations');
+        }
+
+        // Mesh creation functions
+        function createMeshes() {
+            clearScene();
+            
+            try {
+                // Create mesh A
+                const meshAType = document.getElementById('mesh-a-type').value;
+                const meshAName = 'create' + meshAType.charAt(0).toUpperCase() + meshAType.slice(1);
+                
+                if (ThreeEdit[meshAName]) {
+                    meshA = ThreeEdit[meshAName]();
+                } else {
+                    updateStatus('Mesh type not available: ' + meshAType, 'error');
+                    return;
+                }
+
+                // Create mesh B
+                const meshBType = document.getElementById('mesh-b-type').value;
+                const meshBName = 'create' + meshBType.charAt(0).toUpperCase() + meshBType.slice(1);
+                
+                if (ThreeEdit[meshBName]) {
+                    meshB = ThreeEdit[meshBName]();
+                } else {
+                    updateStatus('Mesh type not available: ' + meshBType, 'error');
+                    return;
+                }
+
+                // Position meshes
+                updateMeshPositions();
+                
+                // Add meshes to scene
+                addMeshToScene(meshA, 0x667eea, 'meshA');
+                addMeshToScene(meshB, 0xf5576c, 'meshB');
+
+                updateMeshInfo();
+                updateStatus('Meshes created successfully');
+                
+            } catch (error) {
+                updateStatus('Error creating meshes: ' + error.message, 'error');
+            }
+        }
+
+        function updateMeshA() {
+            if (!meshA) return;
+
+            try {
+                const meshType = document.getElementById('mesh-a-type').value;
+                const meshName = 'create' + meshType.charAt(0).toUpperCase() + meshType.slice(1);
+                
+                if (ThreeEdit[meshName]) {
+                    meshA = ThreeEdit[meshName]();
+                    updateMeshPositions();
+                    updateMeshVisualization();
+                    updateStatus('Mesh A updated');
+                }
+            } catch (error) {
+                updateStatus('Error updating mesh A: ' + error.message, 'error');
+            }
+        }
+
+        function updateMeshB() {
+            if (!meshB) return;
+
+            try {
+                const meshType = document.getElementById('mesh-b-type').value;
+                const meshName = 'create' + meshType.charAt(0).toUpperCase() + meshType.slice(1);
+                
+                if (ThreeEdit[meshName]) {
+                    meshB = ThreeEdit[meshName]();
+                    updateMeshPositions();
+                    updateMeshVisualization();
+                    updateStatus('Mesh B updated');
+                }
+            } catch (error) {
+                updateStatus('Error updating mesh B: ' + error.message, 'error');
+            }
+        }
+
+        function updateMeshPositions() {
+            if (!meshA || !meshB) return;
+
+            // Update mesh A position
+            const aX = parseFloat(document.getElementById('mesh-a-x').value);
+            const aY = parseFloat(document.getElementById('mesh-a-y').value);
+            const aZ = parseFloat(document.getElementById('mesh-a-z').value);
+            
+            ThreeEdit.moveMesh(meshA, { x: aX, y: aY, z: aZ });
+
+            // Update mesh B position
+            const bX = parseFloat(document.getElementById('mesh-b-x').value);
+            const bY = parseFloat(document.getElementById('mesh-b-y').value);
+            const bZ = parseFloat(document.getElementById('mesh-b-z').value);
+            
+            ThreeEdit.moveMesh(meshB, { x: bX, y: bY, z: bZ });
+        }
+
+        function updateBooleanSettings() {
+            booleanSettings.tolerance = parseFloat(document.getElementById('boolean-tolerance').value);
+            booleanSettings.smooth = document.getElementById('boolean-smooth').checked;
+            booleanSettings.preserveMaterials = document.getElementById('preserve-materials').checked;
+
+            // Update value displays
+            document.getElementById('tolerance-value').textContent = booleanSettings.tolerance;
+        }
+
+        function applyUnion() {
+            if (!meshA || !meshB) {
+                updateStatus('Both meshes must be created first', 'error');
+                return;
+            }
+
+            try {
+                resultMesh = ThreeEdit.booleanUnion(meshA, meshB, booleanSettings);
+                addResultToScene();
+                updateStatus('Union operation completed');
+            } catch (error) {
+                updateStatus('Error applying union: ' + error.message, 'error');
+            }
+        }
+
+        function applyIntersection() {
+            if (!meshA || !meshB) {
+                updateStatus('Both meshes must be created first', 'error');
+                return;
+            }
+
+            try {
+                resultMesh = ThreeEdit.booleanIntersection(meshA, meshB, booleanSettings);
+                addResultToScene();
+                updateStatus('Intersection operation completed');
+            } catch (error) {
+                updateStatus('Error applying intersection: ' + error.message, 'error');
+            }
+        }
+
+        function applyDifference() {
+            if (!meshA || !meshB) {
+                updateStatus('Both meshes must be created first', 'error');
+                return;
+            }
+
+            try {
+                resultMesh = ThreeEdit.booleanDifference(meshA, meshB, booleanSettings);
+                addResultToScene();
+                updateStatus('Difference operation completed');
+            } catch (error) {
+                updateStatus('Error applying difference: ' + error.message, 'error');
+            }
+        }
+
+        function validateResult() {
+            if (!resultMesh) {
+                updateStatus('No result mesh to validate', 'error');
+                return;
+            }
+
+            try {
+                const validation = ThreeEdit.validateBoolean(resultMesh);
+                
+                if (validation.isValid) {
+                    updateStatus('Boolean result is valid', 'success');
+                } else {
+                    updateStatus('Boolean result has issues: ' + validation.errors.join(', '), 'warning');
+                }
+            } catch (error) {
+                updateStatus('Error validating result: ' + error.message, 'error');
+            }
+        }
+
+        function addMeshToScene(mesh, color, name) {
+            const geometry = ThreeEdit.toBufferGeometry(mesh);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: color,
+                transparent: true,
+                opacity: 0.7
+            });
+            
+            const threeMesh = new THREE.Mesh(geometry, material);
+            threeMesh.name = name;
+            scene.add(threeMesh);
+            meshObjects.push(threeMesh);
+        }
+
+        function addResultToScene() {
+            // Remove existing result
+            meshObjects = meshObjects.filter(obj => {
+                if (obj.name === 'result') {
+                    scene.remove(obj);
+                    return false;
+                }
+                return true;
+            });
+
+            // Add new result
+            const geometry = ThreeEdit.toBufferGeometry(resultMesh);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x43e97b,
+                transparent: true,
+                opacity: 0.9
+            });
+            
+            const resultThreeMesh = new THREE.Mesh(geometry, material);
+            resultThreeMesh.name = 'result';
+            scene.add(resultThreeMesh);
+            meshObjects.push(resultThreeMesh);
+
+            updateMeshInfo();
+        }
+
+        function updateMeshVisualization() {
+            // Remove existing meshes
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+
+            // Add meshes back
+            if (meshA) addMeshToScene(meshA, 0x667eea, 'meshA');
+            if (meshB) addMeshToScene(meshB, 0xf5576c, 'meshB');
+            if (resultMesh) addResultToScene();
+        }
+
+        function toggleMeshDisplay() {
+            const showMeshA = document.getElementById('show-mesh-a').checked;
+            const showMeshB = document.getElementById('show-mesh-b').checked;
+            const showResult = document.getElementById('show-result').checked;
+
+            meshObjects.forEach(obj => {
+                if (obj.name === 'meshA') obj.visible = showMeshA;
+                if (obj.name === 'meshB') obj.visible = showMeshB;
+                if (obj.name === 'result') obj.visible = showResult;
+            });
+        }
+
+        function toggleWireframe() {
+            updateStatus('Wireframe toggle not implemented yet');
+        }
+
+        function clearScene() {
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+            meshA = null;
+            meshB = null;
+            resultMesh = null;
+            
+            updateMeshInfo();
+            updateStatus('Scene cleared');
+        }
+
+        function resetScene() {
+            clearScene();
+            createMeshes();
+        }
+
+        // Utility functions
+        function updateMeshInfo() {
+            const aVertices = meshA ? meshA.vertices.length : 0;
+            const bVertices = meshB ? meshB.vertices.length : 0;
+            const resultVertices = resultMesh ? resultMesh.vertices.length : 0;
+            
+            document.getElementById('mesh-info').textContent = 
+                `Mesh A: ${aVertices} vertices | Mesh B: ${bVertices} vertices | Result: ${resultVertices} vertices`;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const indicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            
+            statusText.textContent = message;
+            
+            indicator.className = 'status-indicator';
+            if (type === 'error') {
+                indicator.classList.add('error');
+            } else if (type === 'warning') {
+                indicator.classList.add('warning');
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            // Check if ThreeEdit is available
+            if (typeof ThreeEdit === 'undefined') {
+                updateStatus('ThreeEdit library not loaded. Please include the UMD build.', 'error');
+                return;
+            }
+            
+            initScene();
+            createMeshes();
+        });
+    </script>
+</body>
+</html> 

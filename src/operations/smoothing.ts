@@ -1,8 +1,8 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Face } from '../core/Face.ts';
-import { Edge } from '../core/Edge.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Vertex } from '../core/Vertex';
+import { Face } from '../core/Face';
+import { Edge } from '../core/Edge';
 
 export interface SmoothingOptions {
   iterations?: number;

@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { MorphTarget } from './morphing.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { MorphTarget } from './morphing';
 
 /**
  * Keyframe definition for morph animation

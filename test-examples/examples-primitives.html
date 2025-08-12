@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three-edit Primitives Examples</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: #ffffff;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    #controls {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .back-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">three-edit Primitives Examples</div>
+  <a href="index.html" class="back-button button">Back to Index</a>
+  <div id="controls">
+    <button id="test-plane">Plane</button>
+    <button id="test-cube">Cube</button>
+    <button id="test-sphere">Sphere</button>
+    <button id="test-cone">Cone</button>
+    <button id="test-cylinder">Cylinder</button>
+    <button id="test-arrow">Arrow</button>
+    <button id="test-torus">Torus</button>
+    <button id="test-all">Show All</button>
+  </div>
+  
+  <script src="../browser/three-edit.js"></script>
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+  </script>
+  
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import * as CommonUtils from './common-utils.js';
+    // Set up scene using common-utils.js
+    const { scene, camera, renderer } = CommonUtils.setupScene();
+    
+    // Add controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    // Using clearMeshes and createAndAddMesh from common.js
+    
+    // Test plane
+    document.getElementById('test-plane').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      document.getElementById('info').textContent = 'Testing createPlane...';
+      console.log('Testing createPlane...');
+      
+      try {
+        const plane = window.threeEdit.primitives.createPlane(2, 2, 2, 2);
+        CommonUtils.createAndAddMesh(scene, plane, 0x66ccff);
+        console.log('Plane created successfully:', plane);
+        document.getElementById('info').textContent = 'Plane created successfully';
+      } catch (error) {
+        console.error('Error creating plane:', error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test cube
+    document.getElementById('test-cube').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      document.getElementById('info').textContent = 'Testing createCube...';
+      console.log('Testing createCube...');
+      
+      try {
+        const cube = window.threeEdit.primitives.createCube(1.5, 1.5, 1.5, 2, 2, 2);
+        CommonUtils.createAndAddMesh(scene, cube, 0xff6666);
+        console.log('Cube created successfully:', cube);
+        document.getElementById('info').textContent = 'Cube created successfully';
+      } catch (error) {
+        console.error('Error creating cube:', error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test sphere
+    document.getElementById('test-sphere').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      document.getElementById('info').textContent = 'Testing createSphere...';
+      console.log('Testing createSphere...');
+      
+      try {
+        const sphere = window.threeEdit.primitives.createSphere(1, 16, 12);
+        CommonUtils.createAndAddMesh(scene, sphere, 0x66ff66);
+        console.log('Sphere created successfully:', sphere);
+        document.getElementById('info').textContent = 'Sphere created successfully';
+      } catch (error) {
+        console.error('Error creating sphere:', error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test cone
+    document.getElementById('test-cone').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      document.getElementById('info').textContent = 'Testing createCone...';
+      console.log('Testing createCone...');
+      
+      try {
+        const cone = window.threeEdit.primitives.createCone(1, 2, 16, 1);
+        CommonUtils.createAndAddMesh(scene, cone, 0xcc66ff);
+        console.log('Cone created successfully:', cone);
+        document.getElementById('info').textContent = 'Cone created successfully';
+      } catch (error) {
+        console.error('Error creating cone:', error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test cylinder
+    document.getElementById('test-cylinder').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      document.getElementById('info').textContent = 'Testing createCylinder...';
+      console.log('Testing createCylinder...');
+      
+      try {
+        const cylinder = window.threeEdit.primitives.createCylinder(0.5, 0.5, 2, 16, 1);
+        CommonUtils.createAndAddMesh(scene, cylinder, 0xffcc66);
+        console.log('Cylinder created successfully:', cylinder);
+        document.getElementById('info').textContent = 'Cylinder created successfully';
+      } catch (error) {
+        console.error('Error creating cylinder:', error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test arrow
+    document.getElementById('test-arrow').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      document.getElementById('info').textContent = 'Testing createArrow...';
+      console.log('Testing createArrow...');
+      
+      try {
+        const arrow = window.threeEdit.primitives.createArrow(0.2, 0.4, 2, 0.5, 16);
+        CommonUtils.createAndAddMesh(scene, arrow, 0xff66cc);
+        console.log('Arrow created successfully:', arrow);
+        document.getElementById('info').textContent = 'Arrow created successfully';
+      } catch (error) {
+        console.error('Error creating arrow:', error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test torus
+    document.getElementById('test-torus').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      document.getElementById('info').textContent = 'Testing createTorus...';
+      console.log('Testing createTorus...');
+      
+      try {
+        const torus = window.threeEdit.primitives.createTorus(1, 0.4, 16, 16);
+        CommonUtils.createAndAddMesh(scene, torus, 0xff8800);
+        console.log('Torus created successfully:', torus);
+        document.getElementById('info').textContent = 'Torus created successfully';
+      } catch (error) {
+        console.error('Error creating torus:', error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test all
+    document.getElementById('test-all').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      document.getElementById('info').textContent = 'Testing all primitives...';
+      console.log('Testing all primitives...');
+      
+      try {
+        const primitives = window.threeEdit.primitives;
+        const spacing = 2.5;
+        
+        if (primitives.createPlane) {
+          const plane = primitives.createPlane(1, 1, 2, 2);
+          CommonUtils.createAndAddMesh(scene, plane, 0xff0000, new THREE.Vector3(-spacing, 0, -spacing));
+        }
+        
+        if (primitives.createCube) {
+          const cube = primitives.createCube(1, 1, 1, 2, 2, 2);
+          CommonUtils.createAndAddMesh(scene, cube, 0x00ff00, new THREE.Vector3(0, 0, -spacing));
+        }
+        
+        if (primitives.createSphere) {
+          const sphere = primitives.createSphere(0.5, 16, 12);
+          CommonUtils.createAndAddMesh(scene, sphere, 0x0000ff, new THREE.Vector3(spacing, 0, -spacing));
+        }
+        
+        if (primitives.createCone) {
+          const cone = primitives.createCone(0.5, 1, 16, 1);
+          CommonUtils.createAndAddMesh(scene, cone, 0xff00ff, new THREE.Vector3(-spacing, 0, 0));
+        }
+        
+        if (primitives.createCylinder) {
+          const cylinder = primitives.createCylinder(0.5, 0.5, 1, 16, 1);
+          CommonUtils.createAndAddMesh(scene, cylinder, 0xffff00, new THREE.Vector3(0, 0, 0));
+        }
+        
+        if (primitives.createArrow) {
+          const arrow = primitives.createArrow(0.1, 0.2, 1, 0.3, 16);
+          CommonUtils.createAndAddMesh(scene, arrow, 0x00ffff, new THREE.Vector3(spacing, 0, 0));
+        }
+        
+        if (primitives.createTorus) {
+          const torus = primitives.createTorus(0.5, 0.2, 16, 16);
+          CommonUtils.createAndAddMesh(scene, torus, 0xff8800, new THREE.Vector3(-spacing, 0, spacing));
+        }
+        
+        document.getElementById('info').textContent = 'All primitives created successfully';
+      } catch (error) {
+        console.error('Error creating primitives:', error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Check if three-edit is loaded
+    window.addEventListener('load', () => {
+      console.log('Window loaded, checking for three-edit...');
+      console.log('window.threeEdit:', window.threeEdit);
+      
+      if (window.threeEdit) {
+        console.log('three-edit library loaded successfully!');
+        console.log('Available modules:', Object.keys(window.threeEdit));
+        document.getElementById('info').textContent = 'three-edit loaded! Click a test button to begin.';
+        
+        // Auto-run the test-all function to show something immediately
+        setTimeout(() => {
+          document.getElementById('test-all').click();
+        }, 500);
+      } else {
+        console.error('three-edit library not found!');
+        document.getElementById('info').textContent = 'Error: three-edit library not found! Check console for details.';
+      }
+    });
+  </script>
+</body>
+</html>

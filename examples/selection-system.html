@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selection System Demo - Three-Edit</title>
+    <link rel="stylesheet" href="demo-styles.css">
+    <style>
+        .selection-info {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .selection-count {
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .selection-type {
+            color: #e74c3c;
+        }
+        
+        .selection-coords {
+            color: #f39c12;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1>Selection System Demo</h1>
+            <p>Interactive mesh selection with ray casting, box selection, lasso selection, and more</p>
+            <div class="demo-nav">
+                <a href="index.html">← Back to Demos</a>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="code-panel">
+                <h3>Selection Methods</h3>
+                <div class="code-snippet">
+                    <h4>Ray Selection</h4>
+                    <pre><code>// Ray cast from camera to mouse position
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+raycaster.setFromCamera(mouse, camera);
+const intersects = raycaster.intersectObjects(meshObjects);
+
+if (intersects.length > 0) {
+    const point = intersects[0].point;
+    const face = intersects[0].face;
+    const selectedElement = ThreeEdit.selectFace(mesh, face);
+}</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Box Selection</h4>
+                    <pre><code>// Select elements within a bounding box
+const box = new THREE.Box3();
+box.setFromPoints([startPoint, endPoint]);
+
+const selectedElements = ThreeEdit.selectInBox(mesh, box, {
+    includeVertices: true,
+    includeEdges: true,
+    includeFaces: true
+});</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Connected Selection</h4>
+                    <pre><code>// Select connected faces/edges/vertices
+const connected = ThreeEdit.selectConnected(mesh, selectedElement, {
+    maxDepth: 3,
+    includeVertices: true,
+    includeEdges: true,
+    includeFaces: true
+});</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Similar Selection</h4>
+                    <pre><code>// Select similar elements based on properties
+const similar = ThreeEdit.selectSimilar(mesh, selectedElement, {
+    tolerance: 0.1,
+    includeVertices: true,
+    includeEdges: true,
+    includeFaces: true
+});</code></pre>
+                </div>
+            </div>
+
+            <div class="viewport-panel">
+                <div id="viewport"></div>
+                <div class="viewport-controls">
+                    <button onclick="clearSelection()">Clear Selection</button>
+                    <button onclick="selectAll()">Select All</button>
+                    <button onclick="invertSelection()">Invert Selection</button>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <h3>Selection Controls</h3>
+                
+                <div class="control-group">
+                    <label for="selection-mode">Selection Mode:</label>
+                    <select id="selection-mode" onchange="updateSelectionMode()">
+                        <option value="ray">Ray Selection</option>
+                        <option value="box">Box Selection</option>
+                        <option value="lasso">Lasso Selection</option>
+                        <option value="connected">Connected Selection</option>
+                        <option value="similar">Similar Selection</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="element-type">Element Type:</label>
+                    <select id="element-type" onchange="updateElementType()">
+                        <option value="vertices">Vertices</option>
+                        <option value="edges">Edges</option>
+                        <option value="faces">Faces</option>
+                        <option value="all">All</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="selection-tolerance">Tolerance:</label>
+                    <input type="range" id="selection-tolerance" min="0.01" max="1" step="0.01" value="0.1" onchange="updateTolerance()">
+                    <span id="tolerance-value">0.1</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="max-depth">Max Depth (Connected):</label>
+                    <input type="range" id="max-depth" min="1" max="10" step="1" value="3" onchange="updateMaxDepth()">
+                    <span id="depth-value">3</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="mesh-type">Mesh Type:</label>
+                    <select id="mesh-type" onchange="createMesh()">
+                        <option value="cube">Cube</option>
+                        <option value="sphere">Sphere</option>
+                        <option value="cylinder">Cylinder</option>
+                        <option value="torus">Torus</option>
+                        <option value="dodecahedron">Dodecahedron</option>
+                        <option value="icosahedron">Icosahedron</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <button onclick="createMesh()">Create Mesh</button>
+                    <button onclick="addRandomElements()">Add Random Elements</button>
+                </div>
+
+                <div class="selection-info">
+                    <div>Selected: <span class="selection-count" id="selection-count">0</span></div>
+                    <div>Type: <span class="selection-type" id="selection-type">None</span></div>
+                    <div>Position: <span class="selection-coords" id="selection-coords">None</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar" id="status-bar">
+            Ready to select elements
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="../dist/umd/index.umd.js"></script>
+    <script>
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let meshObjects = [];
+        let selectedElements = [];
+        let selectionMode = 'ray';
+        let elementType = 'faces';
+        let tolerance = 0.1;
+        let maxDepth = 3;
+        let isSelecting = false;
+        let selectionStart = null;
+        let selectionEnd = null;
+
+        // Initialize the scene
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 600);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            const viewport = document.getElementById('viewport');
+            viewport.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            // Add event listeners
+            renderer.domElement.addEventListener('mousedown', onMouseDown);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('mouseup', onMouseUp);
+            renderer.domElement.addEventListener('click', onMouseClick);
+
+            createMesh();
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = 800 / 600;
+            camera.updateProjectionMatrix();
+            renderer.setSize(800, 600);
+        }
+
+        function createMesh() {
+            clearScene();
+            const meshType = document.getElementById('mesh-type').value;
+            const meshName = 'create' + meshType.charAt(0).toUpperCase() + meshType.slice(1);
+            
+            if (ThreeEdit[meshName]) {
+                currentMesh = ThreeEdit[meshName]();
+            } else {
+                updateStatus('Mesh type not available: ' + meshType, 'error');
+                return;
+            }
+
+            const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x667eea, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            meshObjects.push(mesh);
+
+            addWireframe(geometry);
+            updateSelectionInfo();
+            updateStatus(meshType + ' created successfully');
+        }
+
+        function addWireframe(geometry) {
+            const wireframe = new THREE.WireframeGeometry(geometry);
+            const line = new THREE.LineSegments(wireframe);
+            line.material.color.setHex(0x000000);
+            line.material.transparent = true;
+            line.material.opacity = 0.3;
+            scene.add(line);
+            meshObjects.push(line);
+        }
+
+        function clearScene() {
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+            selectedElements = [];
+            updateSelectionInfo();
+        }
+
+        function onMouseClick(event) {
+            if (selectionMode === 'ray' && currentMesh) {
+                const mouse = getMousePosition(event);
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, camera);
+                
+                const intersects = raycaster.intersectObjects(meshObjects.filter(obj => obj instanceof THREE.Mesh));
+                
+                if (intersects.length > 0) {
+                    const intersect = intersects[0];
+                    const point = intersect.point;
+                    const face = intersect.face;
+                    
+                    let selectedElement = null;
+                    switch (elementType) {
+                        case 'vertices':
+                            selectedElement = ThreeEdit.selectVertex(currentMesh, face, intersect);
+                            break;
+                        case 'edges':
+                            selectedElement = ThreeEdit.selectEdge(currentMesh, face, intersect);
+                            break;
+                        case 'faces':
+                            selectedElement = ThreeEdit.selectFace(currentMesh, face);
+                            break;
+                        case 'all':
+                            selectedElement = ThreeEdit.selectFace(currentMesh, face);
+                            break;
+                    }
+                    
+                    if (selectedElement) {
+                        selectedElements = [selectedElement];
+                        highlightSelection();
+                        updateSelectionInfo(point, selectedElement);
+                        updateStatus('Element selected via ray casting');
+                    }
+                }
+            }
+        }
+
+        function onMouseDown(event) {
+            if (selectionMode === 'box' || selectionMode === 'lasso') {
+                isSelecting = true;
+                selectionStart = getMousePosition(event);
+                updateStatus('Selection started');
+            }
+        }
+
+        function onMouseMove(event) {
+            if (isSelecting && (selectionMode === 'box' || selectionMode === 'lasso')) {
+                selectionEnd = getMousePosition(event);
+                // Visual feedback for selection area could be added here
+            }
+        }
+
+        function onMouseUp(event) {
+            if (isSelecting && currentMesh) {
+                isSelecting = false;
+                selectionEnd = getMousePosition(event);
+                
+                if (selectionMode === 'box') {
+                    performBoxSelection();
+                } else if (selectionMode === 'lasso') {
+                    performLassoSelection();
+                }
+            }
+        }
+
+        function performBoxSelection() {
+            if (!selectionStart || !selectionEnd) return;
+            
+            const startPoint = new THREE.Vector3();
+            const endPoint = new THREE.Vector3();
+            
+            // Convert screen coordinates to world coordinates
+            raycaster.setFromCamera(selectionStart, camera);
+            const startIntersect = raycaster.ray.origin.clone();
+            
+            raycaster.setFromCamera(selectionEnd, camera);
+            const endIntersect = raycaster.ray.origin.clone();
+            
+            const box = new THREE.Box3();
+            box.setFromPoints([startIntersect, endIntersect]);
+            
+            const options = {
+                includeVertices: elementType === 'vertices' || elementType === 'all',
+                includeEdges: elementType === 'edges' || elementType === 'all',
+                includeFaces: elementType === 'faces' || elementType === 'all',
+                tolerance: tolerance
+            };
+            
+            selectedElements = ThreeEdit.selectInBox(currentMesh, box, options);
+            highlightSelection();
+            updateSelectionInfo();
+            updateStatus('Box selection completed: ' + selectedElements.length + ' elements');
+        }
+
+        function performLassoSelection() {
+            // Simplified lasso selection - in a real implementation, 
+            // you'd collect all mouse points and create a polygon
+            updateStatus('Lasso selection not fully implemented in this demo');
+        }
+
+        function selectConnected() {
+            if (selectedElements.length === 0) {
+                updateStatus('No element selected for connected selection', 'error');
+                return;
+            }
+            
+            const options = {
+                maxDepth: maxDepth,
+                includeVertices: elementType === 'vertices' || elementType === 'all',
+                includeEdges: elementType === 'edges' || elementType === 'all',
+                includeFaces: elementType === 'faces' || elementType === 'all'
+            };
+            
+            const connected = ThreeEdit.selectConnected(currentMesh, selectedElements[0], options);
+            selectedElements = connected;
+            highlightSelection();
+            updateSelectionInfo();
+            updateStatus('Connected selection: ' + selectedElements.length + ' elements');
+        }
+
+        function selectSimilar() {
+            if (selectedElements.length === 0) {
+                updateStatus('No element selected for similar selection', 'error');
+                return;
+            }
+            
+            const options = {
+                tolerance: tolerance,
+                includeVertices: elementType === 'vertices' || elementType === 'all',
+                includeEdges: elementType === 'edges' || elementType === 'all',
+                includeFaces: elementType === 'faces' || elementType === 'all'
+            };
+            
+            const similar = ThreeEdit.selectSimilar(currentMesh, selectedElements[0], options);
+            selectedElements = similar;
+            highlightSelection();
+            updateSelectionInfo();
+            updateStatus('Similar selection: ' + selectedElements.length + ' elements');
+        }
+
+        function highlightSelection() {
+            // Remove previous highlights
+            meshObjects.forEach(obj => {
+                if (obj.material && obj.material.emissive) {
+                    obj.material.emissive.setHex(0x000000);
+                }
+            });
+            
+            // Highlight selected elements
+            if (selectedElements.length > 0) {
+                meshObjects.forEach(obj => {
+                    if (obj instanceof THREE.Mesh && obj.material) {
+                        obj.material.emissive.setHex(0xffff00);
+                        obj.material.emissiveIntensity = 0.3;
+                    }
+                });
+            }
+        }
+
+        function clearSelection() {
+            selectedElements = [];
+            highlightSelection();
+            updateSelectionInfo();
+            updateStatus('Selection cleared');
+        }
+
+        function selectAll() {
+            if (!currentMesh) {
+                updateStatus('No mesh to select from', 'error');
+                return;
+            }
+            
+            const options = {
+                includeVertices: elementType === 'vertices' || elementType === 'all',
+                includeEdges: elementType === 'edges' || elementType === 'all',
+                includeFaces: elementType === 'faces' || elementType === 'all'
+            };
+            
+            selectedElements = ThreeEdit.selectAll(currentMesh, options);
+            highlightSelection();
+            updateSelectionInfo();
+            updateStatus('All elements selected: ' + selectedElements.length);
+        }
+
+        function invertSelection() {
+            if (!currentMesh) {
+                updateStatus('No mesh to invert selection from', 'error');
+                return;
+            }
+            
+            const allElements = ThreeEdit.selectAll(currentMesh, {
+                includeVertices: true,
+                includeEdges: true,
+                includeFaces: true
+            });
+            
+            selectedElements = allElements.filter(element => 
+                !selectedElements.some(selected => selected === element)
+            );
+            
+            highlightSelection();
+            updateSelectionInfo();
+            updateStatus('Selection inverted: ' + selectedElements.length + ' elements');
+        }
+
+        function addRandomElements() {
+            if (!currentMesh) {
+                updateStatus('No mesh to add elements to', 'error');
+                return;
+            }
+            
+            // Add some random vertices
+            for (let i = 0; i < 5; i++) {
+                const x = (Math.random() - 0.5) * 4;
+                const y = (Math.random() - 0.5) * 4;
+                const z = (Math.random() - 0.5) * 4;
+                const vertex = new ThreeEdit.Vertex(x, y, z);
+                currentMesh.addVertex(vertex);
+            }
+            
+            updateStatus('Random elements added');
+        }
+
+        function getMousePosition(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            return new THREE.Vector2(
+                ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                -((event.clientY - rect.top) / rect.height) * 2 + 1
+            );
+        }
+
+        function updateSelectionMode() {
+            selectionMode = document.getElementById('selection-mode').value;
+            updateStatus('Selection mode changed to: ' + selectionMode);
+        }
+
+        function updateElementType() {
+            elementType = document.getElementById('element-type').value;
+            updateStatus('Element type changed to: ' + elementType);
+        }
+
+        function updateTolerance() {
+            tolerance = parseFloat(document.getElementById('selection-tolerance').value);
+            document.getElementById('tolerance-value').textContent = tolerance.toFixed(2);
+        }
+
+        function updateMaxDepth() {
+            maxDepth = parseInt(document.getElementById('max-depth').value);
+            document.getElementById('depth-value').textContent = maxDepth;
+        }
+
+        function updateSelectionInfo(point = null, element = null) {
+            document.getElementById('selection-count').textContent = selectedElements.length;
+            
+            if (element) {
+                let type = 'Unknown';
+                if (element.vertices) type = 'Face';
+                else if (element.start) type = 'Edge';
+                else type = 'Vertex';
+                document.getElementById('selection-type').textContent = type;
+                
+                if (point) {
+                    document.getElementById('selection-coords').textContent = 
+                        `(${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`;
+                }
+            } else {
+                document.getElementById('selection-type').textContent = 'None';
+                document.getElementById('selection-coords').textContent = 'None';
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.textContent = message;
+            statusBar.className = 'status-bar ' + type;
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initScene);
+        window.addEventListener('resize', onWindowResize);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case 'c':
+                    if (event.ctrlKey) clearSelection();
+                    break;
+                case 'a':
+                    if (event.ctrlKey) selectAll();
+                    break;
+                case 'i':
+                    if (event.ctrlKey) invertSelection();
+                    break;
+                case 'Escape':
+                    clearSelection();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html> 

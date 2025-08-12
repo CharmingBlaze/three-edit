@@ -18,6 +18,8 @@ import {
 } from './types';
 import { EdgeKeyCache } from '../topology/edgeKey';
 
+// Import smoothing functions
+import { smoothVertices, laplacianSmoothing, subdivideSurface } from '../operations/smoothing';
 
 /**
  * Create a vertex with standardized options
@@ -377,18 +379,13 @@ export function createFacesFromGrid(
       const v3 = grid[y + 1][x + 1];
       const v4 = grid[y + 1][x];
       
-      // Create two triangular faces
-      const face1 = createFace(mesh, {
-        vertexIds: [v1, v2, v3],
+      // Create a single quad face instead of two triangles
+      const face = createFace(mesh, {
+        vertexIds: [v1, v2, v3, v4],
         materialId
       }, context);
       
-      const face2 = createFace(mesh, {
-        vertexIds: [v1, v3, v4],
-        materialId
-      }, context);
-      
-      faceIds.push(face1.id, face2.id);
+      faceIds.push(face.id);
     }
   }
   
@@ -484,4 +481,47 @@ export function transformVertices(mesh: EditableMesh, matrix: Matrix4) {
     vertex.y = vec.y;
     vertex.z = vec.z;
   });
+}
+
+/**
+ * Apply smoothing to a mesh if enabled in options
+ */
+export function applySmoothingIfEnabled(mesh: EditableMesh, options: any): EditableMesh {
+  if (!options.smoothing?.enabled) {
+    return mesh;
+  }
+
+  const smoothing = options.smoothing;
+  
+  try {
+    switch (smoothing.type) {
+      case 'vertex':
+        return smoothVertices(mesh, {
+          iterations: smoothing.iterations ?? 2,
+          factor: smoothing.factor ?? 0.3
+        });
+      
+      case 'laplacian':
+        return laplacianSmoothing(mesh, {
+          lambda: smoothing.lambda ?? 0.5,
+          iterations: smoothing.iterations ?? 2,
+          factor: smoothing.factor ?? 0.3
+        });
+      
+      case 'subdivision':
+        return subdivideSurface(mesh, {
+          levels: smoothing.levels ?? 1,
+          scheme: smoothing.scheme ?? 'catmullClark',
+          iterations: smoothing.iterations ?? 1,
+          factor: smoothing.factor ?? 1.0
+        });
+      
+      default:
+        console.warn(`Unknown smoothing type: ${smoothing.type}`);
+        return mesh;
+    }
+  } catch (error) {
+    console.error('Error applying smoothing:', error);
+    return mesh;
+  }
 }

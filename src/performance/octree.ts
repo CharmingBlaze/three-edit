@@ -1,6 +1,6 @@
 // Legacy exports for backward compatibility
 import { Vector3 } from 'three';
-import { EditableMesh, Vertex, Face } from '../core/index.ts';
+import { EditableMesh, Vertex, Face } from '../core/index';
 import { OctreeNode, OctreeOptions, SpatialQueryOptions, OctreeStatistics } from './octree/types';
 import { buildOctree } from './octree/construction';
 import { findVerticesNearPoint, findFacesNearPoint } from './octree/queries';
@@ -19,8 +19,10 @@ export type {
 export class Octree {
   private root: OctreeNode;
   private options: OctreeOptions;
+  private mesh: EditableMesh;
 
   constructor(mesh: EditableMesh, options: OctreeOptions = {}) {
+    this.mesh = mesh;
     this.options = {
       maxDepth: 8,
       maxObjectsPerNode: 10,
@@ -49,7 +51,7 @@ export class Octree {
     point: Vector3,
     options: SpatialQueryOptions = {}
   ): Face[] {
-    return findFacesNearPoint(this.root, point, options);
+    return findFacesNearPoint(this.root, point, this.mesh, options);
   }
 
   /**

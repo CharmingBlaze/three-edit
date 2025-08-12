@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/index.ts';
-import { Vertex } from '../core/index.ts';
-import { Edge } from '../core/index.ts';
-import { Face } from '../core/index.ts';
+import { EditableMesh } from '../core/index';
+import { Vertex } from '../core/index';
+import { Edge } from '../core/index';
+import { Face } from '../core/index';
 
 /**
  * Options for creating a low-poly sphere
@@ -27,25 +27,29 @@ export function createLowPolySphere(options: CreateLowPolySphereOptions = {}): E
   
   const mesh = new EditableMesh({ name });
   
-  // Create vertices for the low-poly sphere
-  const vertices: number[] = [];
+  // Create vertices for the low-poly sphere in a grid pattern
+  const grid: number[][] = [];
   
-  // Create center vertex with UVs
-  const centerVertex = new Vertex(0, 0, 0, { uv: { u: 0.5, v: 0.5 } });
-  const centerIndex = mesh.addVertex(centerVertex);
+  // Create multiple rings for quad faces
+  const rings = Math.max(2, Math.floor(segments / 4));
   
-  // Create vertices around the sphere with UVs
-  for (let i = 0; i < segments; i++) {
-    const theta = (i / segments) * Math.PI * 2;
-    const x = Math.cos(theta) * radius;
-    const z = Math.sin(theta) * radius;
+  for (let ring = 0; ring <= rings; ring++) {
+    const ringRadius = (ring / rings) * radius;
+    const row: number[] = [];
     
-    const u = (Math.cos(theta) + 1) / 2;
-    const v = (Math.sin(theta) + 1) / 2;
-    
-    const vertex = new Vertex(x, 0, z, { uv: { u, v } });
-    const vertexIndex = mesh.addVertex(vertex);
-    vertices.push(vertexIndex);
+    for (let i = 0; i <= segments; i++) {
+      const theta = (i / segments) * Math.PI * 2;
+      const x = ringRadius * Math.cos(theta);
+      const z = ringRadius * Math.sin(theta);
+      
+      const u = (Math.cos(theta) + 1) / 2;
+      const v = ring / rings;
+      
+      const vertex = new Vertex(x, 0, z, { uv: { u, v } });
+      const vertexIndex = mesh.addVertex(vertex);
+      row.push(vertexIndex);
+    }
+    grid.push(row);
   }
   
   const edgeMap: { [key: string]: number } = {};
@@ -57,17 +61,22 @@ export function createLowPolySphere(options: CreateLowPolySphereOptions = {}): E
     return edgeMap[key];
   };
 
-  // Create edges and faces
-  for (let i = 0; i < segments; i++) {
-    const v1 = vertices[i];
-    const v2 = vertices[(i + 1) % segments];
+  // Create quad faces
+  for (let ring = 0; ring < rings; ring++) {
+    for (let i = 0; i < segments; i++) {
+      const v1 = grid[ring][i];
+      const v2 = grid[ring][i + 1];
+      const v3 = grid[ring + 1][i + 1];
+      const v4 = grid[ring + 1][i];
 
-    const edge1 = addEdge(centerIndex, v1);
-    const edge2 = addEdge(v1, v2);
-    const edge3 = addEdge(v2, centerIndex);
+      const edge1 = addEdge(v1, v2);
+      const edge2 = addEdge(v2, v3);
+      const edge3 = addEdge(v3, v4);
+      const edge4 = addEdge(v4, v1);
 
-    // Create face (material index 0)
-    mesh.addFace(new Face([centerIndex, v1, v2], [edge1, edge2, edge3], { materialIndex: 0 }));
+      // Create face (material index 0)
+      mesh.addFace(new Face([v1, v2, v3, v4], [edge1, edge2, edge3, edge4], { materialIndex: 0 }));
+    }
   }
   
   return mesh;

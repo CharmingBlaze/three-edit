@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Edit Library Demos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 40px;
+        }
+
+        .demo-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .demo-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .demo-card p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .demo-card .features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .demo-card .features li {
+            padding: 5px 0;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        .demo-card .features li:before {
+            content: "✓ ";
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .demo-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .demo-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .demo-link.disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .demo-link.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .status.complete {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.coming-soon {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Three-Edit Library Demos</h1>
+            <p>Comprehensive examples showcasing every feature of the three-edit library</p>
+        </div>
+
+        <div class="demo-grid">
+            <!-- Core Features -->
+            <div class="demo-card">
+                <h3>Core Mesh System <span class="status complete">Complete</span></h3>
+                <p>Learn the fundamental mesh structure with vertices, edges, and faces.</p>
+                <ul class="features">
+                    <li>Vertex, Edge, and Face classes</li>
+                    <li>Mesh creation and manipulation</li>
+                    <li>Topology management</li>
+                    <li>Geometry validation</li>
+                </ul>
+                <a href="core-mesh-system.html" class="demo-link">View Demo</a>
+            </div>
+
+            <!-- Primitives -->
+            <div class="demo-card">
+                <h3>Primitive Creation <span class="status complete">Complete</span></h3>
+                <p>Create basic and complex geometric shapes with customizable parameters.</p>
+                <ul class="features">
+                    <li>Basic shapes (cube, sphere, cylinder)</li>
+                    <li>Complex primitives (torus, dodecahedron)</li>
+                    <li>Parametric shapes</li>
+                    <li>Custom geometry builders</li>
+                </ul>
+                <a href="primitives-demo.html" class="demo-link">View Demo</a>
+            </div>
+
+            <!-- Editing Operations -->
+            <div class="demo-card">
+                <h3>Editing Operations <span class="status complete">Complete</span></h3>
+                <p>Advanced mesh editing tools for professional 3D modeling.</p>
+                <ul class="features">
+                    <li>Extrude faces, edges, and vertices</li>
+                    <li>Bevel operations</li>
+                    <li>Bridge and inset tools</li>
+                    <li>Knife and loop cut operations</li>
+                </ul>
+                <a href="editing-operations.html" class="demo-link">View Demo</a>
+            </div>
+
+            <!-- Transformations -->
+            <div class="demo-card">
+                <h3>Transformations <span class="status complete">Complete</span></h3>
+                <p>Move, rotate, scale, and deform meshes with precision.</p>
+                <ul class="features">
+                    <li>Basic transforms (move, rotate, scale)</li>
+                    <li>Array operations</li>
+                    <li>Mirror operations</li>
+                    <li>Deformation tools (bend, twist, taper)</li>
+                </ul>
+                <a href="transformations-demo.html" class="demo-link">View Demo</a>
+            </div>
+
+            <!-- Boolean Operations -->
+            <div class="demo-card">
+                <h3>Boolean Operations <span class="status complete">Complete</span></h3>
+                <p>Combine meshes using CSG (Constructive Solid Geometry) operations.</p>
+                <ul class="features">
+                    <li>Union, intersection, and difference</li>
+                    <li>Advanced boolean modifiers</li>
+                    <li>Operation history</li>
+                    <li>Boolean validation</li>
+                </ul>
+                <a href="boolean-operations.html" class="demo-link">View Demo</a>
+            </div>
+
+            <!-- UV Mapping -->
+            <div class="demo-card">
+                <h3>UV Mapping <span class="status complete">Complete</span></h3>
+                <p>Generate and manipulate texture coordinates for materials.</p>
+                <ul class="features">
+                    <li>Planar, cylindrical, and spherical UVs</li>
+                    <li>Cubic UV mapping</li>
+                    <li>UV transformation tools</li>
+                    <li>Automatic UV generation</li>
+                </ul>
+                <a href="uv-mapping.html" class="demo-link">View Demo</a>
+            </div>
+
+            <!-- Selection System -->
+            <div class="demo-card">
+                <h3>Selection System <span class="status coming-soon">Coming Soon</span></h3>
+                <p>Advanced selection tools for precise mesh editing.</p>
+                <ul class="features">
+                    <li>Ray-based selection</li>
+                    <li>Box and lasso selection</li>
+                    <li>Connected component selection</li>
+                    <li>Similar element selection</li>
+                </ul>
+                <a href="#" class="demo-link disabled">Coming Soon</a>
+            </div>
+
+            <!-- Scene Graph -->
+            <div class="demo-card">
+                <h3>Scene Graph <span class="status coming-soon">Coming Soon</span></h3>
+                <p>Organize and manage complex 3D scenes with hierarchical structures.</p>
+                <ul class="features">
+                    <li>Node hierarchy management</li>
+                    <li>Parent-child relationships</li>
+                    <li>Scene traversal</li>
+                    <li>Three.js integration</li>
+                </ul>
+                <a href="#" class="demo-link disabled">Coming Soon</a>
+            </div>
+
+            <!-- Materials & Texturing -->
+            <div class="demo-card">
+                <h3>Materials & Texturing <span class="status coming-soon">Coming Soon</span></h3>
+                <p>Manage materials and apply textures to your 3D models.</p>
+                <ul class="features">
+                    <li>Material assignment</li>
+                    <li>Material management</li>
+                    <li>Texture coordinate handling</li>
+                    <li>Multi-material support</li>
+                </ul>
+                <a href="#" class="demo-link disabled">Coming Soon</a>
+            </div>
+
+            <!-- Performance & Optimization -->
+            <div class="demo-card">
+                <h3>Performance & Optimization <span class="status coming-soon">Coming Soon</span></h3>
+                <p>Optimize your meshes for better performance and memory usage.</p>
+                <ul class="features">
+                    <li>Level of Detail (LOD)</li>
+                    <li>Mesh simplification</li>
+                    <li>Memory optimization</li>
+                    <li>Octree spatial indexing</li>
+                </ul>
+                <a href="#" class="demo-link disabled">Coming Soon</a>
+            </div>
+
+            <!-- Import/Export -->
+            <div class="demo-card">
+                <h3>Import/Export <span class="status coming-soon">Coming Soon</span></h3>
+                <p>Load and save 3D models in various industry-standard formats.</p>
+                <ul class="features">
+                    <li>OBJ, STL, PLY formats</li>
+                    <li>GLTF/GLB support</li>
+                    <li>FBX and Collada</li>
+                    <li>Three.js integration</li>
+                </ul>
+                <a href="#" class="demo-link disabled">Coming Soon</a>
+            </div>
+
+            <!-- Animation System -->
+            <div class="demo-card">
+                <h3>Animation System <span class="status coming-soon">Coming Soon</span></h3>
+                <p>Create skeletal animations and morphing effects.</p>
+                <ul class="features">
+                    <li>Skeletal animation</li>
+                    <li>Bone and skin system</li>
+                    <li>Morphing animations</li>
+                    <li>Weight painting</li>
+                </ul>
+                <a href="#" class="demo-link disabled">Coming Soon</a>
+            </div>
+
+            <!-- Helper Tools -->
+            <div class="demo-card">
+                <h3>Helper Tools <span class="status coming-soon">Coming Soon</span></h3>
+                <p>Utility functions and debugging tools for development.</p>
+                <ul class="features">
+                    <li>Math utilities</li>
+                    <li>Geometry helpers</li>
+                    <li>Debug visualization</li>
+                    <li>Validation tools</li>
+                </ul>
+                <a href="#" class="demo-link disabled">Coming Soon</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Three-Edit Library v0.2.0 - Comprehensive 3D Mesh Editing for Three.js</p>
+            <p>6 demos available now • 6 more coming soon</p>
+        </div>
+    </div>
+</body>
+</html> 

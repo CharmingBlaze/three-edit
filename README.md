@@ -62,9 +62,50 @@ npm install three-edit
 yarn add three-edit
 ```
 
-### Direct browser usage (vanilla JavaScript)
+### 🚀 Super Easy Browser Usage (Recommended!)
 
-You can use three-edit directly in the browser without any build step:
+For the **easiest possible setup**, use our modern browser build that includes everything:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Three-Edit App</title>
+</head>
+<body>
+    <div id="viewport"></div>
+    
+    <!-- Just one script tag - no other dependencies! -->
+    <script type="module">
+        import { ThreeEdit } from './browser/three-edit.browser.js';
+        
+        // Create a cube - it's that simple!
+        const cube = ThreeEdit.createCube({ width: 1, height: 1, depth: 1 });
+        const geometry = ThreeEdit.toBufferGeometry(cube);
+        
+        // Use with Three.js (included in the bundle)
+        const material = new THREE.MeshPhongMaterial({ color: 0x4CAF50 });
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        // Add to your scene
+        scene.add(mesh);
+    </script>
+</body>
+</html>
+```
+
+**✨ Benefits:**
+- ✅ **No dependencies** - Three.js is included!
+- ✅ **Modern ES modules** - Clean import syntax
+- ✅ **TypeScript support** - Full type definitions
+- ✅ **Self-contained** - Everything in one file
+- ✅ **Easy to use** - Just one script tag!
+
+> **🎯 New!** This is our **recommended approach** for browser usage. See `examples/simple-modern-demo.html` for a complete working example!
+
+### Legacy Browser Usage
+
+For older browsers or specific requirements, you can still use the traditional approach:
 
 ```html
 <!-- Include Three.js first -->
@@ -80,7 +121,7 @@ You can use three-edit directly in the browser without any build step:
 </script>
 ```
 
-> **Note:** The browser version is included in the `browser/three-edit.js` file in the repository. This provides a simplified version of the library with the core functionality for direct browser usage.
+> **Note:** The legacy browser version is included in the `browser/three-edit.js` file in the repository.
 
 ## 🚀 Getting Started
 

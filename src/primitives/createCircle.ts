@@ -1,6 +1,6 @@
 import { EditableMesh } from '../core/EditableMesh';
 import { CreateCircleOptions } from './types';
-import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { createVertex, createFace, createPrimitiveContext, normalizeOptions, createFacesFromGrid } from './helpers';
 import { validatePrimitive } from './validation';
 
 /**
@@ -39,8 +39,9 @@ export function createCircle(options: CreateCircleOptions = {}): EditableMesh {
   const offsetX = normalizedOptions.centered ? 0 : normalizedOptions.radius;
   const offsetZ = normalizedOptions.centered ? 0 : normalizedOptions.radius;
 
-  const vertices: number[] = [];
-
+  // Create a simple triangle fan for the circle
+  const segments = normalizedOptions.segments;
+  
   // Create center vertex
   const centerVertex = createVertex(mesh, {
     x: offsetX,
@@ -48,35 +49,29 @@ export function createCircle(options: CreateCircleOptions = {}): EditableMesh {
     z: offsetZ,
     uv: { u: 0.5, v: 0.5 }
   }, context);
-  vertices.push(centerVertex.id);
-
+  
   // Create perimeter vertices
-  for (let i = 0; i <= normalizedOptions.segments; i++) {
-    const theta = normalizedOptions.thetaStart + (i / normalizedOptions.segments) * normalizedOptions.thetaLength;
+  const perimeterVertices: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const theta = normalizedOptions.thetaStart + (i / segments) * normalizedOptions.thetaLength;
     const x = offsetX + normalizedOptions.radius * Math.cos(theta);
     const z = offsetZ + normalizedOptions.radius * Math.sin(theta);
     const u = 0.5 + 0.5 * Math.cos(theta);
     const v = 0.5 + 0.5 * Math.sin(theta);
     
-    const uv = { u, v };
-    
     const result = createVertex(mesh, {
       x,
       y: 0,
       z,
-      uv
+      uv: { u, v }
     }, context);
-    vertices.push(result.id);
+    perimeterVertices.push(result.id);
   }
-
-  // Create triangular faces
-  for (let i = 0; i < normalizedOptions.segments; i++) {
-    const v1 = vertices[0]; // center
-    const v2 = vertices[i + 1];
-    const v3 = vertices[i + 2];
-    
+  
+  // Create triangle faces (triangle fan)
+  for (let i = 0; i < perimeterVertices.length - 1; i++) {
     createFace(mesh, {
-      vertexIds: [v1, v2, v3],
+      vertexIds: [centerVertex.id, perimeterVertices[i], perimeterVertices[i + 1]],
       materialId: normalizedOptions.materialId
     }, context);
   }

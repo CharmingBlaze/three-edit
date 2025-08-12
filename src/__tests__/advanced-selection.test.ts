@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { createCube } from '../primitives/createCube.ts';
-import { createSphere } from '../primitives/createSphere.ts';
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { createCube } from '../primitives/createCube';
+import { createSphere } from '../primitives/createSphere';
+import { EditableMesh } from '../core/EditableMesh';
 import { 
   selectByRay, 
   selectByBox, 
@@ -9,8 +9,8 @@ import {
   selectByCircle,
   selectConnected,
   selectSimilar
-} from '../selection/advancedSelection.ts';
-import { Selection } from '../selection/Selection.ts';
+} from '../selection/advancedSelection';
+import { Selection } from '../selection/Selection';
 import { Ray, Box3, Vector3 } from 'three';
 
 describe('Advanced Selection', () => {

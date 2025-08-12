@@ -1,22 +1,22 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/index.ts';
-import { createCube } from '../primitives/createCube.ts';
-import { createSphere } from '../primitives/createSphere.ts';
-import { createCylinder } from '../primitives/createCylinder.ts';
+import { EditableMesh } from '../core/index';
+import { createCube } from '../primitives/createCube';
+import { createSphere } from '../primitives/createSphere';
+import { createCylinder } from '../primitives/createCylinder';
 import {
   morphVertices,
   interpolateShapes,
   applyMorphTargets,
   createMorphTarget,
   blendMorphTargets
-} from '../operations/morphing.ts';
+} from '../operations/morphing';
 import {
   subdivideSurface,
   laplacianSmoothing,
   smoothEdges,
   smoothVertices
-} from '../operations/smoothing.ts';
+} from '../operations/smoothing';
 import {
   csgUnion,
   csgIntersection,
@@ -25,7 +25,7 @@ import {
   applyBooleanModifier,
   advancedIntersection,
   BooleanHistoryManager
-} from '../operations/advancedBoolean.ts';
+} from '../operations/advancedBoolean';
 
 
 describe('Advanced Operations', () => {

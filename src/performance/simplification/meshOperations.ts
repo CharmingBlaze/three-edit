@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { EditableMesh, Face } from '../../core/index.ts';
+import { EditableMesh, Face } from '../../core/index';
 import { EdgeCollapse } from './types';
 
 /**

@@ -2,7 +2,7 @@
 import { bend } from './deform/bend';
 import { twist } from './deform/twist';
 import { taper } from './deform/taper';
-import { EditableMesh } from '../core/index.ts';
+import { EditableMesh } from '../core/index';
 import { BendOptions, TwistOptions, TaperOptions, DeformType } from './deform/types';
 
 export type {

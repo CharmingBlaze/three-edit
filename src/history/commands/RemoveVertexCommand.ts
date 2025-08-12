@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../../core/EditableMesh.ts';
-import { Vertex } from '../../core/Vertex.ts';
-import { BaseSerializableCommand } from '../Command.ts';
+import { EditableMesh } from '../../core/EditableMesh';
+import { Vertex } from '../../core/Vertex';
+import { BaseSerializableCommand } from '../Command';
 
 /**
  * Command to remove a vertex from a mesh

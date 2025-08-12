@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { createCube } from '../primitives/createCube.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { createCube } from '../primitives/createCube';
 import { 
   applyVertexNoise, 
   applyFaceDisplacement, 
@@ -9,7 +9,7 @@ import {
   applyCellularNoise, 
   applyTurbulenceNoise, 
   applyNoise 
-} from '../transform/noise.ts';
+} from '../transform/noise';
 
 describe('Noise and Displacement Operations', () => {
   let mesh: EditableMesh;

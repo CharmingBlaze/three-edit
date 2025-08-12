@@ -1,6 +1,6 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Vertex } from '../core/Vertex';
+import { Face } from '../core/Face';
 
 // Three.js types (we'll define these to avoid external dependencies in tests)
 interface Vector3 {
@@ -110,8 +110,13 @@ export function convertToThreeMesh(
       normals.push(vertex.normal.x, vertex.normal.y, vertex.normal.z);
     }
     
-    if (generateUVs && vertex.uv) {
-      uvs.push(vertex.uv.u, vertex.uv.v);
+    if (generateUVs) {
+      if (vertex.uv) {
+        uvs.push(vertex.uv.u, vertex.uv.v);
+      } else {
+        // Generate default UVs if none exist
+        uvs.push(0, 0);
+      }
     }
   });
 

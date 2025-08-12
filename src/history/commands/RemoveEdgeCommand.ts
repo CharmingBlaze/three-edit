@@ -1,6 +1,6 @@
-import { EditableMesh } from '../../core/EditableMesh.ts';
-import { Edge } from '../../core/Edge.ts';
-import { BaseSerializableCommand } from '../Command.ts';
+import { EditableMesh } from '../../core/EditableMesh';
+import { Edge } from '../../core/Edge';
+import { BaseSerializableCommand } from '../Command';
 
 /**
  * Command to remove an edge from a mesh

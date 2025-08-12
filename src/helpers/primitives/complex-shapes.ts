@@ -11,9 +11,9 @@ import * as transforms from './transform-helpers';
 import * as uvs from './uv-generators';
 
 /**
- * Create a torus knot
+ * Create a torus knot (helper version)
  */
-export function createTorusKnot(
+export function createTorusKnotHelper(
   radius: number = 0.5,
   tube: number = 0.2,
   p: number = 2,
@@ -65,9 +65,9 @@ export function createTorusKnot(
 }
 
 /**
- * Create a Mobius strip
+ * Create a Mobius strip (helper version)
  */
-export function createMobiusStrip(
+export function createMobiusStripHelper(
   radius: number = 0.5,
   tube: number = 0.2,
   radialSegments: number = 8,
@@ -117,9 +117,9 @@ export function createMobiusStrip(
 }
 
 /**
- * Create a pipe
+ * Create a pipe (helper version)
  */
-export function createPipe(
+export function createPipeHelper(
   radius: number = 0.5,
   height: number = 1,
   thickness: number = 0.1,
@@ -188,9 +188,9 @@ export function createPipe(
 }
 
 /**
- * Create a handle (curved pipe)
+ * Create a handle (curved pipe) (helper version)
  */
-export function createHandle(
+export function createHandleHelper(
   radius: number = 0.5,
   tube: number = 0.1,
   arc: number = Math.PI,
@@ -243,7 +243,7 @@ export function createHandle(
 /**
  * Create a greeble block (detailed block with protrusions)
  */
-export function createGreebleBlock(
+export function createGreebleBlockHelper(
   width: number = 1,
   height: number = 1,
   depth: number = 1,
@@ -262,7 +262,7 @@ export function createGreebleBlock(
 /**
  * Create a low-poly sphere
  */
-export function createLowPolySphere(
+export function createLowPolySphereHelper(
   radius: number = 0.5,
   detailLevel: number = 2,
   materialIndex: number = 0
@@ -280,7 +280,7 @@ export function createLowPolySphere(
 /**
  * Create an arrow
  */
-export function createArrow(
+export function createArrowHelper(
   length: number = 1,
   headLength: number = 0.2,
   headWidth: number = 0.1,

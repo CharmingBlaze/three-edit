@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UV Mapping Demo - Three-Edit</title>
+    <link rel="stylesheet" href="demo-styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1>UV Mapping</h1>
+            <p>Generate and manipulate texture coordinates for materials</p>
+            <a href="index.html" class="back-link">← Back to Demos</a>
+        </div>
+
+        <div class="demo-nav">
+            <div class="nav-section">
+                <button class="nav-button active" onclick="showSection('planar')">Planar UVs</button>
+                <button class="nav-button" onclick="showSection('cylindrical')">Cylindrical UVs</button>
+                <button class="nav-button" onclick="showSection('spherical')">Spherical UVs</button>
+                <button class="nav-button" onclick="showSection('cubic')">Cubic UVs</button>
+            </div>
+            <div class="nav-section">
+                <button class="nav-button" onclick="resetScene()">Reset</button>
+                <button class="nav-button" onclick="toggleTexture()">Toggle Texture</button>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="code-panel">
+                <div id="planar-code" class="code-section">
+                    <h3>Planar UV Mapping</h3>
+                    <div class="code-block">
+<span class="code-comment">// Generate planar UVs</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">generatePlanarUVs</span>(mesh.<span class="code-function">vertices</span>, {
+    projection: <span class="code-string">'xy'</span>,
+    scale: { x: <span class="code-number">1</span>, y: <span class="code-number">1</span> },
+    offset: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span> }
+});
+
+<span class="code-comment">// Planar UV with custom projection</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">generatePlanarUVs</span>(mesh.<span class="code-function">vertices</span>, {
+    projection: <span class="code-string">'xz'</span>,
+    scale: { x: <span class="code-number">2</span>, y: <span class="code-number">2</span> },
+    offset: { x: <span class="code-number">0.5</span>, y: <span class="code-number">0.5</span> }
+});
+
+<span class="code-comment">// Planar UV with rotation</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">generatePlanarUVs</span>(mesh.<span class="code-function">vertices</span>, {
+    projection: <span class="code-string">'xy'</span>,
+    rotation: Math.<span class="code-function">PI</span> / <span class="code-number">4</span>,
+    scale: { x: <span class="code-number">1</span>, y: <span class="code-number">1</span> }
+});
+                    </div>
+                </div>
+
+                <div id="cylindrical-code" class="code-section hidden">
+                    <h3>Cylindrical UV Mapping</h3>
+                    <div class="code-block">
+<span class="code-comment">// Generate cylindrical UVs</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">generateCylindricalUVs</span>(mesh.<span class="code-function">vertices</span>, {
+    axis: <span class="code-string">'y'</span>,
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+    radius: <span class="code-number">1</span>,
+    height: <span class="code-number">2</span>
+});
+
+<span class="code-comment">// Cylindrical UV with custom parameters</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">generateCylindricalUVs</span>(mesh.<span class="code-function">vertices</span>, {
+    axis: <span class="code-string">'x'</span>,
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+    radius: <span class="code-number">2</span>,
+    height: <span class="code-number">4</span>,
+    angleOffset: Math.<span class="code-function">PI</span> / <span class="code-number">2</span>
+});
+                    </div>
+                </div>
+
+                <div id="spherical-code" class="code-section hidden">
+                    <h3>Spherical UV Mapping</h3>
+                    <div class="code-block">
+<span class="code-comment">// Generate spherical UVs</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">generateSphericalUVs</span>(mesh.<span class="code-function">vertices</span>, {
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+    radius: <span class="code-number">1</span>
+});
+
+<span class="code-comment">// Spherical UV with custom parameters</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">generateSphericalUVs</span>(mesh.<span class="code-function">vertices</span>, {
+    center: { x: <span class="code-number">1</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+    radius: <span class="code-number">2</span>,
+    latitudeOffset: Math.<span class="code-function">PI</span> / <span class="code-number">4</span>,
+    longitudeOffset: Math.<span class="code-function">PI</span> / <span class="code-number">2</span>
+});
+                    </div>
+                </div>
+
+                <div id="cubic-code" class="code-section hidden">
+                    <h3>Cubic UV Mapping</h3>
+                    <div class="code-block">
+<span class="code-comment">// Generate cubic UVs</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">generateCubicUVs</span>(mesh.<span class="code-function">vertices</span>, {
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+    size: <span class="code-number">2</span>
+});
+
+<span class="code-comment">// Cubic UV with custom parameters</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">generateCubicUVs</span>(mesh.<span class="code-function">vertices</span>, {
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+    size: <span class="code-number">3</span>,
+    faceMapping: {
+        front: { u: <span class="code-number">0</span>, v: <span class="code-number">0</span> },
+        back: { u: <span class="code-number">1</span>, v: <span class="code-number">0</span> },
+        top: { u: <span class="code-number">2</span>, v: <span class="code-number">0</span> },
+        bottom: { u: <span class="code-number">3</span>, v: <span class="code-number">0</span> },
+        right: { u: <span class="code-number">4</span>, v: <span class="code-number">0</span> },
+        left: { u: <span class="code-number">5</span>, v: <span class="code-number">0</span> }
+    }
+});
+                    </div>
+                </div>
+            </div>
+
+            <div class="viewport-panel">
+                <div class="viewport-container" id="viewport">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading 3D Scene...
+                    </div>
+                </div>
+                <div class="viewport-info">
+                    <div id="uv-info">Apply UV mapping to see texture coordinates</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <h4>Base Mesh</h4>
+                    <div class="control-item">
+                        <label for="base-mesh">Mesh Type:</label>
+                        <select id="base-mesh" onchange="changeBaseMesh()">
+                            <option value="cube">Cube</option>
+                            <option value="sphere">Sphere</option>
+                            <option value="cylinder">Cylinder</option>
+                            <option value="torus">Torus</option>
+                            <option value="plane">Plane</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>UV Parameters</h4>
+                    <div class="control-item">
+                        <label for="uv-scale-x">Scale X:</label>
+                        <input type="range" id="uv-scale-x" min="0.1" max="5" step="0.1" value="1" onchange="updateUV()">
+                        <span id="scale-x-value">1.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="uv-scale-y">Scale Y:</label>
+                        <input type="range" id="uv-scale-y" min="0.1" max="5" step="0.1" value="1" onchange="updateUV()">
+                        <span id="scale-y-value">1.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="uv-offset-x">Offset X:</label>
+                        <input type="range" id="uv-offset-x" min="0" max="1" step="0.01" value="0" onchange="updateUV()">
+                        <span id="offset-x-value">0.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="uv-offset-y">Offset Y:</label>
+                        <input type="range" id="uv-offset-y" min="0" max="1" step="0.01" value="0" onchange="updateUV()">
+                        <span id="offset-y-value">0.0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Projection Settings</h4>
+                    <div class="control-item">
+                        <label for="projection-axis">Projection:</label>
+                        <select id="projection-axis" onchange="updateUV()">
+                            <option value="xy">XY</option>
+                            <option value="xz">XZ</option>
+                            <option value="yz">YZ</option>
+                        </select>
+                    </div>
+                    <div class="control-item">
+                        <label for="uv-rotation">Rotation:</label>
+                        <input type="range" id="uv-rotation" min="0" max="6.28" step="0.1" value="0" onchange="updateUV()">
+                        <span id="rotation-value">0.0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Texture Options</h4>
+                    <div class="control-item">
+                        <label for="texture-type">Texture:</label>
+                        <select id="texture-type" onchange="changeTexture()">
+                            <option value="checker">Checker</option>
+                            <option value="gradient">Gradient</option>
+                            <option value="noise">Noise</option>
+                            <option value="uv-debug">UV Debug</option>
+                        </select>
+                    </div>
+                    <div class="control-item">
+                        <label>
+                            <input type="checkbox" id="show-uv-overlay" onchange="toggleUVOverlay()"> Show UV Overlay
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="applyUVMapping()">Apply UV Mapping</button>
+                <button class="btn btn-secondary" onclick="generateTexture()">Generate Texture</button>
+                <button class="btn btn-secondary" onclick="exportUVs()">Export UVs</button>
+                <button class="btn btn-success" onclick="createBaseMesh()">Create Base Mesh</button>
+                <button class="btn btn-danger" onclick="clearScene()">Clear Scene</button>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator" id="status-indicator"></div>
+                <span id="status-text">Ready</span>
+            </div>
+            <div class="status-item">
+                <span id="uv-info">UVs: 0 | Texture: None</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let meshObjects = [];
+        let currentUVType = 'planar';
+        let currentTexture = null;
+        let showTexture = true;
+
+        // Initialize the scene
+        function initScene() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x2c3e50);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+
+            // Create renderer
+            const container = document.getElementById('viewport');
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            // Add controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+
+            // Add grid
+            const gridHelper = new THREE.GridHelper(10, 10);
+            scene.add(gridHelper);
+
+            // Start animation loop
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('viewport');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Section navigation
+        function showSection(sectionName) {
+            // Hide all code sections
+            document.querySelectorAll('.code-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Show selected section
+            document.getElementById(sectionName + '-code').classList.remove('hidden');
+
+            // Update navigation buttons
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update current UV type
+            currentUVType = sectionName;
+            updateStatus('Showing ' + sectionName + ' UV mapping');
+        }
+
+        // Mesh creation functions
+        function createBaseMesh() {
+            clearScene();
+            
+            try {
+                const meshType = document.getElementById('base-mesh').value;
+                const meshName = 'create' + meshType.charAt(0).toUpperCase() + meshType.slice(1);
+                
+                if (ThreeEdit[meshName]) {
+                    currentMesh = ThreeEdit[meshName]();
+                } else {
+                    updateStatus('Mesh type not available: ' + meshType, 'error');
+                    return;
+                }
+
+                // Convert to Three.js geometry
+                const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x667eea,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+                meshObjects.push(mesh);
+
+                updateMeshInfo();
+                updateStatus(meshType + ' created successfully');
+                
+            } catch (error) {
+                updateStatus('Error creating mesh: ' + error.message, 'error');
+            }
+        }
+
+        function changeBaseMesh() {
+            if (currentMesh) {
+                createBaseMesh();
+            }
+        }
+
+        function updateUV() {
+            // Update value displays
+            document.getElementById('scale-x-value').textContent = document.getElementById('uv-scale-x').value;
+            document.getElementById('scale-y-value').textContent = document.getElementById('uv-scale-y').value;
+            document.getElementById('offset-x-value').textContent = document.getElementById('uv-offset-x').value;
+            document.getElementById('offset-y-value').textContent = document.getElementById('uv-offset-y').value;
+            document.getElementById('rotation-value').textContent = document.getElementById('uv-rotation').value;
+        }
+
+        function applyUVMapping() {
+            if (!currentMesh) {
+                updateStatus('No mesh to apply UVs to', 'error');
+                return;
+            }
+
+            try {
+                const scaleX = parseFloat(document.getElementById('uv-scale-x').value);
+                const scaleY = parseFloat(document.getElementById('uv-scale-y').value);
+                const offsetX = parseFloat(document.getElementById('uv-offset-x').value);
+                const offsetY = parseFloat(document.getElementById('uv-offset-y').value);
+                const rotation = parseFloat(document.getElementById('uv-rotation').value);
+                const projection = document.getElementById('projection-axis').value;
+
+                switch (currentUVType) {
+                    case 'planar':
+                        ThreeEdit.generatePlanarUVs(currentMesh.vertices, {
+                            projection: projection,
+                            scale: { x: scaleX, y: scaleY },
+                            offset: { x: offsetX, y: offsetY },
+                            rotation: rotation
+                        });
+                        break;
+                    case 'cylindrical':
+                        ThreeEdit.generateCylindricalUVs(currentMesh.vertices, {
+                            axis: projection[1],
+                            center: { x: 0, y: 0, z: 0 },
+                            radius: 1,
+                            height: 2,
+                            scale: { x: scaleX, y: scaleY },
+                            offset: { x: offsetX, y: offsetY }
+                        });
+                        break;
+                    case 'spherical':
+                        ThreeEdit.generateSphericalUVs(currentMesh.vertices, {
+                            center: { x: 0, y: 0, z: 0 },
+                            radius: 1,
+                            scale: { x: scaleX, y: scaleY },
+                            offset: { x: offsetX, y: offsetY }
+                        });
+                        break;
+                    case 'cubic':
+                        ThreeEdit.generateCubicUVs(currentMesh.vertices, {
+                            center: { x: 0, y: 0, z: 0 },
+                            size: 2,
+                            scale: { x: scaleX, y: scaleY },
+                            offset: { x: offsetX, y: offsetY }
+                        });
+                        break;
+                }
+
+                // Update visualization
+                updateMeshVisualization();
+                updateStatus(currentUVType + ' UVs applied successfully');
+                
+            } catch (error) {
+                updateStatus('Error applying UVs: ' + error.message, 'error');
+            }
+        }
+
+        function generateTexture() {
+            const textureType = document.getElementById('texture-type').value;
+            
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+
+                switch (textureType) {
+                    case 'checker':
+                        createCheckerTexture(ctx, 512, 512);
+                        break;
+                    case 'gradient':
+                        createGradientTexture(ctx, 512, 512);
+                        break;
+                    case 'noise':
+                        createNoiseTexture(ctx, 512, 512);
+                        break;
+                    case 'uv-debug':
+                        createUVDebugTexture(ctx, 512, 512);
+                        break;
+                }
+
+                currentTexture = new THREE.CanvasTexture(canvas);
+                updateMeshVisualization();
+                updateStatus(textureType + ' texture generated');
+                
+            } catch (error) {
+                updateStatus('Error generating texture: ' + error.message, 'error');
+            }
+        }
+
+        function createCheckerTexture(ctx, width, height) {
+            const size = 32;
+            for (let x = 0; x < width; x += size) {
+                for (let y = 0; y < height; y += size) {
+                    const isEven = ((x / size) + (y / size)) % 2 === 0;
+                    ctx.fillStyle = isEven ? '#ffffff' : '#000000';
+                    ctx.fillRect(x, y, size, size);
+                }
+            }
+        }
+
+        function createGradientTexture(ctx, width, height) {
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#ff0000');
+            gradient.addColorStop(0.5, '#00ff00');
+            gradient.addColorStop(1, '#0000ff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        function createNoiseTexture(ctx, width, height) {
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const noise = Math.random() * 255;
+                data[i] = noise;     // R
+                data[i + 1] = noise; // G
+                data[i + 2] = noise; // B
+                data[i + 3] = 255;   // A
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function createUVDebugTexture(ctx, width, height) {
+            // Create a UV debug texture with colored quadrants
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            
+            // Red quadrant (top-left)
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(0, 0, halfWidth, halfHeight);
+            
+            // Green quadrant (top-right)
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(halfWidth, 0, halfWidth, halfHeight);
+            
+            // Blue quadrant (bottom-left)
+            ctx.fillStyle = '#0000ff';
+            ctx.fillRect(0, halfHeight, halfWidth, halfHeight);
+            
+            // Yellow quadrant (bottom-right)
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(halfWidth, halfHeight, halfWidth, halfHeight);
+            
+            // Add grid lines
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(halfWidth, 0);
+            ctx.lineTo(halfWidth, height);
+            ctx.moveTo(0, halfHeight);
+            ctx.lineTo(width, halfHeight);
+            ctx.stroke();
+        }
+
+        function changeTexture() {
+            if (showTexture) {
+                generateTexture();
+            }
+        }
+
+        function toggleTexture() {
+            showTexture = !showTexture;
+            updateMeshVisualization();
+            updateStatus(showTexture ? 'Texture enabled' : 'Texture disabled');
+        }
+
+        function toggleUVOverlay() {
+            updateStatus('UV overlay not implemented yet');
+        }
+
+        function exportUVs() {
+            if (!currentMesh) {
+                updateStatus('No mesh to export UVs from', 'error');
+                return;
+            }
+
+            try {
+                // Create a simple UV visualization
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, 512, 512);
+                
+                // Draw UV coordinates
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                
+                currentMesh.faces.forEach(face => {
+                    if (face.vertices.length >= 3) {
+                        ctx.beginPath();
+                        const v1 = face.vertices[0];
+                        const v2 = face.vertices[1];
+                        const v3 = face.vertices[2];
+                        
+                        if (v1.uv && v2.uv && v3.uv) {
+                            ctx.moveTo(v1.uv.u * 512, v1.uv.v * 512);
+                            ctx.lineTo(v2.uv.u * 512, v2.uv.v * 512);
+                            ctx.lineTo(v3.uv.u * 512, v3.uv.v * 512);
+                            ctx.closePath();
+                            ctx.stroke();
+                        }
+                    }
+                });
+                
+                // Create download link
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataURL;
+                link.download = 'uv_map.png';
+                link.click();
+                
+                updateStatus('UV map exported successfully');
+                
+            } catch (error) {
+                updateStatus('Error exporting UVs: ' + error.message, 'error');
+            }
+        }
+
+        function updateMeshVisualization() {
+            // Remove existing mesh objects
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+
+            // Create new visualization
+            const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+            
+            let material;
+            if (showTexture && currentTexture) {
+                material = new THREE.MeshPhongMaterial({ 
+                    map: currentTexture,
+                    transparent: true,
+                    opacity: 0.9
+                });
+            } else {
+                material = new THREE.MeshPhongMaterial({ 
+                    color: 0x667eea,
+                    transparent: true,
+                    opacity: 0.8
+                });
+            }
+            
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            meshObjects.push(mesh);
+        }
+
+        function clearScene() {
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+            currentMesh = null;
+            currentTexture = null;
+            
+            updateMeshInfo();
+            updateStatus('Scene cleared');
+        }
+
+        function resetScene() {
+            clearScene();
+            createBaseMesh();
+        }
+
+        // Utility functions
+        function updateMeshInfo() {
+            if (currentMesh) {
+                const vertices = currentMesh.vertices.length;
+                const faces = currentMesh.faces.length;
+                const edges = currentMesh.edges.length;
+                const uvs = currentMesh.vertices.filter(v => v.uv).length;
+                document.getElementById('uv-info').textContent = 
+                    `Vertices: ${vertices} | Faces: ${faces} | UVs: ${uvs}`;
+            } else {
+                document.getElementById('uv-info').textContent = 'Vertices: 0 | Faces: 0 | UVs: 0';
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const indicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            
+            statusText.textContent = message;
+            
+            indicator.className = 'status-indicator';
+            if (type === 'error') {
+                indicator.classList.add('error');
+            } else if (type === 'warning') {
+                indicator.classList.add('warning');
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            // Check if ThreeEdit is available
+            if (typeof ThreeEdit === 'undefined') {
+                updateStatus('ThreeEdit library not loaded. Please include the UMD build.', 'error');
+                return;
+            }
+            
+            initScene();
+            createBaseMesh();
+            generateTexture();
+        });
+    </script>
+</body>
+</html> 

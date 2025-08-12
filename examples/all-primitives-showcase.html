@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Primitives Showcase - Three-Edit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            color: white;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .control-group input, .control-group select {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #fa709a, #fee140);
+        }
+
+        .primitives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .primitive-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 380px;
+        }
+
+        .primitive-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .primitive-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+        }
+
+        .primitive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .primitive-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .primitive-icon {
+            font-size: 1.5em;
+            opacity: 0.7;
+        }
+
+        .primitive-viewport {
+            width: 100%;
+            height: 250px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .primitive-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.8em;
+        }
+
+        .primitive-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .primitive-controls .btn {
+            flex: 1;
+            min-width: 80px;
+            font-size: 0.8em;
+            padding: 8px 12px;
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            z-index: 1000;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .primitives-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Three-Edit Primitives Showcase</h1>
+            <p>Explore all available 3D primitives in organized rows</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="grid-size">Grid Size:</label>
+                <select id="grid-size" onchange="updateGridSize()">
+                    <option value="2" selected>2 Columns</option>
+                    <option value="3">3 Columns</option>
+                    <option value="4">4 Columns</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="rotation-speed">Rotation Speed:</label>
+                <input type="range" id="rotation-speed" min="0" max="0.05" step="0.005" value="0.01" onchange="updateRotationSpeed()">
+            </div>
+            
+            <div class="control-group">
+                <label for="auto-rotate">Auto Rotate:</label>
+                <input type="checkbox" id="auto-rotate" checked onchange="toggleAutoRotate()">
+            </div>
+            
+            <button class="btn btn-primary" onclick="createAllPrimitives()">🎯 Create All Primitives</button>
+            <button class="btn btn-secondary" onclick="clearAllPrimitives()">🗑️ Clear All</button>
+            <button class="btn btn-success" onclick="randomizeColors()">🎨 Randomize Colors</button>
+            <button class="btn btn-danger" onclick="resetCamera()">📷 Reset Camera</button>
+        </div>
+
+        <div class="primitives-grid" id="primitives-grid">
+            <!-- Primitive cards will be generated here -->
+        </div>
+    </div>
+
+    <div class="status-bar" id="status-bar">
+        Ready to create primitives
+    </div>
+
+             <!-- Load Three.js with fallback -->
+    <script>
+        // Ensure Three.js loads before proceeding (2025 ES Module approach)
+        function loadThreeJS() {
+            return new Promise((resolve, reject) => {
+                if (typeof THREE !== 'undefined') {
+                    console.log('Three.js already loaded');
+                    loadOrbitControls().then(resolve).catch(reject);
+                    return;
+                }
+                
+                // Use ES module approach for 2025
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.textContent = `
+                    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+                    window.THREE = THREE;
+                    console.log('Three.js loaded via ES modules');
+                `;
+                script.onload = () => {
+                    loadOrbitControls().then(resolve).catch(reject);
+                };
+                script.onerror = () => {
+                    console.error('Failed to load Three.js via ES modules, trying fallback...');
+                    // Fallback to CDN for older browsers
+                    const fallbackScript = document.createElement('script');
+                    fallbackScript.src = 'https://unpkg.com/three@0.160.0/build/three.min.js';
+                    fallbackScript.onload = () => {
+                        console.log('Three.js loaded from CDN fallback');
+                        loadOrbitControls().then(resolve).catch(reject);
+                    };
+                    fallbackScript.onerror = reject;
+                    document.head.appendChild(fallbackScript);
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        function loadOrbitControls() {
+            return new Promise((resolve, reject) => {
+                if (typeof THREE.OrbitControls !== 'undefined') {
+                    console.log('OrbitControls already loaded');
+                    resolve();
+                    return;
+                }
+                
+                // Use ES module approach for OrbitControls (2025)
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.textContent = `
+                    import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+                    window.THREE.OrbitControls = OrbitControls;
+                    console.log('OrbitControls loaded via ES modules');
+                `;
+                script.onload = () => {
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.error('Failed to load OrbitControls via ES modules, trying fallback...');
+                    // Fallback to CDN for older browsers
+                    const fallbackScript = document.createElement('script');
+                    fallbackScript.src = 'https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js';
+                    fallbackScript.onload = () => {
+                        console.log('OrbitControls loaded from CDN fallback');
+                        resolve();
+                    };
+                    fallbackScript.onerror = () => {
+                        console.warn('OrbitControls not available, continuing without controls');
+                        resolve(); // Continue without controls
+                    };
+                    document.head.appendChild(fallbackScript);
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        function loadThreeEdit() {
+            return new Promise((resolve, reject) => {
+                // Ensure Three.js is fully loaded before loading ThreeEdit
+                if (typeof THREE === 'undefined') {
+                    reject(new Error('Three.js must be loaded before ThreeEdit'));
+                    return;
+                }
+                
+                // Use the IIFE version for simplicity and reliability
+                const script = document.createElement('script');
+                script.src = '../browser/three-edit.browser.iife.js';
+                script.onload = () => {
+                    console.log('ThreeEdit loaded successfully via IIFE');
+                    console.log('ThreeEdit object:', typeof ThreeEdit);
+                    if (typeof ThreeEdit !== 'undefined') {
+                        console.log('ThreeEdit functions:', Object.keys(ThreeEdit));
+                        console.log('createCube available:', typeof ThreeEdit.createCube);
+                    }
+                    resolve();
+                };
+                script.onerror = (error) => {
+                    console.error('Failed to load ThreeEdit:', error);
+                    reject(error);
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Load all dependencies in sequence
+        loadThreeJS()
+            .then(() => loadThreeEdit())
+            .then(() => {
+                console.log('All dependencies loaded, initializing...');
+                // Wait a bit for everything to be ready
+                setTimeout(() => {
+                    if (typeof initializeDemo === 'function') {
+                        initializeDemo();
+                    } else {
+                        console.error('initializeDemo function not found');
+                    }
+                }, 500); // Increased delay to ensure ThreeEdit is fully initialized
+            })
+            .catch(error => {
+                console.error('Failed to load dependencies:', error);
+                document.body.innerHTML = '<div style="color: white; text-align: center; padding: 50px;">Failed to load Three.js or ThreeEdit. Please check your internet connection.</div>';
+            });
+    </script>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let primitiveObjects = new Map(); // Map of primitive name to {mesh, threeObject, viewport}
+        let rotationSpeed = 0.01;
+        let autoRotate = true;
+        let animationId;
+
+        // Available primitives in browser build with larger sizes for better visibility
+        let primitives = [];
+
+        // Initialize primitives after ThreeEdit is loaded
+        function initializePrimitives() {
+            if (typeof ThreeEdit === 'undefined') {
+                console.error('ThreeEdit not available for primitive initialization');
+                return;
+            }
+            
+            primitives = [
+                {
+                    name: 'Cube',
+                    icon: '🧱',
+                    function: () => ThreeEdit.createCube({ width: 1.5, height: 1.5, depth: 1.5 }),
+                    color: 0x4CAF50
+                },
+                {
+                    name: 'Sphere',
+                    icon: '🔵',
+                    function: () => ThreeEdit.createSphere({ radius: 0.8, segments: 16, rings: 12 }),
+                    color: 0x2196F3
+                },
+                {
+                    name: 'Cylinder',
+                    icon: '🔘',
+                    function: () => ThreeEdit.createCylinder({ radius: 0.6, height: 1.5, segments: 16 }),
+                    color: 0xFF9800
+                },
+                {
+                    name: 'Plane',
+                    icon: '⬜',
+                    function: () => ThreeEdit.createPlane({ width: 1.5, height: 1.5, widthSegments: 2, heightSegments: 2 }),
+                    color: 0x607D8B
+                }
+            ];
+            
+            console.log('Primitives initialized with ThreeEdit functions');
+        }
+
+        // Initialize demo after dependencies are loaded
+        function initializeDemo() {
+            console.log('Initializing demo...');
+            console.log('THREE available:', typeof THREE !== 'undefined');
+            console.log('ThreeEdit available:', typeof ThreeEdit !== 'undefined');
+            
+            if (typeof THREE === 'undefined') {
+                console.error('THREE is not defined');
+                return;
+            }
+            
+            if (typeof ThreeEdit === 'undefined') {
+                console.error('ThreeEdit is not defined');
+                return;
+            }
+            
+            // Initialize primitives after ThreeEdit is loaded
+            console.log('ThreeEdit functions available:', Object.keys(ThreeEdit));
+            initializePrimitives();
+            
+            // Initialize the scene
+            initScene();
+            
+            // Add the main renderer to the page
+            const mainViewport = document.createElement('div');
+            mainViewport.id = 'main-viewport';
+            mainViewport.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: 1;
+                pointer-events: none;
+            `;
+            mainViewport.appendChild(renderer.domElement);
+            document.body.appendChild(mainViewport);
+            
+            // Create the primitive cards
+            createPrimitiveCards();
+            
+            // Set initial grid size
+            updateGridSize();
+            
+            const controlMessage = controls ? 'with OrbitControls' : 'with manual mouse controls (drag to move, scroll to zoom)';
+            updateStatus(`Demo ready - click "Create All Primitives" to see them all (${controlMessage})`);
+        }
+
+        // Initialize the scene
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8f9fa);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 8);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0xf8f9fa, 1);
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+
+            // Add controls if available
+            if (typeof THREE.OrbitControls !== 'undefined') {
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.enableZoom = true;
+                controls.enablePan = false;
+                controls.autoRotate = true;
+                controls.autoRotateSpeed = 2.0;
+                console.log('OrbitControls initialized');
+            } else {
+                console.warn('OrbitControls not available - using manual camera controls');
+                controls = null;
+                
+                // Add simple manual camera controls
+                let isMouseDown = false;
+                let mouseX = 0;
+                let mouseY = 0;
+                
+                renderer.domElement.addEventListener('mousedown', (event) => {
+                    isMouseDown = true;
+                    mouseX = event.clientX;
+                    mouseY = event.clientY;
+                });
+                
+                renderer.domElement.addEventListener('mouseup', () => {
+                    isMouseDown = false;
+                });
+                
+                renderer.domElement.addEventListener('mousemove', (event) => {
+                    if (isMouseDown) {
+                        const deltaX = event.clientX - mouseX;
+                        const deltaY = event.clientY - mouseY;
+                        
+                        camera.position.x += deltaX * 0.01;
+                        camera.position.y -= deltaY * 0.01;
+                        camera.lookAt(0, 0, 0);
+                        
+                        mouseX = event.clientX;
+                        mouseY = event.clientY;
+                    }
+                });
+                
+                renderer.domElement.addEventListener('wheel', (event) => {
+                    const zoomSpeed = 0.1;
+                    const zoom = event.deltaY > 0 ? 1 + zoomSpeed : 1 - zoomSpeed;
+                    camera.position.multiplyScalar(zoom);
+                });
+            }
+
+            animate();
+        }
+
+        // Animation loop
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            if (autoRotate) {
+                primitiveObjects.forEach((obj, name) => {
+                    if (obj.threeObject) {
+                        obj.threeObject.rotation.x += rotationSpeed;
+                        obj.threeObject.rotation.y += rotationSpeed;
+                    }
+                });
+            }
+            
+            if (controls) {
+                controls.update();
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Create a primitive
+        function createPrimitive(primitiveDef) {
+            try {
+                // Check if the primitive function exists
+                if (typeof primitiveDef.function !== 'function') {
+                    throw new Error('Primitive function not available');
+                }
+                
+                const editableMesh = primitiveDef.function();
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                
+                // Ensure geometry has proper attributes
+                if (!geometry.attributes.position) {
+                    throw new Error('Geometry missing position attributes');
+                }
+                
+                // Create smooth material for better appearance
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: primitiveDef.color,
+                    transparent: true,
+                    opacity: 0.9,
+                    shininess: 30,
+                    flatShading: false
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                // Ensure proper face normals for smooth rendering
+                geometry.computeVertexNormals();
+                geometry.computeBoundingSphere();
+                geometry.computeBoundingBox();
+                
+                // Position the primitive in a grid layout
+                const index = primitives.findIndex(p => p.name === primitiveDef.name);
+                const gridSize = 2; // 2x2 grid
+                const spacing = 3;
+                const row = Math.floor(index / gridSize);
+                const col = index % gridSize;
+                
+                mesh.position.set(
+                    (col - 0.5) * spacing,
+                    (row - 0.5) * spacing,
+                    0
+                );
+                
+                scene.add(mesh);
+
+                // Store the object
+                primitiveObjects.set(primitiveDef.name, {
+                    mesh: editableMesh,
+                    threeObject: mesh
+                });
+
+                // Update stats
+                updatePrimitiveStats(primitiveDef.name, editableMesh);
+                
+                updateStatus(`✅ Created ${primitiveDef.name}`);
+                return true;
+            } catch (error) {
+                console.error(`Error creating ${primitiveDef.name}:`, error);
+                updateStatus(`❌ Failed to create ${primitiveDef.name}: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Create primitive cards in the DOM
+        function createPrimitiveCards() {
+            const grid = document.getElementById('primitives-grid');
+            if (!grid) {
+                console.error('Primitives grid not found');
+                return;
+            }
+            
+            grid.innerHTML = '';
+            
+            primitives.forEach(primitive => {
+                const card = document.createElement('div');
+                card.className = 'primitive-card';
+                card.setAttribute('data-primitive', primitive.name);
+                
+                card.innerHTML = `
+                    <div class="primitive-header">
+                        <span class="primitive-name">${primitive.name}</span>
+                        <span class="primitive-icon">${primitive.icon}</span>
+                    </div>
+                    <div class="primitive-info">
+                        <p>Click "Create All Primitives" to see this primitive in the 3D scene above.</p>
+                    </div>
+                    <div class="primitive-stats">
+                        <div class="stat vertices">
+                            <span class="stat-label">Vertices:</span>
+                            <span class="stat-value">-</span>
+                        </div>
+                        <div class="stat faces">
+                            <span class="stat-label">Faces:</span>
+                            <span class="stat-value">-</span>
+                        </div>
+                        <div class="stat edges">
+                            <span class="stat-label">Edges:</span>
+                            <span class="stat-value">-</span>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // Filter available primitives
+        function getAvailablePrimitives() {
+            return primitives.filter(primitive => {
+                try {
+                    // Check if the function exists and can be called
+                    const testMesh = primitive.function();
+                    return testMesh && testMesh.vertices && testMesh.faces;
+                } catch (error) {
+                    console.warn(`Primitive ${primitive.name} not available:`, error.message);
+                    return false;
+                }
+            });
+        }
+
+        // Create all primitives
+        function createAllPrimitives() {
+            clearAllPrimitives();
+            
+            const availablePrimitives = getAvailablePrimitives();
+            let successCount = 0;
+            const totalPrimitives = availablePrimitives.length;
+            
+            if (totalPrimitives === 0) {
+                updateStatus('❌ No primitives available', 'error');
+                return;
+            }
+            
+            availablePrimitives.forEach((primitive, index) => {
+                setTimeout(() => {
+                    if (createPrimitive(primitive)) {
+                        successCount++;
+                    }
+                    
+                    if (index === totalPrimitives - 1) {
+                        setTimeout(() => {
+                            updateStatus(`🎉 Created ${successCount} out of ${totalPrimitives} available primitives`);
+                        }, availablePrimitives.length * 100 + 500);
+                    }
+                }, index * 100); // Stagger creation
+            });
+        }
+
+        // Clear all primitives
+        function clearAllPrimitives() {
+            primitiveObjects.forEach((obj, name) => {
+                if (obj.threeObject) {
+                    scene.remove(obj.threeObject);
+                }
+            });
+            primitiveObjects.clear();
+            updateStatus('🗑️ Cleared all primitives');
+        }
+
+        // Update primitive statistics
+        function updatePrimitiveStats(primitiveName, editableMesh) {
+            const card = document.querySelector(`[data-primitive="${primitiveName}"]`);
+            if (card) {
+                const verticesEl = card.querySelector('.vertices .stat-value');
+                const facesEl = card.querySelector('.faces .stat-value');
+                const edgesEl = card.querySelector('.edges .stat-value');
+                
+                if (verticesEl) verticesEl.textContent = editableMesh.vertices.length;
+                if (facesEl) facesEl.textContent = editableMesh.faces.length;
+                if (edgesEl) edgesEl.textContent = editableMesh.edges.length;
+            }
+        }
+
+        // Randomize colors
+        function randomizeColors() {
+            const colors = [0x4CAF50, 0x2196F3, 0xFF9800, 0x9C27B0, 0x607D8B, 0xE91E63, 0x00BCD4, 0x795548, 0x3F51B5, 0xFF5722, 0x8BC34A, 0x673AB7];
+            
+            primitiveObjects.forEach((obj, name) => {
+                if (obj.threeObject && obj.threeObject.material) {
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    obj.threeObject.material.color.setHex(randomColor);
+                }
+            });
+            
+            updateStatus('🎨 Randomized all colors');
+        }
+
+        // Reset camera
+        function resetCamera() {
+            camera.position.set(0, 0, 4);
+            camera.lookAt(0, 0, 0);
+            controls.reset();
+            updateStatus('📷 Camera reset');
+        }
+
+        // Update grid size
+        function updateGridSize() {
+            const size = document.getElementById('grid-size').value;
+            const grid = document.getElementById('primitives-grid');
+            grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            updateStatus(`📐 Grid size changed to ${size} columns`);
+        }
+
+        // Update rotation speed
+        function updateRotationSpeed() {
+            rotationSpeed = parseFloat(document.getElementById('rotation-speed').value);
+            updateStatus(`⚡ Rotation speed: ${rotationSpeed.toFixed(3)}`);
+        }
+
+        // Toggle auto rotate
+        function toggleAutoRotate() {
+            autoRotate = document.getElementById('auto-rotate').checked;
+            updateStatus(autoRotate ? '🔄 Auto rotation enabled' : '⏸️ Auto rotation disabled');
+        }
+
+                 // Update status
+         function updateStatus(message, type = 'info') {
+             const statusBar = document.getElementById('status-bar');
+             if (statusBar) {
+                 statusBar.textContent = message;
+                 statusBar.className = `status-bar ${type}`;
+                 
+                 // Clear status after 3 seconds
+                 setTimeout(() => {
+                     if (statusBar) {
+                         statusBar.textContent = 'Ready';
+                         statusBar.className = 'status-bar';
+                     }
+                 }, 3000);
+             } else {
+                 console.log(`Status: ${message}`);
+             }
+         }
+
+        // Generate primitive cards
+        function generatePrimitiveCards() {
+            const grid = document.getElementById('primitives-grid');
+            grid.innerHTML = '';
+
+            primitives.forEach(primitive => {
+                const card = document.createElement('div');
+                card.className = 'primitive-card';
+                card.setAttribute('data-primitive', primitive.name);
+                
+                card.innerHTML = `
+                    <div class="primitive-header">
+                        <span class="primitive-name">${primitive.name}</span>
+                        <span class="primitive-icon">${primitive.icon}</span>
+                    </div>
+                    <div class="primitive-viewport">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Click to create
+                        </div>
+                    </div>
+                    <div class="primitive-stats">
+                        <div class="stat vertices">
+                            <span class="stat-value">0</span>
+                            <span class="stat-label">Vertices</span>
+                        </div>
+                        <div class="stat faces">
+                            <span class="stat-value">0</span>
+                            <span class="stat-label">Faces</span>
+                        </div>
+                        <div class="stat edges">
+                            <span class="stat-value">0</span>
+                            <span class="stat-label">Edges</span>
+                        </div>
+                    </div>
+                    <div class="primitive-controls">
+                        <button class="btn btn-primary" onclick="createPrimitive(${JSON.stringify(primitive).replace(/"/g, '&quot;')})">Create</button>
+                        <button class="btn btn-secondary" onclick="removePrimitive('${primitive.name}')">Remove</button>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // Remove a specific primitive
+        function removePrimitive(primitiveName) {
+            const obj = primitiveObjects.get(primitiveName);
+            if (obj && obj.threeObject) {
+                scene.remove(obj.threeObject);
+                primitiveObjects.delete(primitiveName);
+                updateStatus(`🗑️ Removed ${primitiveName}`);
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            initScene();
+            generatePrimitiveCards();
+            updateStatus('🎨 Primitives showcase ready');
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            // Handle resize if needed
+        });
+    </script>
+</body>
+</html> 

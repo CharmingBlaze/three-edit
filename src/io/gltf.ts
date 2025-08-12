@@ -15,7 +15,19 @@ import { createCube } from '../primitives';
  * @param options Export options
  * @returns GLTF JSON object
  */
+import { triangulateForExport } from '../utils/triangulation';
+
 export function exportGLTF(mesh: EditableMesh, options: any = {}): GLTF {
+  
+  // Triangulate the mesh for GLTF export (GLTF only supports triangles)
+  const triangulated = triangulateForExport(mesh, {
+    quadMethod: 'optimal',
+    ngonMethod: 'fan',
+    preserveOriginal: true
+  });
+  
+  const triangulatedMesh = triangulated.mesh;
+  
   // Create a simple GLTF structure directly
   const gltf: GLTF = {
     asset: {
@@ -42,7 +54,7 @@ export function exportGLTF(mesh: EditableMesh, options: any = {}): GLTF {
       {
         bufferView: 0,
         componentType: 5126, // FLOAT
-        count: mesh.getVertexCount(),
+        count: triangulatedMesh.getVertexCount(),
         type: 'VEC3' as const,
         max: [1, 1, 1],
         min: [-1, -1, -1]
@@ -50,7 +62,7 @@ export function exportGLTF(mesh: EditableMesh, options: any = {}): GLTF {
       {
         bufferView: 1,
         componentType: 5123, // UNSIGNED_SHORT
-        count: mesh.getFaceCount() * 3,
+        count: triangulatedMesh.getFaceCount() * 3,
         type: 'SCALAR' as const
       }
     ],
@@ -58,16 +70,16 @@ export function exportGLTF(mesh: EditableMesh, options: any = {}): GLTF {
       {
         buffer: 0,
         byteOffset: 0,
-        byteLength: mesh.getVertexCount() * 12 // 3 floats * 4 bytes
+        byteLength: triangulatedMesh.getVertexCount() * 12 // 3 floats * 4 bytes
       },
       {
         buffer: 0,
-        byteOffset: mesh.getVertexCount() * 12,
-        byteLength: mesh.getFaceCount() * 6 // 3 shorts * 2 bytes
+        byteOffset: triangulatedMesh.getVertexCount() * 12,
+        byteLength: triangulatedMesh.getFaceCount() * 6 // 3 shorts * 2 bytes
       }
     ],
     buffers: [{
-      byteLength: mesh.getVertexCount() * 12 + mesh.getFaceCount() * 6
+      byteLength: triangulatedMesh.getVertexCount() * 12 + triangulatedMesh.getFaceCount() * 6
     }],
     materials: [{
       pbrMetallicRoughness: {

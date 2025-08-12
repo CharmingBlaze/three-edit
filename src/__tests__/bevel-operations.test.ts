@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { createCube } from '../primitives/createCube.ts';
-import { bevel, bevelEdge, bevelVertex, bevelFace } from '../editing/bevel.ts';
-import { Face } from '../core/Face.ts';
-import { Vertex } from '../core/Vertex.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { createCube } from '../primitives/createCube';
+import { bevel, bevelEdge, bevelVertex, bevelFace } from '../editing/bevel';
+import { Face } from '../core/Face';
+import { Vertex } from '../core/Vertex';
 
 describe('Bevel Operations', () => {
   let mesh: EditableMesh;

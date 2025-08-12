@@ -23,8 +23,9 @@ describe('Bridge Tool', () => {
 
   describe('bridgeEdges', () => {
     it('should bridge two edges with quads', () => {
-      const edge1Index = 0;
-      const edge2Index = 8; // Use a different edge that's not connected to edge 0
+      // Use edges from opposite faces of the cube
+      const edge1Index = 0; // Front face edge
+      const edge2Index = 4; // Back face edge (assuming they're not connected)
       
       const result = bridgeEdges(cube, edge1Index, edge2Index);
 
@@ -35,8 +36,9 @@ describe('Bridge Tool', () => {
     });
 
     it('should bridge two edges with triangles', () => {
-      const edge1Index = 1;
-      const edge2Index = 9; // Use a different edge that's not connected to edge 1
+      // Use edges from opposite faces of the cube
+      const edge1Index = 1; // Front face edge
+      const edge2Index = 5; // Back face edge (assuming they're not connected)
       
       const result = bridgeEdges(cube, edge1Index, edge2Index, { createQuads: false });
 
@@ -66,7 +68,7 @@ describe('Bridge Tool', () => {
 
     it('should apply smoothing when requested', () => {
       const edge1Index = 2;
-      const edge2Index = 10; // Use a different edge that's not connected to edge 2
+      const edge2Index = 6; // Use a different edge that's not connected to edge 2
       
       const result = bridgeEdges(cube, edge1Index, edge2Index, { 
         smooth: true, 
@@ -79,7 +81,7 @@ describe('Bridge Tool', () => {
 
     it('should assign material to new faces', () => {
       const edge1Index = 3;
-      const edge2Index = 11; // Use a different edge that's not connected to edge 3
+      const edge2Index = 7; // Use a different edge that's not connected to edge 3
       const testMaterial = { name: 'test' };
       
       const result = bridgeEdges(cube, edge1Index, edge2Index, { material: testMaterial });
@@ -91,7 +93,8 @@ describe('Bridge Tool', () => {
 
   describe('bridgeEdgeSequence', () => {
     it('should bridge multiple edges in sequence', () => {
-      const edgeIndices = [0, 8, 16]; // Use edges that are not connected to each other
+      // Use edges from different faces that are less likely to be connected
+      const edgeIndices = [0, 2, 4]; // Use edges that are not connected to each other
       
       const result = bridgeEdgeSequence(cube, edgeIndices);
 
@@ -206,7 +209,7 @@ describe('Bridge Tool', () => {
     it('should complete operations within reasonable time', () => {
       const startTime = performance.now();
       
-      const result = bridgeEdges(cube, 0, 8); // Use valid edge combination
+      const result = bridgeEdges(cube, 0, 4); // Use valid edge combination
       
       const endTime = performance.now();
       const operationTime = endTime - startTime;
@@ -221,7 +224,7 @@ describe('Bridge Tool', () => {
       const originalEdgeCount = cube.edges.length;
       const originalFaceCount = cube.faces.length;
       
-      const result = bridgeEdges(cube, 0, 8, { validate: true }); // Use valid edge combination
+      const result = bridgeEdges(cube, 0, 4, { validate: true }); // Use valid edge combination
 
       expect(result.success).toBe(true);
       expect(cube.vertices.length).toBeGreaterThan(originalVertexCount);
@@ -255,7 +258,7 @@ describe('Bridge Tool', () => {
     });
 
     it('should handle invalid options gracefully', () => {
-      const result = bridgeEdges(cube, 0, 8, { // Use valid edge combination
+      const result = bridgeEdges(cube, 0, 4, { // Use valid edge combination
         smoothingFactor: 2.0, // Invalid value
         tolerance: -1 // Invalid value
       });
@@ -268,7 +271,7 @@ describe('Bridge Tool', () => {
     it('should preserve materials when requested', () => {
       const testMaterial = { name: 'bridge_material' };
       
-      const result = bridgeEdges(cube, 0, 8, { // Use valid edge combination
+      const result = bridgeEdges(cube, 0, 4, { // Use valid edge combination
         preserveMaterials: true,
         material: testMaterial
       });
@@ -280,7 +283,7 @@ describe('Bridge Tool', () => {
     it('should assign new material to bridge faces', () => {
       const testMaterial = { name: 'new_material' };
       
-      const result = bridgeEdges(cube, 0, 8, { material: testMaterial }); // Use valid edge combination
+      const result = bridgeEdges(cube, 0, 4, { material: testMaterial }); // Use valid edge combination
 
       expect(result.success).toBe(true);
       // Check that new faces have the assigned material

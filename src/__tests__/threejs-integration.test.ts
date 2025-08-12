@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { createCube, createSphere } from '../primitives/index.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { createCube, createSphere } from '../primitives/index';
 import {
   convertToThreeMesh,
   convertFromThreeMesh,
@@ -10,7 +10,7 @@ import {
   extractFromScene,
   createSceneGraph,
   validateThreeJSIntegration
-} from '../integration/threejs.ts';
+} from '../integration/threejs';
 
 describe('Three.js Integration', () => {
   let cube: EditableMesh;

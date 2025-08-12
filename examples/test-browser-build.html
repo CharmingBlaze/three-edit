@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Browser Build</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        .info { background: #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Browser Build</h1>
+    <div id="status" class="status info">Testing browser build...</div>
+    <div id="results"></div>
+
+    <!-- Load the IIFE version -->
+    <script src="../browser/three-edit.browser.iife.js"></script>
+    
+    <script>
+        const status = document.getElementById('status');
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        try {
+            log('🔍 Testing IIFE script loading...', 'info');
+            
+            // Test if ThreeEdit is available globally
+            if (typeof ThreeEdit !== 'undefined') {
+                log('✅ ThreeEdit loaded successfully!', 'success');
+                log(`📦 ThreeEdit object type: ${typeof ThreeEdit}`, 'info');
+                
+                // Test if Three.js is available
+                if (typeof THREE !== 'undefined') {
+                    log('✅ THREE is available globally', 'success');
+                    log(`🎯 THREE version: ${THREE.REVISION}`, 'info');
+                } else {
+                    log('❌ THREE is not available globally', 'error');
+                }
+                
+                // Test ThreeEdit functions
+                const functions = Object.keys(ThreeEdit);
+                log(`🔧 Available functions: ${functions.length}`, 'info');
+                log(`📋 Functions: ${functions.slice(0, 10).join(', ')}...`, 'info');
+                
+                // Test specific functions
+                if (typeof ThreeEdit.createCube === 'function') {
+                    log('✅ createCube function available', 'success');
+                    
+                    // Test creating a cube
+                    try {
+                        const cube = ThreeEdit.createCube({ width: 1, height: 1, depth: 1 });
+                        log('✅ Cube created successfully', 'success');
+                        
+                        if (typeof ThreeEdit.toBufferGeometry === 'function') {
+                            const geometry = ThreeEdit.toBufferGeometry(cube);
+                            log('✅ toBufferGeometry works', 'success');
+                        } else {
+                            log('❌ toBufferGeometry not available', 'error');
+                        }
+                    } catch (error) {
+                        log(`❌ Error creating cube: ${error.message}`, 'error');
+                    }
+                } else {
+                    log('❌ createCube function not available', 'error');
+                }
+                
+                if (typeof ThreeEdit.createSphere === 'function') {
+                    log('✅ createSphere function available', 'success');
+                } else {
+                    log('❌ createSphere function not available', 'error');
+                }
+                
+                if (typeof ThreeEdit.createCylinder === 'function') {
+                    log('✅ createCylinder function available', 'success');
+                } else {
+                    log('❌ createCylinder function not available', 'error');
+                }
+                
+                if (typeof ThreeEdit.createPlane === 'function') {
+                    log('✅ createPlane function available', 'success');
+                } else {
+                    log('❌ createPlane function not available', 'error');
+                }
+                
+            } else {
+                log('❌ ThreeEdit object is not available', 'error');
+            }
+            
+            status.textContent = '✅ Test completed! Check results below.';
+            status.className = 'status success';
+            
+        } catch (error) {
+            log(`❌ Test failed: ${error.message}`, 'error');
+            status.textContent = '❌ Test failed! Check console for details.';
+            status.className = 'status error';
+        }
+    </script>
+</body>
+</html> 

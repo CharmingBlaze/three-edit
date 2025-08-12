@@ -1,6 +1,6 @@
-import { EditableMesh } from '../../core/EditableMesh.ts';
-import { Selection } from '../../selection/Selection.ts';
-import { BaseSerializableCommand } from '../Command.ts';
+import { EditableMesh } from '../../core/EditableMesh';
+import { Selection } from '../../selection/Selection';
+import { BaseSerializableCommand } from '../Command';
 
 /**
  * Command to assign a material to selected faces in a mesh

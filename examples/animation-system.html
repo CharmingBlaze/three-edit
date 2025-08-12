@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation System Demo - Three-Edit</title>
+    <link rel="stylesheet" href="demo-styles.css">
+    <style>
+        .animation-timeline {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .timeline-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .timeline-slider {
+            flex: 1;
+            height: 20px;
+            background: #34495e;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .timeline-progress {
+            height: 100%;
+            background: #667eea;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 20px;
+            background: #e74c3c;
+            border-radius: 2px;
+        }
+        
+        .bone-visualization {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .bone-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .bone-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .bone-item.selected {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+        
+        .bone-item.active {
+            border-color: #27ae60;
+            background: #d4edda;
+        }
+        
+        .animation-info {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .animation-property {
+            color: #3498db;
+        }
+        
+        .animation-value {
+            color: #e74c3c;
+        }
+        
+        .keyframe-editor {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .keyframe-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background: white;
+        }
+        
+        .keyframe-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .keyframe-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .keyframe-item.selected {
+            background: #e3f2fd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1>Animation System Demo</h1>
+            <p>Create skeletal animations and morphing effects</p>
+            <div class="demo-nav">
+                <a href="index.html">← Back to Demos</a>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="code-panel">
+                <h3>Animation Operations</h3>
+                <div class="code-snippet">
+                    <h4>Skeletal Animation</h4>
+                    <pre><code>// Create skeleton and bones
+const skeleton = new ThreeEdit.Skeleton();
+const rootBone = new ThreeEdit.Bone('root', { x: 0, y: 0, z: 0 });
+const armBone = new ThreeEdit.Bone('arm', { x: 0, y: 1, z: 0 });
+
+skeleton.addBone(rootBone);
+skeleton.addBone(armBone, rootBone);
+
+// Create skin and assign weights
+const skin = new ThreeEdit.Skin(mesh, skeleton);
+skin.assignWeights(vertices, weights);
+
+// Create animation
+const animation = new ThreeEdit.Animation('walk', {
+    duration: 2.0,
+    loop: true
+});</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Keyframe Animation</h4>
+                    <pre><code>// Add keyframes to animation
+animation.addKeyframe(0, {
+    bone: 'arm',
+    rotation: { x: 0, y: 0, z: 0 }
+});
+
+animation.addKeyframe(1, {
+    bone: 'arm',
+    rotation: { x: 0, y: Math.PI / 2, z: 0 }
+});
+
+animation.addKeyframe(2, {
+    bone: 'arm',
+    rotation: { x: 0, y: 0, z: 0 }
+});
+
+// Play animation
+skeleton.playAnimation(animation);</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Morphing Animation</h4>
+                    <pre><code>// Create morph targets
+const morphTargets = ThreeEdit.createMorphTargets(mesh, [
+    { name: 'smile', vertices: smileVertices },
+    { name: 'frown', vertices: frownVertices }
+]);
+
+// Create morphing animation
+const morphAnimation = new ThreeEdit.MorphAnimation('expression', {
+    duration: 1.0,
+    targets: ['smile', 'frown']
+});
+
+// Apply morphing
+ThreeEdit.applyMorphing(mesh, morphAnimation, time);</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Weight Painting</h4>
+                    <pre><code>// Paint weights on vertices
+ThreeEdit.paintWeights(skin, vertices, {
+    bone: 'arm',
+    weight: 0.8,
+    radius: 0.5
+});
+
+// Smooth weights
+ThreeEdit.smoothWeights(skin, {
+    iterations: 3,
+    strength: 0.5
+});
+
+// Normalize weights
+ThreeEdit.normalizeWeights(skin);</code></pre>
+                </div>
+            </div>
+
+            <div class="viewport-panel">
+                <div id="viewport"></div>
+                <div class="viewport-controls">
+                    <button onclick="resetAnimation()">Reset</button>
+                    <button onclick="playAnimation()">Play</button>
+                    <button onclick="pauseAnimation()">Pause</button>
+                    <button onclick="stopAnimation()">Stop</button>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <h3>Animation Controls</h3>
+                
+                <div class="control-group">
+                    <label for="animation-type">Animation Type:</label>
+                    <select id="animation-type" onchange="changeAnimationType()">
+                        <option value="skeletal">Skeletal Animation</option>
+                        <option value="morphing">Morphing Animation</option>
+                        <option value="procedural">Procedural Animation</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <h4>Timeline</h4>
+                    <div class="animation-timeline">
+                        <div class="timeline-controls">
+                            <span id="current-time">0.00s</span>
+                            <div class="timeline-slider" id="timeline-slider">
+                                <div class="timeline-progress" id="timeline-progress"></div>
+                                <div class="timeline-marker" id="timeline-marker"></div>
+                            </div>
+                            <span id="total-time">2.00s</span>
+                        </div>
+                        <div>
+                            <button onclick="setTime(0)">0s</button>
+                            <button onclick="setTime(0.5)">0.5s</button>
+                            <button onclick="setTime(1)">1s</button>
+                            <button onclick="setTime(1.5)">1.5s</button>
+                            <button onclick="setTime(2)">2s</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Bone System</h4>
+                    <div class="bone-visualization" id="bone-visualization">
+                        <div class="bone-item" onclick="selectBone('root')">
+                            <div>🦴</div>
+                            <div>Root</div>
+                        </div>
+                        <div class="bone-item" onclick="selectBone('spine')">
+                            <div>🦴</div>
+                            <div>Spine</div>
+                        </div>
+                        <div class="bone-item" onclick="selectBone('leftArm')">
+                            <div>🦴</div>
+                            <div>Left Arm</div>
+                        </div>
+                        <div class="bone-item" onclick="selectBone('rightArm')">
+                            <div>🦴</div>
+                            <div>Right Arm</div>
+                        </div>
+                        <div class="bone-item" onclick="selectBone('leftLeg')">
+                            <div>🦴</div>
+                            <div>Left Leg</div>
+                        </div>
+                        <div class="bone-item" onclick="selectBone('rightLeg')">
+                            <div>🦴</div>
+                            <div>Right Leg</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Bone Transform</h4>
+                    <label for="bone-rotation-x">Rotation X:</label>
+                    <input type="range" id="bone-rotation-x" min="-3.14" max="3.14" step="0.1" value="0" onchange="updateBoneTransform()">
+                    <span id="bone-rotation-x-value">0</span>
+                    
+                    <label for="bone-rotation-y">Rotation Y:</label>
+                    <input type="range" id="bone-rotation-y" min="-3.14" max="3.14" step="0.1" value="0" onchange="updateBoneTransform()">
+                    <span id="bone-rotation-y-value">0</span>
+                    
+                    <label for="bone-rotation-z">Rotation Z:</label>
+                    <input type="range" id="bone-rotation-z" min="-3.14" max="3.14" step="0.1" value="0" onchange="updateBoneTransform()">
+                    <span id="bone-rotation-z-value">0</span>
+                    
+                    <button onclick="addKeyframe()">Add Keyframe</button>
+                    <button onclick="removeKeyframe()">Remove Keyframe</button>
+                </div>
+
+                <div class="control-group">
+                    <h4>Animation Settings</h4>
+                    <label for="animation-duration">Duration:</label>
+                    <input type="range" id="animation-duration" min="0.5" max="10" step="0.5" value="2" onchange="updateAnimationDuration()">
+                    <span id="animation-duration-value">2.0s</span>
+                    
+                    <label for="animation-loop">Loop Animation:</label>
+                    <input type="checkbox" id="animation-loop" checked>
+                    
+                    <label for="animation-speed">Speed:</label>
+                    <input type="range" id="animation-speed" min="0.1" max="3" step="0.1" value="1" onchange="updateAnimationSpeed()">
+                    <span id="animation-speed-value">1.0x</span>
+                </div>
+
+                <div class="control-group">
+                    <h4>Weight Painting</h4>
+                    <label for="paint-weight">Weight Value:</label>
+                    <input type="range" id="paint-weight" min="0" max="1" step="0.1" value="0.5" onchange="updatePaintWeight()">
+                    <span id="paint-weight-value">0.5</span>
+                    
+                    <label for="paint-radius">Paint Radius:</label>
+                    <input type="range" id="paint-radius" min="0.1" max="2" step="0.1" value="0.5" onchange="updatePaintRadius()">
+                    <span id="paint-radius-value">0.5</span>
+                    
+                    <button onclick="paintWeights()">Paint Weights</button>
+                    <button onclick="smoothWeights()">Smooth Weights</button>
+                    <button onclick="normalizeWeights()">Normalize Weights</button>
+                </div>
+
+                <div class="keyframe-editor">
+                    <h4>Keyframe Editor</h4>
+                    <div class="keyframe-list" id="keyframe-list">
+                        <div class="keyframe-item">
+                            <span>0.0s - Root (0, 0, 0)</span>
+                            <button onclick="removeKeyframe(0)">×</button>
+                        </div>
+                        <div class="keyframe-item">
+                            <span>1.0s - Left Arm (0, 1.57, 0)</span>
+                            <button onclick="removeKeyframe(1)">×</button>
+                        </div>
+                        <div class="keyframe-item">
+                            <span>2.0s - Root (0, 0, 0)</span>
+                            <button onclick="removeKeyframe(2)">×</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="animation-info" id="animation-info">
+                    <div>Current Animation: <span class="animation-property">Walk Cycle</span></div>
+                    <div>Duration: <span class="animation-value">2.00s</span></div>
+                    <div>Current Time: <span class="animation-value">0.00s</span></div>
+                    <div>Selected Bone: <span class="animation-value">Root</span></div>
+                    <div>Keyframes: <span class="animation-value">3</span></div>
+                    <div>Status: <span class="animation-value">Stopped</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar" id="status-bar">
+            Ready for animation
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="../dist/umd/index.umd.js"></script>
+    <script>
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let meshObjects = [];
+        let skeleton = null;
+        let currentAnimation = null;
+        let animationTime = 0;
+        let isPlaying = false;
+        let selectedBone = 'root';
+        let animationSpeed = 1.0;
+        let lastTime = 0;
+
+        // Initialize the scene
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+
+            camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 600);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            const viewport = document.getElementById('viewport');
+            viewport.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            createAnimatedMesh();
+            setupTimeline();
+            animate();
+        }
+
+        function animate() {
+            const currentTime = performance.now();
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+
+            if (isPlaying && currentAnimation) {
+                animationTime += deltaTime * animationSpeed;
+                const duration = parseFloat(document.getElementById('animation-duration').value);
+                
+                if (animationTime >= duration) {
+                    if (document.getElementById('animation-loop').checked) {
+                        animationTime = 0;
+                    } else {
+                        animationTime = duration;
+                        isPlaying = false;
+                    }
+                }
+                
+                updateAnimation(animationTime);
+                updateTimeline();
+            }
+
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = 800 / 600;
+            camera.updateProjectionMatrix();
+            renderer.setSize(800, 600);
+        }
+
+        function createAnimatedMesh() {
+            // Create a simple character mesh
+            currentMesh = ThreeEdit.createCube({ width: 1, height: 2, depth: 0.5 });
+            
+            // Create skeleton
+            skeleton = new ThreeEdit.Skeleton();
+            const rootBone = new ThreeEdit.Bone('root', { x: 0, y: 0, z: 0 });
+            const spineBone = new ThreeEdit.Bone('spine', { x: 0, y: 1, z: 0 });
+            const leftArmBone = new ThreeEdit.Bone('leftArm', { x: -0.8, y: 1.5, z: 0 });
+            const rightArmBone = new ThreeEdit.Bone('rightArm', { x: 0.8, y: 1.5, z: 0 });
+            const leftLegBone = new ThreeEdit.Bone('leftLeg', { x: -0.3, y: -1, z: 0 });
+            const rightLegBone = new ThreeEdit.Bone('rightLeg', { x: 0.3, y: -1, z: 0 });
+            
+            skeleton.addBone(rootBone);
+            skeleton.addBone(spineBone, rootBone);
+            skeleton.addBone(leftArmBone, spineBone);
+            skeleton.addBone(rightArmBone, spineBone);
+            skeleton.addBone(leftLegBone, rootBone);
+            skeleton.addBone(rightLegBone, rootBone);
+            
+            // Create skin
+            const skin = new ThreeEdit.Skin(currentMesh, skeleton);
+            
+            // Create animation
+            currentAnimation = new ThreeEdit.Animation('walk', {
+                duration: 2.0,
+                loop: true
+            });
+            
+            // Add keyframes
+            currentAnimation.addKeyframe(0, {
+                bone: 'root',
+                rotation: { x: 0, y: 0, z: 0 }
+            });
+            
+            currentAnimation.addKeyframe(1, {
+                bone: 'leftArm',
+                rotation: { x: 0, y: Math.PI / 2, z: 0 }
+            });
+            
+            currentAnimation.addKeyframe(2, {
+                bone: 'root',
+                rotation: { x: 0, y: 0, z: 0 }
+            });
+            
+            addMeshToScene();
+            updateAnimationInfo();
+        }
+
+        function addMeshToScene() {
+            const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x667eea, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            meshObjects.push(mesh);
+            
+            // Add bone visualization
+            addBoneVisualization();
+        }
+
+        function addBoneVisualization() {
+            // Add simple bone visualization
+            const boneGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1);
+            const boneMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            
+            const bones = ['root', 'spine', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+            const positions = [
+                { x: 0, y: 0, z: 0 },
+                { x: 0, y: 1, z: 0 },
+                { x: -0.8, y: 1.5, z: 0 },
+                { x: 0.8, y: 1.5, z: 0 },
+                { x: -0.3, y: -1, z: 0 },
+                { x: 0.3, y: -1, z: 0 }
+            ];
+            
+            bones.forEach((boneName, index) => {
+                const boneMesh = new THREE.Mesh(boneGeometry, boneMaterial);
+                boneMesh.position.set(positions[index].x, positions[index].y, positions[index].z);
+                boneMesh.userData = { boneName };
+                scene.add(boneMesh);
+                meshObjects.push(boneMesh);
+            });
+        }
+
+        function setupTimeline() {
+            const slider = document.getElementById('timeline-slider');
+            slider.addEventListener('click', (e) => {
+                const rect = slider.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percentage = clickX / rect.width;
+                const duration = parseFloat(document.getElementById('animation-duration').value);
+                const newTime = percentage * duration;
+                setTime(newTime);
+            });
+        }
+
+        function updateAnimation(time) {
+            if (!currentAnimation || !skeleton) return;
+            
+            // Apply animation to skeleton
+            skeleton.updateAnimation(currentAnimation, time);
+            
+            // Update mesh based on skeleton
+            updateMeshFromSkeleton();
+        }
+
+        function updateMeshFromSkeleton() {
+            // Simulate mesh deformation based on skeleton
+            if (meshObjects.length > 0) {
+                const mainMesh = meshObjects[0];
+                // Apply bone transformations to mesh
+                // This is a simplified version - in a real implementation,
+                // you would apply bone matrices to vertex positions
+            }
+        }
+
+        function updateTimeline() {
+            const duration = parseFloat(document.getElementById('animation-duration').value);
+            const percentage = (animationTime / duration) * 100;
+            
+            document.getElementById('timeline-progress').style.width = percentage + '%';
+            document.getElementById('timeline-marker').style.left = percentage + '%';
+            document.getElementById('current-time').textContent = animationTime.toFixed(2) + 's';
+        }
+
+        function setTime(time) {
+            animationTime = Math.max(0, Math.min(time, parseFloat(document.getElementById('animation-duration').value)));
+            updateAnimation(animationTime);
+            updateTimeline();
+            updateAnimationInfo();
+        }
+
+        function playAnimation() {
+            isPlaying = true;
+            updateAnimationInfo();
+            updateStatus('Animation playing');
+        }
+
+        function pauseAnimation() {
+            isPlaying = false;
+            updateAnimationInfo();
+            updateStatus('Animation paused');
+        }
+
+        function stopAnimation() {
+            isPlaying = false;
+            animationTime = 0;
+            updateAnimation(animationTime);
+            updateTimeline();
+            updateAnimationInfo();
+            updateStatus('Animation stopped');
+        }
+
+        function resetAnimation() {
+            stopAnimation();
+            createAnimatedMesh();
+            updateStatus('Animation reset');
+        }
+
+        function changeAnimationType() {
+            const type = document.getElementById('animation-type').value;
+            updateStatus('Animation type changed to: ' + type);
+        }
+
+        function selectBone(boneName) {
+            selectedBone = boneName;
+            
+            // Update bone selection UI
+            document.querySelectorAll('.bone-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.closest('.bone-item').classList.add('selected');
+            
+            updateAnimationInfo();
+        }
+
+        function updateBoneTransform() {
+            const rotationX = parseFloat(document.getElementById('bone-rotation-x').value);
+            const rotationY = parseFloat(document.getElementById('bone-rotation-y').value);
+            const rotationZ = parseFloat(document.getElementById('bone-rotation-z').value);
+            
+            document.getElementById('bone-rotation-x-value').textContent = rotationX.toFixed(2);
+            document.getElementById('bone-rotation-y-value').textContent = rotationY.toFixed(2);
+            document.getElementById('bone-rotation-z-value').textContent = rotationZ.toFixed(2);
+            
+            // Apply bone transformation
+            if (skeleton) {
+                const bone = skeleton.getBone(selectedBone);
+                if (bone) {
+                    bone.setRotation({ x: rotationX, y: rotationY, z: rotationZ });
+                }
+            }
+        }
+
+        function addKeyframe() {
+            if (!currentAnimation) return;
+            
+            const rotationX = parseFloat(document.getElementById('bone-rotation-x').value);
+            const rotationY = parseFloat(document.getElementById('bone-rotation-y').value);
+            const rotationZ = parseFloat(document.getElementById('bone-rotation-z').value);
+            
+            currentAnimation.addKeyframe(animationTime, {
+                bone: selectedBone,
+                rotation: { x: rotationX, y: rotationY, z: rotationZ }
+            });
+            
+            updateKeyframeList();
+            updateStatus('Keyframe added at ' + animationTime.toFixed(2) + 's');
+        }
+
+        function removeKeyframe() {
+            if (!currentAnimation) return;
+            
+            currentAnimation.removeKeyframe(animationTime, selectedBone);
+            updateKeyframeList();
+            updateStatus('Keyframe removed');
+        }
+
+        function updateKeyframeList() {
+            const list = document.getElementById('keyframe-list');
+            list.innerHTML = '';
+            
+            // This is a simplified version - in a real implementation,
+            // you would iterate through actual keyframes
+            const keyframes = [
+                { time: 0, bone: 'root', rotation: { x: 0, y: 0, z: 0 } },
+                { time: 1, bone: 'leftArm', rotation: { x: 0, y: 1.57, z: 0 } },
+                { time: 2, bone: 'root', rotation: { x: 0, y: 0, z: 0 } }
+            ];
+            
+            keyframes.forEach((keyframe, index) => {
+                const item = document.createElement('div');
+                item.className = 'keyframe-item';
+                item.innerHTML = `
+                    <span>${keyframe.time.toFixed(1)}s - ${keyframe.bone} (${keyframe.rotation.x.toFixed(2)}, ${keyframe.rotation.y.toFixed(2)}, ${keyframe.rotation.z.toFixed(2)})</span>
+                    <button onclick="removeKeyframe(${index})">×</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function updateAnimationDuration() {
+            const duration = parseFloat(document.getElementById('animation-duration').value);
+            document.getElementById('animation-duration-value').textContent = duration.toFixed(1) + 's';
+            document.getElementById('total-time').textContent = duration.toFixed(2) + 's';
+            
+            if (currentAnimation) {
+                currentAnimation.duration = duration;
+            }
+            
+            updateAnimationInfo();
+        }
+
+        function updateAnimationSpeed() {
+            animationSpeed = parseFloat(document.getElementById('animation-speed').value);
+            document.getElementById('animation-speed-value').textContent = animationSpeed.toFixed(1) + 'x';
+        }
+
+        function updatePaintWeight() {
+            const weight = parseFloat(document.getElementById('paint-weight').value);
+            document.getElementById('paint-weight-value').textContent = weight.toFixed(1);
+        }
+
+        function updatePaintRadius() {
+            const radius = parseFloat(document.getElementById('paint-radius').value);
+            document.getElementById('paint-radius-value').textContent = radius.toFixed(1);
+        }
+
+        function paintWeights() {
+            const weight = parseFloat(document.getElementById('paint-weight').value);
+            const radius = parseFloat(document.getElementById('paint-radius').value);
+            
+            // Simulate weight painting
+            updateStatus(`Painted weights: ${weight} at radius ${radius}`);
+        }
+
+        function smoothWeights() {
+            updateStatus('Weights smoothed');
+        }
+
+        function normalizeWeights() {
+            updateStatus('Weights normalized');
+        }
+
+        function updateAnimationInfo() {
+            const info = document.getElementById('animation-info');
+            const duration = parseFloat(document.getElementById('animation-duration').value);
+            const status = isPlaying ? 'Playing' : 'Stopped';
+            
+            info.innerHTML = `
+                <div>Current Animation: <span class="animation-property">Walk Cycle</span></div>
+                <div>Duration: <span class="animation-value">${duration.toFixed(2)}s</span></div>
+                <div>Current Time: <span class="animation-value">${animationTime.toFixed(2)}s</span></div>
+                <div>Selected Bone: <span class="animation-value">${selectedBone}</span></div>
+                <div>Keyframes: <span class="animation-value">3</span></div>
+                <div>Status: <span class="animation-value">${status}</span></div>
+            `;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.textContent = message;
+            statusBar.className = 'status-bar ' + type;
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initScene);
+        window.addEventListener('resize', onWindowResize);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case ' ':
+                    event.preventDefault();
+                    if (isPlaying) pauseAnimation();
+                    else playAnimation();
+                    break;
+                case 'r':
+                    if (event.ctrlKey) resetAnimation();
+                    break;
+                case 'k':
+                    if (event.ctrlKey) addKeyframe();
+                    break;
+                case 'ArrowLeft':
+                    setTime(Math.max(0, animationTime - 0.1));
+                    break;
+                case 'ArrowRight':
+                    setTime(Math.min(parseFloat(document.getElementById('animation-duration').value), animationTime + 0.1));
+                    break;
+            }
+        });
+    </script>
+</body>
+</html> 

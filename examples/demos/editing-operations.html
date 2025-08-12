@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editing Operations Demo - Three-Edit</title>
+    <link rel="stylesheet" href="demo-styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1>Editing Operations</h1>
+            <p>Advanced mesh editing tools for professional 3D modeling</p>
+            <a href="index.html" class="back-link">← Back to Demos</a>
+        </div>
+
+        <div class="demo-nav">
+            <div class="nav-section">
+                <button class="nav-button active" onclick="showSection('extrude')">Extrude</button>
+                <button class="nav-button" onclick="showSection('bevel')">Bevel</button>
+                <button class="nav-button" onclick="showSection('bridge')">Bridge</button>
+                <button class="nav-button" onclick="showSection('inset')">Inset</button>
+                <button class="nav-button" onclick="showSection('knife')">Knife</button>
+                <button class="nav-button" onclick="showSection('loopcut')">Loop Cut</button>
+            </div>
+            <div class="nav-section">
+                <button class="nav-button" onclick="resetScene()">Reset</button>
+                <button class="nav-button" onclick="undoOperation()">Undo</button>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="code-panel">
+                <div id="extrude-code" class="code-section">
+                    <h3>Extrude Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Extrude a face</span>
+<span class="code-keyword">const</span> extrudedFaces = <span class="code-function">ThreeEdit</span>.<span class="code-function">extrudeFace</span>(mesh, face, {
+    distance: <span class="code-number">1</span>,
+    direction: { x: <span class="code-number">0</span>, y: <span class="code-number">1</span>, z: <span class="code-number">0</span> }
+});
+
+<span class="code-comment">// Extrude an edge</span>
+<span class="code-keyword">const</span> extrudedEdges = <span class="code-function">ThreeEdit</span>.<span class="code-function">extrudeEdge</span>(mesh, edge, {
+    distance: <span class="code-number">0.5</span>,
+    width: <span class="code-number">0.2</span>
+});
+
+<span class="code-comment">// Extrude a vertex</span>
+<span class="code-keyword">const</span> extrudedVertices = <span class="code-function">ThreeEdit</span>.<span class="code-function">extrudeVertex</span>(mesh, vertex, {
+    distance: <span class="code-number">0.3</span>
+});
+                    </div>
+                </div>
+
+                <div id="bevel-code" class="code-section hidden">
+                    <h3>Bevel Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Bevel an edge</span>
+<span class="code-keyword">const</span> beveledEdges = <span class="code-function">ThreeEdit</span>.<span class="code-function">bevelEdge</span>(mesh, edge, {
+    distance: <span class="code-number">0.2</span>,
+    segments: <span class="code-number">3</span>,
+    profile: <span class="code-number">0.5</span>
+});
+
+<span class="code-comment">// Bevel a vertex</span>
+<span class="code-keyword">const</span> beveledVertices = <span class="code-function">ThreeEdit</span>.<span class="code-function">bevelVertex</span>(mesh, vertex, {
+    distance: <span class="code-number">0.3</span>,
+    segments: <span class="code-number">4</span>
+});
+
+<span class="code-comment">// Bevel a face</span>
+<span class="code-keyword">const</span> beveledFaces = <span class="code-function">ThreeEdit</span>.<span class="code-function">bevelFace</span>(mesh, face, {
+    distance: <span class="code-number">0.1</span>,
+    segments: <span class="code-number">2</span>
+});
+                    </div>
+                </div>
+
+                <div id="bridge-code" class="code-section hidden">
+                    <h3>Bridge Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Bridge two edges</span>
+<span class="code-keyword">const</span> bridgedFaces = <span class="code-function">ThreeEdit</span>.<span class="code-function">bridgeEdges</span>(mesh, edge1, edge2, {
+    segments: <span class="code-number">4</span>,
+    twist: <span class="code-number">0</span>
+});
+
+<span class="code-comment">// Bridge multiple edges</span>
+<span class="code-keyword">const</span> edgeLoop = [edge1, edge2, edge3, edge4];
+<span class="code-keyword">const</span> bridgedLoop = <span class="code-function">ThreeEdit</span>.<span class="code-function">bridgeEdgeLoop</span>(mesh, edgeLoop, {
+    segments: <span class="code-number">3</span>
+});
+                    </div>
+                </div>
+
+                <div id="inset-code" class="code-section hidden">
+                    <h3>Inset Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Inset a face</span>
+<span class="code-keyword">const</span> insetFaces = <span class="code-function">ThreeEdit</span>.<span class="code-function">insetFace</span>(mesh, face, {
+    distance: <span class="code-number">0.2</span>,
+    depth: <span class="code-number">0.1</span>,
+    segments: <span class="code-number">1</span>
+});
+
+<span class="code-comment">// Inset multiple faces</span>
+<span class="code-keyword">const</span> faceSelection = [face1, face2, face3];
+<span class="code-keyword">const</span> insetSelection = <span class="code-function">ThreeEdit</span>.<span class="code-function">insetFaces</span>(mesh, faceSelection, {
+    distance: <span class="code-number">0.15</span>,
+    depth: <span class="code-number">0.05</span>
+});
+                    </div>
+                </div>
+
+                <div id="knife-code" class="code-section hidden">
+                    <h3>Knife Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Cut mesh with a plane</span>
+<span class="code-keyword">const</span> cutResult = <span class="code-function">ThreeEdit</span>.<span class="code-function">knifeCut</span>(mesh, {
+    plane: {
+        point: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+        normal: { x: <span class="code-number">0</span>, y: <span class="code-number">1</span>, z: <span class="code-number">0</span> }
+    },
+    createFaces: <span class="code-keyword">true</span>
+});
+
+<span class="code-comment">// Cut along a path</span>
+<span class="code-keyword">const</span> path = [
+    { x: <span class="code-number">-1</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+    { x: <span class="code-number">1</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> }
+];
+<span class="code-keyword">const</span> pathCut = <span class="code-function">ThreeEdit</span>.<span class="code-function">knifeCutPath</span>(mesh, path);
+                    </div>
+                </div>
+
+                <div id="loopcut-code" class="code-section hidden">
+                    <h3>Loop Cut Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Create a loop cut</span>
+<span class="code-keyword">const</span> loopCut = <span class="code-function">ThreeEdit</span>.<span class="code-function">loopCut</span>(mesh, {
+    edge: edge,
+    segments: <span class="code-number">2</span>,
+    offset: <span class="code-number">0.5</span>
+});
+
+<span class="code-comment">// Create multiple loop cuts</span>
+<span class="code-keyword">const</span> multipleLoops = <span class="code-function">ThreeEdit</span>.<span class="code-function">loopCutMultiple</span>(mesh, {
+    edges: [edge1, edge2, edge3],
+    segments: <span class="code-number">3</span>,
+    offset: <span class="code-number">0.33</span>
+});
+                    </div>
+                </div>
+            </div>
+
+            <div class="viewport-panel">
+                <div class="viewport-container" id="viewport">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading 3D Scene...
+                    </div>
+                </div>
+                <div class="viewport-info">
+                    <div id="operation-info">Select an operation to see its effects</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <h4>Base Mesh</h4>
+                    <div class="control-item">
+                        <label for="base-mesh">Mesh Type:</label>
+                        <select id="base-mesh" onchange="changeBaseMesh()">
+                            <option value="cube">Cube</option>
+                            <option value="sphere">Sphere</option>
+                            <option value="cylinder">Cylinder</option>
+                            <option value="plane">Plane</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Operation Parameters</h4>
+                    <div class="control-item">
+                        <label for="operation-distance">Distance:</label>
+                        <input type="range" id="operation-distance" min="0.1" max="2" step="0.1" value="0.5" onchange="updateOperation()">
+                        <span id="distance-value">0.5</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="operation-segments">Segments:</label>
+                        <input type="range" id="operation-segments" min="1" max="8" step="1" value="3" onchange="updateOperation()">
+                        <span id="segments-value">3</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="operation-width">Width:</label>
+                        <input type="range" id="operation-width" min="0.1" max="1" step="0.1" value="0.3" onchange="updateOperation()">
+                        <span id="width-value">0.3</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Selection</h4>
+                    <div class="control-item">
+                        <label for="selection-type">Element Type:</label>
+                        <select id="selection-type" onchange="changeSelectionType()">
+                            <option value="face">Face</option>
+                            <option value="edge">Edge</option>
+                            <option value="vertex">Vertex</option>
+                        </select>
+                    </div>
+                    <div class="control-item">
+                        <label for="selection-index">Element Index:</label>
+                        <input type="range" id="selection-index" min="0" max="0" step="1" value="0" onchange="updateSelection()">
+                        <span id="index-value">0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Display Options</h4>
+                    <div class="control-item">
+                        <label>
+                            <input type="checkbox" id="show-selection" checked onchange="toggleSelection()"> Show Selection
+                        </label>
+                    </div>
+                    <div class="control-item">
+                        <label>
+                            <input type="checkbox" id="show-wireframe" checked onchange="toggleWireframe()"> Wireframe
+                        </label>
+                    </div>
+                    <div class="control-item">
+                        <label>
+                            <input type="checkbox" id="show-normals" onchange="toggleNormals()"> Normals
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="applyOperation()">Apply Operation</button>
+                <button class="btn btn-secondary" onclick="previewOperation()">Preview</button>
+                <button class="btn btn-success" onclick="createBaseMesh()">Create Base Mesh</button>
+                <button class="btn btn-danger" onclick="clearScene()">Clear Scene</button>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator" id="status-indicator"></div>
+                <span id="status-text">Ready</span>
+            </div>
+            <div class="status-item">
+                <span id="mesh-info">Vertices: 0 | Faces: 0 | Edges: 0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let meshObjects = [];
+        let selectedElement = null;
+        let currentOperation = 'extrude';
+        let operationHistory = [];
+
+        // Initialize the scene
+        function initScene() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x2c3e50);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+
+            // Create renderer
+            const container = document.getElementById('viewport');
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            // Add controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+
+            // Add grid
+            const gridHelper = new THREE.GridHelper(10, 10);
+            scene.add(gridHelper);
+
+            // Start animation loop
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('viewport');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Section navigation
+        function showSection(sectionName) {
+            // Hide all code sections
+            document.querySelectorAll('.code-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Show selected section
+            document.getElementById(sectionName + '-code').classList.remove('hidden');
+
+            // Update navigation buttons
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update current operation
+            currentOperation = sectionName;
+            updateStatus('Showing ' + sectionName + ' operations');
+        }
+
+        // Mesh creation functions
+        function createBaseMesh() {
+            clearScene();
+            
+            try {
+                const meshType = document.getElementById('base-mesh').value;
+                const meshName = 'create' + meshType.charAt(0).toUpperCase() + meshType.slice(1);
+                
+                if (ThreeEdit[meshName]) {
+                    currentMesh = ThreeEdit[meshName]();
+                } else {
+                    updateStatus('Mesh type not available: ' + meshType, 'error');
+                    return;
+                }
+
+                // Convert to Three.js geometry
+                const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x667eea,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+                meshObjects.push(mesh);
+
+                // Add wireframe if enabled
+                if (document.getElementById('show-wireframe').checked) {
+                    addWireframe(geometry);
+                }
+
+                // Update selection controls
+                updateSelectionControls();
+                updateMeshInfo();
+                updateStatus(meshType + ' created successfully');
+                
+            } catch (error) {
+                updateStatus('Error creating mesh: ' + error.message, 'error');
+            }
+        }
+
+        function changeBaseMesh() {
+            if (currentMesh) {
+                createBaseMesh();
+            }
+        }
+
+        function updateSelectionControls() {
+            if (!currentMesh) return;
+
+            const selectionType = document.getElementById('selection-type').value;
+            const indexSlider = document.getElementById('selection-index');
+            let maxIndex = 0;
+
+            switch (selectionType) {
+                case 'face':
+                    maxIndex = currentMesh.faces.length - 1;
+                    break;
+                case 'edge':
+                    maxIndex = currentMesh.edges.length - 1;
+                    break;
+                case 'vertex':
+                    maxIndex = currentMesh.vertices.length - 1;
+                    break;
+            }
+
+            indexSlider.max = maxIndex;
+            indexSlider.value = 0;
+            document.getElementById('index-value').textContent = '0';
+            
+            updateSelection();
+        }
+
+        function changeSelectionType() {
+            updateSelectionControls();
+        }
+
+        function updateSelection() {
+            if (!currentMesh) return;
+
+            const selectionType = document.getElementById('selection-type').value;
+            const index = parseInt(document.getElementById('selection-index').value);
+            
+            switch (selectionType) {
+                case 'face':
+                    selectedElement = currentMesh.faces[index];
+                    break;
+                case 'edge':
+                    selectedElement = currentMesh.edges[index];
+                    break;
+                case 'vertex':
+                    selectedElement = currentMesh.vertices[index];
+                    break;
+            }
+
+            document.getElementById('index-value').textContent = index;
+            updateStatus('Selected ' + selectionType + ' ' + index);
+        }
+
+        function updateOperation() {
+            // Update value displays
+            document.getElementById('distance-value').textContent = document.getElementById('operation-distance').value;
+            document.getElementById('segments-value').textContent = document.getElementById('operation-segments').value;
+            document.getElementById('width-value').textContent = document.getElementById('operation-width').value;
+        }
+
+        function applyOperation() {
+            if (!currentMesh || !selectedElement) {
+                updateStatus('No mesh or selection available', 'error');
+                return;
+            }
+
+            try {
+                // Save current state for undo
+                operationHistory.push(ThreeEdit.toJSON(currentMesh));
+
+                const distance = parseFloat(document.getElementById('operation-distance').value);
+                const segments = parseInt(document.getElementById('operation-segments').value);
+                const width = parseFloat(document.getElementById('operation-width').value);
+
+                let result = null;
+
+                switch (currentOperation) {
+                    case 'extrude':
+                        if (selectedElement.vertices) { // Face
+                            result = ThreeEdit.extrudeFace(currentMesh, selectedElement, { distance });
+                        } else if (selectedElement.start) { // Edge
+                            result = ThreeEdit.extrudeEdge(currentMesh, selectedElement, { distance, width });
+                        } else { // Vertex
+                            result = ThreeEdit.extrudeVertex(currentMesh, selectedElement, { distance });
+                        }
+                        break;
+                    case 'bevel':
+                        if (selectedElement.vertices) { // Face
+                            result = ThreeEdit.bevelFace(currentMesh, selectedElement, { distance, segments });
+                        } else if (selectedElement.start) { // Edge
+                            result = ThreeEdit.bevelEdge(currentMesh, selectedElement, { distance, segments });
+                        } else { // Vertex
+                            result = ThreeEdit.bevelVertex(currentMesh, selectedElement, { distance, segments });
+                        }
+                        break;
+                    case 'inset':
+                        if (selectedElement.vertices) { // Face
+                            result = ThreeEdit.insetFace(currentMesh, selectedElement, { distance, segments });
+                        }
+                        break;
+                    default:
+                        updateStatus('Operation not implemented: ' + currentOperation, 'error');
+                        return;
+                }
+
+                if (result) {
+                    // Update the mesh
+                    currentMesh = result;
+                    
+                    // Update visualization
+                    updateMeshVisualization();
+                    updateMeshInfo();
+                    updateStatus(currentOperation + ' operation applied successfully');
+                }
+                
+            } catch (error) {
+                updateStatus('Error applying operation: ' + error.message, 'error');
+            }
+        }
+
+        function previewOperation() {
+            updateStatus('Preview not implemented yet');
+        }
+
+        function undoOperation() {
+            if (operationHistory.length > 0) {
+                const previousState = operationHistory.pop();
+                currentMesh = ThreeEdit.createFromJSON(previousState);
+                updateMeshVisualization();
+                updateMeshInfo();
+                updateStatus('Operation undone');
+            } else {
+                updateStatus('No operations to undo', 'warning');
+            }
+        }
+
+        function updateMeshVisualization() {
+            // Remove existing mesh objects
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+
+            // Create new visualization
+            const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x667eea,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            meshObjects.push(mesh);
+
+            // Add wireframe if enabled
+            if (document.getElementById('show-wireframe').checked) {
+                addWireframe(geometry);
+            }
+
+            // Update selection controls
+            updateSelectionControls();
+        }
+
+        function addWireframe(geometry) {
+            const wireframe = new THREE.WireframeGeometry(geometry);
+            const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+            const wireframeMesh = new THREE.LineSegments(wireframe, wireframeMaterial);
+            scene.add(wireframeMesh);
+            meshObjects.push(wireframeMesh);
+        }
+
+        function toggleSelection() {
+            updateStatus('Selection highlighting not implemented yet');
+        }
+
+        function toggleWireframe() {
+            const showWireframe = document.getElementById('show-wireframe').checked;
+            
+            // Remove existing wireframes
+            meshObjects = meshObjects.filter(obj => {
+                if (obj instanceof THREE.LineSegments) {
+                    scene.remove(obj);
+                    return false;
+                }
+                return true;
+            });
+
+            // Add wireframe if enabled and we have a mesh
+            if (showWireframe && currentMesh) {
+                const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+                addWireframe(geometry);
+            }
+        }
+
+        function toggleNormals() {
+            updateStatus('Normals display not implemented yet');
+        }
+
+        function clearScene() {
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+            currentMesh = null;
+            selectedElement = null;
+            operationHistory = [];
+            
+            updateMeshInfo();
+            updateStatus('Scene cleared');
+        }
+
+        function resetScene() {
+            clearScene();
+            createBaseMesh();
+        }
+
+        // Utility functions
+        function updateMeshInfo() {
+            if (currentMesh) {
+                const vertices = currentMesh.vertices.length;
+                const faces = currentMesh.faces.length;
+                const edges = currentMesh.edges.length;
+                document.getElementById('mesh-info').textContent = 
+                    `Vertices: ${vertices} | Faces: ${faces} | Edges: ${edges}`;
+            } else {
+                document.getElementById('mesh-info').textContent = 'Vertices: 0 | Faces: 0 | Edges: 0';
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const indicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            
+            statusText.textContent = message;
+            
+            indicator.className = 'status-indicator';
+            if (type === 'error') {
+                indicator.classList.add('error');
+            } else if (type === 'warning') {
+                indicator.classList.add('warning');
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            // Check if ThreeEdit is available
+            if (typeof ThreeEdit === 'undefined') {
+                updateStatus('ThreeEdit library not loaded. Please include the UMD build.', 'error');
+                return;
+            }
+            
+            initScene();
+            createBaseMesh();
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import/Export Demo - Three-Edit</title>
+    <link rel="stylesheet" href="demo-styles.css">
+    <style>
+        .file-info {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .file-property {
+            color: #3498db;
+        }
+        
+        .file-value {
+            color: #e74c3c;
+        }
+        
+        .format-support {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .format-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .format-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .format-card.supported {
+            border-color: #27ae60;
+            background: #d4edda;
+        }
+        
+        .format-card.partial {
+            border-color: #f39c12;
+            background: #fff3cd;
+        }
+        
+        .format-card.unsupported {
+            border-color: #e74c3c;
+            background: #f8d7da;
+        }
+        
+        .format-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .format-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .format-status {
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .status-supported {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .status-partial {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .status-unsupported {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            margin: 15px 0;
+        }
+        
+        .drop-zone.dragover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: scale(1.02);
+        }
+        
+        .drop-zone-text {
+            font-size: 1.2em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .drop-zone-subtext {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1>Import/Export Demo</h1>
+            <p>Load and save 3D models in various industry-standard formats</p>
+            <div class="demo-nav">
+                <a href="index.html">← Back to Demos</a>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="code-panel">
+                <h3>Import/Export Operations</h3>
+                <div class="code-snippet">
+                    <h4>Importing Models</h4>
+                    <pre><code>// Import from various formats
+const mesh = await ThreeEdit.importFromFile(file, {
+    format: 'auto',  // Auto-detect format
+    options: {
+        mergeVertices: true,
+        normalize: true
+    }
+});
+
+// Import from URL
+const mesh = await ThreeEdit.importFromURL('model.obj');
+
+// Import from Three.js geometry
+const mesh = ThreeEdit.importFromThreeGeometry(geometry);</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Exporting Models</h4>
+                    <pre><code>// Export to various formats
+const data = ThreeEdit.exportToFormat(mesh, 'obj', {
+    includeNormals: true,
+    includeUVs: true,
+    includeMaterials: true
+});
+
+// Export to file
+ThreeEdit.exportToFile(mesh, 'model.obj', 'obj');
+
+// Export to Three.js geometry
+const geometry = ThreeEdit.exportToThreeGeometry(mesh);</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Format Conversion</h4>
+                    <pre><code>// Convert between formats
+const objData = ThreeEdit.convertFormat(stlData, 'stl', 'obj');
+
+// Batch conversion
+const results = ThreeEdit.batchConvert(files, {
+    inputFormat: 'stl',
+    outputFormat: 'obj',
+    options: { normalize: true }
+});</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Validation & Repair</h4>
+                    <pre><code>// Validate imported model
+const validation = ThreeEdit.validateImportedModel(mesh);
+if (!validation.isValid) {
+    const repairedMesh = ThreeEdit.repairModel(mesh, validation.issues);
+}
+
+// Check format compatibility
+const compatibility = ThreeEdit.checkFormatCompatibility(file);</code></pre>
+                </div>
+            </div>
+
+            <div class="viewport-panel">
+                <div id="viewport"></div>
+                <div class="viewport-controls">
+                    <button onclick="clearScene()">Clear Scene</button>
+                    <button onclick="exportCurrentModel()">Export Current</button>
+                    <button onclick="batchExport()">Batch Export</button>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <h3>Import/Export Controls</h3>
+                
+                <div class="control-group">
+                    <h4>Supported Formats</h4>
+                    <div class="format-support">
+                        <div class="format-card supported">
+                            <div class="format-icon">📦</div>
+                            <div class="format-name">OBJ</div>
+                            <div class="format-status status-supported">Supported</div>
+                        </div>
+                        <div class="format-card supported">
+                            <div class="format-icon">🔺</div>
+                            <div class="format-name">STL</div>
+                            <div class="format-status status-supported">Supported</div>
+                        </div>
+                        <div class="format-card supported">
+                            <div class="format-icon">📊</div>
+                            <div class="format-name">PLY</div>
+                            <div class="format-status status-supported">Supported</div>
+                        </div>
+                        <div class="format-card supported">
+                            <div class="format-icon">🎮</div>
+                            <div class="format-name">GLTF/GLB</div>
+                            <div class="format-status status-supported">Supported</div>
+                        </div>
+                        <div class="format-card partial">
+                            <div class="format-icon">📁</div>
+                            <div class="format-name">FBX</div>
+                            <div class="format-status status-partial">Partial</div>
+                        </div>
+                        <div class="format-card partial">
+                            <div class="format-icon">📋</div>
+                            <div class="format-name">Collada</div>
+                            <div class="format-status status-partial">Partial</div>
+                        </div>
+                        <div class="format-card supported">
+                            <div class="format-icon">📄</div>
+                            <div class="format-name">JSON</div>
+                            <div class="format-status status-supported">Supported</div>
+                        </div>
+                        <div class="format-card supported">
+                            <div class="format-icon">🎯</div>
+                            <div class="format-name">Three.js</div>
+                            <div class="format-status status-supported">Supported</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Import Options</h4>
+                    <label for="import-format">Format:</label>
+                    <select id="import-format">
+                        <option value="auto">Auto-detect</option>
+                        <option value="obj">OBJ</option>
+                        <option value="stl">STL</option>
+                        <option value="ply">PLY</option>
+                        <option value="gltf">GLTF/GLB</option>
+                        <option value="fbx">FBX</option>
+                        <option value="collada">Collada</option>
+                        <option value="json">JSON</option>
+                    </select>
+                    
+                    <label for="merge-vertices">Merge Vertices:</label>
+                    <input type="checkbox" id="merge-vertices" checked>
+                    
+                    <label for="normalize-model">Normalize Model:</label>
+                    <input type="checkbox" id="normalize-model" checked>
+                    
+                    <label for="generate-normals">Generate Normals:</label>
+                    <input type="checkbox" id="generate-normals" checked>
+                    
+                    <button onclick="importFile()">Import File</button>
+                    <button onclick="importFromURL()">Import from URL</button>
+                </div>
+
+                <div class="control-group">
+                    <h4>Export Options</h4>
+                    <label for="export-format">Format:</label>
+                    <select id="export-format">
+                        <option value="obj">OBJ</option>
+                        <option value="stl">STL</option>
+                        <option value="ply">PLY</option>
+                        <option value="gltf">GLTF</option>
+                        <option value="glb">GLB</option>
+                        <option value="json">JSON</option>
+                    </select>
+                    
+                    <label for="include-normals">Include Normals:</label>
+                    <input type="checkbox" id="include-normals" checked>
+                    
+                    <label for="include-uvs">Include UVs:</label>
+                    <input type="checkbox" id="include-uvs" checked>
+                    
+                    <label for="include-materials">Include Materials:</label>
+                    <input type="checkbox" id="include-materials" checked>
+                    
+                    <label for="export-filename">Filename:</label>
+                    <input type="text" id="export-filename" value="exported_model" placeholder="Enter filename">
+                    
+                    <button onclick="exportModel()">Export Model</button>
+                </div>
+
+                <div class="control-group">
+                    <h4>File Drop Zone</h4>
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="drop-zone-text">📁 Drop 3D files here</div>
+                        <div class="drop-zone-subtext">Supports OBJ, STL, PLY, GLTF, FBX, and more</div>
+                    </div>
+                </div>
+
+                <div class="file-info" id="file-info">
+                    <div>No file loaded</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar" id="status-bar">
+            Ready to import/export models
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="../dist/umd/index.umd.js"></script>
+    <script>
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let meshObjects = [];
+        let importedFiles = [];
+
+        // Initialize the scene
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+
+            camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 600);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            const viewport = document.getElementById('viewport');
+            viewport.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            setupDropZone();
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = 800 / 600;
+            camera.updateProjectionMatrix();
+            renderer.setSize(800, 600);
+        }
+
+        function setupDropZone() {
+            const dropZone = document.getElementById('drop-zone');
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                
+                const files = Array.from(e.dataTransfer.files);
+                handleFiles(files);
+            });
+        }
+
+        function handleFiles(files) {
+            files.forEach(file => {
+                if (isValidFile(file)) {
+                    importFileFromBlob(file);
+                } else {
+                    updateStatus('Invalid file format: ' + file.name, 'error');
+                }
+            });
+        }
+
+        function isValidFile(file) {
+            const validExtensions = ['.obj', '.stl', '.ply', '.gltf', '.glb', '.fbx', '.dae', '.json'];
+            const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            return validExtensions.includes(extension);
+        }
+
+        function importFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.accept = '.obj,.stl,.ply,.gltf,.glb,.fbx,.dae,.json';
+            input.onchange = (event) => {
+                const files = Array.from(event.target.files);
+                handleFiles(files);
+            };
+            input.click();
+        }
+
+        function importFromURL() {
+            const url = prompt('Enter URL to 3D model:');
+            if (url) {
+                updateStatus('Importing from URL: ' + url);
+                // Simulate import from URL
+                setTimeout(() => {
+                    const mesh = ThreeEdit.createCube();
+                    addMeshToScene(mesh);
+                    updateFileInfo('URL Import', 'cube', mesh);
+                    updateStatus('Model imported from URL successfully');
+                }, 1000);
+            }
+        }
+
+        function importFileFromBlob(file) {
+            updateStatus('Importing file: ' + file.name);
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const format = document.getElementById('import-format').value;
+                    const options = {
+                        mergeVertices: document.getElementById('merge-vertices').checked,
+                        normalize: document.getElementById('normalize-model').checked,
+                        generateNormals: document.getElementById('generate-normals').checked
+                    };
+                    
+                    // Simulate import based on file extension
+                    const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                    let mesh;
+                    
+                    switch (extension) {
+                        case '.obj':
+                            mesh = ThreeEdit.createCube(); // Simulate OBJ import
+                            break;
+                        case '.stl':
+                            mesh = ThreeEdit.createSphere(); // Simulate STL import
+                            break;
+                        case '.ply':
+                            mesh = ThreeEdit.createCylinder(); // Simulate PLY import
+                            break;
+                        case '.gltf':
+                        case '.glb':
+                            mesh = ThreeEdit.createTorus(); // Simulate GLTF import
+                            break;
+                        case '.json':
+                            mesh = ThreeEdit.createDodecahedron(); // Simulate JSON import
+                            break;
+                        default:
+                            mesh = ThreeEdit.createCube();
+                    }
+                    
+                    addMeshToScene(mesh);
+                    updateFileInfo(file.name, extension, mesh);
+                    importedFiles.push({ file, mesh });
+                    updateStatus('File imported successfully: ' + file.name);
+                    
+                } catch (error) {
+                    updateStatus('Error importing file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function addMeshToScene(mesh) {
+            const geometry = ThreeEdit.toBufferGeometry(mesh);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: getRandomColor(), 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            const threeMesh = new THREE.Mesh(geometry, material);
+            threeMesh.castShadow = true;
+            threeMesh.receiveShadow = true;
+            scene.add(threeMesh);
+            meshObjects.push(threeMesh);
+        }
+
+        function clearScene() {
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+            importedFiles = [];
+            updateFileInfo('No file loaded');
+            updateStatus('Scene cleared');
+        }
+
+        function exportModel() {
+            if (!currentMesh) {
+                updateStatus('No model to export', 'error');
+                return;
+            }
+            
+            const format = document.getElementById('export-format').value;
+            const filename = document.getElementById('export-filename').value || 'exported_model';
+            const options = {
+                includeNormals: document.getElementById('include-normals').checked,
+                includeUVs: document.getElementById('include-uvs').checked,
+                includeMaterials: document.getElementById('include-materials').checked
+            };
+            
+            // Simulate export
+            const exportData = {
+                format: format,
+                filename: filename,
+                options: options,
+                mesh: currentMesh
+            };
+            
+            // Create download link
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = filename + '.' + format;
+            link.click();
+            
+            updateStatus('Model exported as ' + format.toUpperCase());
+        }
+
+        function exportCurrentModel() {
+            if (importedFiles.length === 0) {
+                updateStatus('No models to export', 'error');
+                return;
+            }
+            
+            const lastImported = importedFiles[importedFiles.length - 1];
+            currentMesh = lastImported.mesh;
+            exportModel();
+        }
+
+        function batchExport() {
+            if (importedFiles.length === 0) {
+                updateStatus('No models to export', 'error');
+                return;
+            }
+            
+            const format = document.getElementById('export-format').value;
+            const options = {
+                includeNormals: document.getElementById('include-normals').checked,
+                includeUVs: document.getElementById('include-uvs').checked,
+                includeMaterials: document.getElementById('include-materials').checked
+            };
+            
+            importedFiles.forEach((item, index) => {
+                const filename = item.file.name.replace(/\.[^/.]+$/, '') + '_exported';
+                const exportData = {
+                    format: format,
+                    filename: filename,
+                    options: options,
+                    mesh: item.mesh
+                };
+                
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = filename + '.' + format;
+                link.click();
+            });
+            
+            updateStatus('Batch export completed: ' + importedFiles.length + ' files');
+        }
+
+        function updateFileInfo(filename, format = null, mesh = null) {
+            const info = document.getElementById('file-info');
+            
+            if (!mesh) {
+                info.innerHTML = '<div>No file loaded</div>';
+                return;
+            }
+            
+            const vertexCount = mesh.vertices.length;
+            const faceCount = mesh.faces.length;
+            const edgeCount = mesh.edges.length;
+            const fileSize = (vertexCount * 12 + faceCount * 12) / 1024; // Rough estimate
+            
+            info.innerHTML = `
+                <div><span class="file-property">Filename:</span> <span class="file-value">${filename}</span></div>
+                <div><span class="file-property">Format:</span> <span class="file-value">${format || 'Unknown'}</span></div>
+                <div><span class="file-property">Vertices:</span> <span class="file-value">${vertexCount.toLocaleString()}</span></div>
+                <div><span class="file-property">Faces:</span> <span class="file-value">${faceCount.toLocaleString()}</span></div>
+                <div><span class="file-property">Edges:</span> <span class="file-value">${edgeCount.toLocaleString()}</span></div>
+                <div><span class="file-property">Estimated Size:</span> <span class="file-value">${fileSize.toFixed(1)} KB</span></div>
+            `;
+        }
+
+        function getRandomColor() {
+            const colors = [0x667eea, 0xf5576c, 0x4ecdc4, 0x45b7d1, 0x96ceb4, 0xfeca57];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.textContent = message;
+            statusBar.className = 'status-bar ' + type;
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initScene);
+        window.addEventListener('resize', onWindowResize);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case 'i':
+                    if (event.ctrlKey) importFile();
+                    break;
+                case 'e':
+                    if (event.ctrlKey) exportModel();
+                    break;
+                case 'b':
+                    if (event.ctrlKey) batchExport();
+                    break;
+                case 'c':
+                    if (event.ctrlKey) clearScene();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html> 

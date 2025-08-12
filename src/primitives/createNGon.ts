@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/index.ts';
-import { Vertex } from '../core/index.ts';
-import { Edge } from '../core/index.ts';
-import { Face } from '../core/index.ts';
+import { EditableMesh } from '../core/index';
+import { Vertex } from '../core/index';
+import { Edge } from '../core/index';
+import { Face } from '../core/index';
 
 /**
  * Options for creating an NGon
@@ -79,7 +79,7 @@ export function createNGon(options: CreateNGonOptions = {}): EditableMesh {
     return edgeMap[key];
   };
 
-  // Create edges and faces for the side walls
+  // Create edges and faces for the side walls (quads)
   for (let h = 0; h < heightSegments; h++) {
     for (let s = 0; s < sides; s++) {
       const v1 = vertices[h][s];
@@ -100,6 +100,7 @@ export function createNGon(options: CreateNGonOptions = {}): EditableMesh {
   if (!openEnded) {
     // Bottom cap
     if (thetaLength === Math.PI * 2) {
+      // Full circle - create a single n-gon face
       const bottomVertices = vertices[0].slice(0, sides).reverse();
       const bottomEdges: number[] = [];
       for (let s = 0; s < sides; s++) {
@@ -107,6 +108,7 @@ export function createNGon(options: CreateNGonOptions = {}): EditableMesh {
       }
       mesh.addFace(new Face(bottomVertices, bottomEdges, { materialIndex: 1 }));
     } else {
+      // Partial circle - create triangular faces from center
       const bottomCenterVertex = new Vertex(0, -halfHeight, 0, { uv: { u: 0.5, v: 0.5 } });
       const bottomCenterIndex = mesh.addVertex(bottomCenterVertex);
       for (let s = 0; s < sides; s++) {
@@ -121,6 +123,7 @@ export function createNGon(options: CreateNGonOptions = {}): EditableMesh {
 
     // Top cap
     if (thetaLength === Math.PI * 2) {
+      // Full circle - create a single n-gon face
       const topVertices = vertices[heightSegments].slice(0, sides);
       const topEdges: number[] = [];
       for (let s = 0; s < sides; s++) {
@@ -128,6 +131,7 @@ export function createNGon(options: CreateNGonOptions = {}): EditableMesh {
       }
       mesh.addFace(new Face(topVertices, topEdges, { materialIndex: 2 }));
     } else {
+      // Partial circle - create triangular faces from center
       const topCenterVertex = new Vertex(0, halfHeight, 0, { uv: { u: 0.5, v: 0.5 } });
       const topCenterIndex = mesh.addVertex(topCenterVertex);
       for (let s = 0; s < sides; s++) {

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three-edit Editing Examples</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: #ffffff;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    #controls {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .back-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">three-edit Editing Examples</div>
+  <a href="index.html" class="back-button button">Back to Index</a>
+  <div id="controls">
+    <button id="test-extrude">Extrude</button>
+    <button id="test-bevel">Bevel</button>
+    <button id="test-inset">Inset</button>
+    <button id="test-loopcut">Loop Cut</button>
+    <button id="test-bridge">Bridge</button>
+    <button id="test-all">Show All</button>
+  </div>
+  
+  <script src="../browser/three-edit.js"></script>
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+  </script>
+  
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import * as CommonUtils from './common-utils.js';
+    // Fallback conversion function in case window.threeEdit.conversion is not available
+    function convertToBufferGeometry(editableMesh) {
+      console.log('Using fallback conversion function');
+      const geometry = new THREE.BufferGeometry();
+      
+      // Extract vertices
+      const vertices = [];
+      editableMesh.vertices.forEach(vertex => {
+        vertices.push(vertex.x, vertex.y, vertex.z);
+      });
+      
+      // Extract faces (indices)
+      const indices = [];
+      editableMesh.faces.forEach(face => {
+        if (face.vertexIds.length === 3) {
+          // Triangle
+          indices.push(face.vertexIds[0], face.vertexIds[1], face.vertexIds[2]);
+        } else if (face.vertexIds.length === 4) {
+          // Quad - split into two triangles
+          indices.push(
+            face.vertexIds[0], face.vertexIds[1], face.vertexIds[2],
+            face.vertexIds[0], face.vertexIds[2], face.vertexIds[3]
+          );
+        }
+      });
+      
+      // Set attributes
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      
+      return geometry;
+    }
+
+    // Set up scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x333333);
+    
+    // Add controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+    
+    // Add grid helper
+    const gridHelper = new THREE.GridHelper(10, 10);
+    scene.add(gridHelper);
+    
+    // Clear existing meshes
+    function clearMeshes() {
+      const toRemove = [];
+      scene.children.forEach(child => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.Object3D) {
+          if (!(child instanceof THREE.GridHelper) && 
+              !(child instanceof THREE.DirectionalLight) && 
+              !(child instanceof THREE.AmbientLight)) {
+            toRemove.push(child);
+          }
+        }
+      });
+      
+      toRemove.forEach(obj => scene.remove(obj));
+    }
+    
+    // Create and add mesh to scene
+    function createAndAddMesh(editableMesh, color, position) {
+      try {
+        // Convert to Three.js BufferGeometry
+        const geometry = window.threeEdit.conversion ? 
+          window.threeEdit.conversion.toBufferGeometry(editableMesh) : 
+          convertToBufferGeometry(editableMesh);
+        
+        const material = new THREE.MeshStandardMaterial({ 
+          color: color,
+          side: THREE.DoubleSide
+        });
+        
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          wireframe: true
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        if (position) {
+          mesh.position.copy(position);
+        }
+        scene.add(mesh);
+        
+        const wireframe = new THREE.Mesh(geometry.clone(), wireframeMaterial);
+        if (position) {
+          wireframe.position.copy(position);
+        }
+        scene.add(wireframe);
+        
+        return mesh;
+      } catch (error) {
+        console.error("Error creating mesh:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+        return null;
+      }
+    }
+    
+    // Test extrude
+    document.getElementById('test-extrude').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing extrude...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.editing) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Select a face to extrude
+          const faceIndex = 0; // Top face
+          const face = cube.faces[faceIndex];
+          
+          // Extrude the face
+          const extrudedMesh = window.threeEdit.editing.extrude(cube, {
+            faceIds: [face.id],
+            distance: 0.5,
+            scale: 0.8
+          });
+          
+          console.log(`Extruded mesh created with ${extrudedMesh.vertices.length} vertices and ${extrudedMesh.faces.length} faces`);
+          createAndAddMesh(extrudedMesh, 0xff0000);
+          document.getElementById('info').textContent = 'Extrude Example';
+        } else {
+          console.error("threeEdit.editing.extrude not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.editing.extrude not found';
+        }
+      } catch (error) {
+        console.error("Error in test-extrude:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test bevel
+    document.getElementById('test-bevel').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing bevel...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.editing) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Select edges to bevel
+          const edgeIds = cube.edges.slice(0, 4).map(edge => edge.id);
+          
+          // Bevel the edges
+          const beveledMesh = window.threeEdit.editing.bevel(cube, {
+            edgeIds: edgeIds,
+            offset: 0.2
+          });
+          
+          console.log(`Beveled mesh created with ${beveledMesh.vertices.length} vertices and ${beveledMesh.faces.length} faces`);
+          createAndAddMesh(beveledMesh, 0x00ff00);
+          document.getElementById('info').textContent = 'Bevel Example';
+        } else {
+          console.error("threeEdit.editing.bevel not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.editing.bevel not found';
+        }
+      } catch (error) {
+        console.error("Error in test-bevel:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test inset
+    document.getElementById('test-inset').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing inset...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.editing) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Select a face to inset
+          const faceIndex = 0; // Top face
+          const face = cube.faces[faceIndex];
+          
+          // Inset the face
+          const insetMesh = window.threeEdit.editing.inset(cube, {
+            faceIds: [face.id],
+            depth: 0.1,
+            amount: 0.2
+          });
+          
+          console.log(`Inset mesh created with ${insetMesh.vertices.length} vertices and ${insetMesh.faces.length} faces`);
+          createAndAddMesh(insetMesh, 0x0000ff);
+          document.getElementById('info').textContent = 'Inset Example';
+        } else {
+          console.error("threeEdit.editing.inset not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.editing.inset not found';
+        }
+      } catch (error) {
+        console.error("Error in test-inset:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test loop cut
+    document.getElementById('test-loopcut').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing loop cut...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.editing) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1,
+            widthSegments: 1,
+            heightSegments: 1,
+            depthSegments: 1
+          });
+          
+          // Select an edge to cut
+          const edgeIndex = 0;
+          const edge = cube.edges[edgeIndex];
+          
+          // Perform loop cut
+          const cutMesh = window.threeEdit.editing.loopCut(cube, {
+            edgeId: edge.id,
+            factor: 0.5
+          });
+          
+          console.log(`Loop cut mesh created with ${cutMesh.vertices.length} vertices and ${cutMesh.faces.length} faces`);
+          createAndAddMesh(cutMesh, 0xff00ff);
+          document.getElementById('info').textContent = 'Loop Cut Example';
+        } else {
+          console.error("threeEdit.editing.loopCut not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.editing.loopCut not found';
+        }
+      } catch (error) {
+        console.error("Error in test-loopcut:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test bridge
+    document.getElementById('test-bridge').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing bridge...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.editing) {
+          // Create two separate cubes
+          const cube1 = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          const cube2 = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Move the second cube
+          cube2.vertices.forEach(vertex => {
+            vertex.x += 2;
+          });
+          
+          // Select faces to bridge
+          const face1 = cube1.faces[0];
+          const face2 = cube2.faces[0];
+          
+          // Bridge the faces
+          const bridgedMesh = window.threeEdit.editing.bridge(cube1, {
+            sourceFaceId: face1.id,
+            targetFaceId: face2.id
+          });
+          
+          console.log(`Bridged mesh created with ${bridgedMesh.vertices.length} vertices and ${bridgedMesh.faces.length} faces`);
+          createAndAddMesh(bridgedMesh, 0xffff00);
+          document.getElementById('info').textContent = 'Bridge Example';
+        } else {
+          console.error("threeEdit.editing.bridge not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.editing.bridge not found';
+        }
+      } catch (error) {
+        console.error("Error in test-bridge:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test all
+    document.getElementById('test-all').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing all editing operations...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.editing) {
+          const spacing = 2.5;
+          
+          // Extrude example
+          const cubeExtrude = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const faceExtrude = cubeExtrude.faces[0];
+          const extrudedMesh = window.threeEdit.editing.extrude(cubeExtrude, {
+            faceIds: [faceExtrude.id],
+            distance: 0.5,
+            scale: 0.8
+          });
+          createAndAddMesh(extrudedMesh, 0xff0000, new THREE.Vector3(-spacing, 0, -spacing));
+          
+          // Bevel example
+          const cubeBevel = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const edgesBevel = cubeBevel.edges.slice(0, 4).map(edge => edge.id);
+          const beveledMesh = window.threeEdit.editing.bevel(cubeBevel, {
+            edgeIds: edgesBevel,
+            offset: 0.2
+          });
+          createAndAddMesh(beveledMesh, 0x00ff00, new THREE.Vector3(0, 0, -spacing));
+          
+          // Inset example
+          const cubeInset = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const faceInset = cubeInset.faces[0];
+          const insetMesh = window.threeEdit.editing.inset(cubeInset, {
+            faceIds: [faceInset.id],
+            depth: 0.1,
+            amount: 0.2
+          });
+          createAndAddMesh(insetMesh, 0x0000ff, new THREE.Vector3(spacing, 0, -spacing));
+          
+          // Loop cut example
+          const cubeLoopCut = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const edgeLoopCut = cubeLoopCut.edges[0];
+          const cutMesh = window.threeEdit.editing.loopCut(cubeLoopCut, {
+            edgeId: edgeLoopCut.id,
+            factor: 0.5
+          });
+          createAndAddMesh(cutMesh, 0xff00ff, new THREE.Vector3(-spacing, 0, spacing));
+          
+          // Bridge example
+          const cubeBridge1 = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const cubeBridge2 = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          cubeBridge2.vertices.forEach(vertex => { vertex.x += 2; });
+          const faceBridge1 = cubeBridge1.faces[0];
+          const faceBridge2 = cubeBridge2.faces[0];
+          const bridgedMesh = window.threeEdit.editing.bridge(cubeBridge1, {
+            sourceFaceId: faceBridge1.id,
+            targetFaceId: faceBridge2.id
+          });
+          createAndAddMesh(bridgedMesh, 0xffff00, new THREE.Vector3(spacing, 0, spacing));
+          
+          document.getElementById('info').textContent = 'All Editing Examples';
+        } else {
+          console.error("threeEdit.editing not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.editing not found';
+        }
+      } catch (error) {
+        console.error("Error in test-all:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Check if three-edit is loaded
+    window.addEventListener('load', () => {
+      console.log('Window loaded, checking for three-edit...');
+      console.log('window.threeEdit:', window.threeEdit);
+      
+      if (window.threeEdit) {
+        console.log('three-edit library loaded successfully!');
+        console.log('Available modules:', Object.keys(window.threeEdit));
+        document.getElementById('info').textContent = 'three-edit loaded! Click a test button to begin.';
+        
+        // Auto-run the test-all function to show something immediately
+        setTimeout(() => {
+          document.getElementById('test-all').click();
+        }, 500);
+      } else {
+        console.error('three-edit library not found!');
+        document.getElementById('info').textContent = 'Error: three-edit library not found! Check console for details.';
+      }
+    });
+  </script>
+</body>
+</html>

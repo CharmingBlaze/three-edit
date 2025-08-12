@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { createCube } from '../primitives/createCube.ts';
-import { array, arrayLinear, arrayRadial, arrayGrid } from '../transform/array.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { createCube } from '../primitives/createCube';
+import { array, arrayLinear, arrayRadial, arrayGrid } from '../transform/array';
 
 describe('Array Operations', () => {
   let mesh: EditableMesh;

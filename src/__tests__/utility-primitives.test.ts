@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
-import { createGreebleBlock } from '../primitives/createGreebleBlock.ts';
-import { createEmpty } from '../primitives/createEmpty.ts';
-import { createBoundingBox } from '../primitives/createBoundingBox.ts';
-import { createHandle } from '../primitives/createHandle.ts';
-import { validateMesh } from '../validation/validateMesh.ts';
-import { toBufferGeometry } from '../conversion/toBufferGeometry.ts';
+import { createGreebleBlock } from '../primitives/createGreebleBlock';
+import { createEmpty } from '../primitives/createEmpty';
+import { createBoundingBox } from '../primitives/createBoundingBox';
+import { createHandle } from '../primitives/createHandle';
+import { validateMesh } from '../validation/validateMesh';
+import { toBufferGeometry } from '../conversion/toBufferGeometry';
 
 describe('Utility Primitives', () => {
   describe('createGreebleBlock', () => {

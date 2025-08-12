@@ -1,5 +1,5 @@
-import { EditableMesh } from '../../core/EditableMesh.ts';
-import { Command } from '../Command.ts';
+import { EditableMesh } from '../../core/EditableMesh';
+import { Command } from '../Command';
 import { CommandHistoryOptions, CommandHistoryEventType, CommandHistoryEvent } from './types';
 
 /**

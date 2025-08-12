@@ -1,5 +1,5 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Selection } from '../selection/Selection.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Selection } from '../selection/Selection';
 import { Material } from './Material';
 import { MaterialManager } from './MaterialManager';
 

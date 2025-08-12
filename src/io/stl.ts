@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Face } from '../core/Face.ts';
-import { createCube } from '../primitives/index.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Vertex } from '../core/Vertex';
+import { Face } from '../core/Face';
+import { createCube } from '../primitives/index';
 
 /**
  * STL import/export options

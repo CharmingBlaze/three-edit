@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Face } from '../core/Face.ts';
-import { calculateFaceNormal } from '../utils/mathUtils.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Face } from '../core/Face';
+import { calculateFaceNormal } from '../utils/mathUtils';
 
 /**
  * Options for fixing winding order

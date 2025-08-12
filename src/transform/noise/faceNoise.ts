@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../../core/index.ts';
+import { EditableMesh } from '../../core/index';
 import { FaceDisplacementOptions, NoiseOptions } from './types';
 import { PerlinNoise, clampValue } from './perlinNoise';
 

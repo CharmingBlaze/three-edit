@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three-edit UV Mapping Examples</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: #ffffff;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    #controls {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .back-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">three-edit UV Mapping Examples</div>
+  <a href="index.html" class="back-button button">Back to Index</a>
+  <div id="controls">
+    <button id="test-planar">Planar UV Mapping</button>
+    <button id="test-box">Box UV Mapping</button>
+    <button id="test-cylindrical">Cylindrical UV Mapping</button>
+    <button id="test-spherical">Spherical UV Mapping</button>
+    <button id="test-unwrap">Smart Unwrap</button>
+    <button id="test-all">Show All</button>
+  </div>
+  
+  <script src="../browser/three-edit.js"></script>
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+  </script>
+  
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import * as CommonUtils from './common-utils.js';
+    // Fallback conversion function in case window.threeEdit.conversion is not available
+    function convertToBufferGeometry(editableMesh) {
+      console.log('Using fallback conversion function');
+      const geometry = new THREE.BufferGeometry();
+      
+      // Extract vertices
+      const vertices = [];
+      editableMesh.vertices.forEach(vertex => {
+        vertices.push(vertex.x, vertex.y, vertex.z);
+      });
+      
+      // Extract faces (indices)
+      const indices = [];
+      editableMesh.faces.forEach(face => {
+        if (face.vertexIds.length === 3) {
+          // Triangle
+          indices.push(face.vertexIds[0], face.vertexIds[1], face.vertexIds[2]);
+        } else if (face.vertexIds.length === 4) {
+          // Quad - split into two triangles
+          indices.push(
+            face.vertexIds[0], face.vertexIds[1], face.vertexIds[2],
+            face.vertexIds[0], face.vertexIds[2], face.vertexIds[3]
+          );
+        }
+      });
+      
+      // Set attributes
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      
+      return geometry;
+    }
+
+    // Set up scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x333333);
+    
+    // Add controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+    
+    // Add grid helper
+    const gridHelper = new THREE.GridHelper(10, 10);
+    scene.add(gridHelper);
+    
+    // Clear existing meshes
+    function clearMeshes() {
+      const toRemove = [];
+      scene.children.forEach(child => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.Object3D) {
+          if (!(child instanceof THREE.GridHelper) && 
+              !(child instanceof THREE.DirectionalLight) && 
+              !(child instanceof THREE.AmbientLight)) {
+            toRemove.push(child);
+          }
+        }
+      });
+      
+      toRemove.forEach(obj => scene.remove(obj));
+    }
+    
+    // Create a UV grid texture
+    function createUVGridTexture() {
+      const canvas = document.createElement('canvas');
+      const size = 512;
+      canvas.width = size;
+      canvas.height = size;
+      
+      const ctx = canvas.getContext('2d');
+      
+      // Fill background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      
+      // Draw grid
+      const gridSize = 8;
+      const cellSize = size / gridSize;
+      
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      
+      // Draw grid lines
+      for (let i = 0; i <= gridSize; i++) {
+        const pos = i * cellSize;
+        
+        // Horizontal line
+        ctx.beginPath();
+        ctx.moveTo(0, pos);
+        ctx.lineTo(size, pos);
+        ctx.stroke();
+        
+        // Vertical line
+        ctx.beginPath();
+        ctx.moveTo(pos, 0);
+        ctx.lineTo(pos, size);
+        ctx.stroke();
+      }
+      
+      // Draw colored squares
+      for (let i = 0; i < gridSize; i++) {
+        for (let j = 0; j < gridSize; j++) {
+          if ((i + j) % 2 === 0) {
+            const hue = (i * gridSize + j) * (360 / (gridSize * gridSize));
+            ctx.fillStyle = `hsl(${hue}, 70%, 70%)`;
+            ctx.fillRect(i * cellSize + 2, j * cellSize + 2, cellSize - 4, cellSize - 4);
+          }
+        }
+      }
+      
+      // Draw U/V labels
+      ctx.fillStyle = '#000000';
+      ctx.font = '24px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // U labels (bottom)
+      for (let i = 0; i < gridSize; i++) {
+        const u = i / (gridSize - 1);
+        ctx.fillText(u.toFixed(1), (i + 0.5) * cellSize, size - 12);
+      }
+      
+      // V labels (left)
+      for (let i = 0; i < gridSize; i++) {
+        const v = 1 - i / (gridSize - 1);
+        ctx.fillText(v.toFixed(1), 12, (i + 0.5) * cellSize);
+      }
+      
+      // Create texture
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      
+      return texture;
+    }
+    
+    // Create and add mesh to scene with UV grid texture
+    function createAndAddMesh(editableMesh, color, position) {
+      try {
+        // Convert to Three.js BufferGeometry
+        const geometry = window.threeEdit.conversion ? 
+          window.threeEdit.conversion.toBufferGeometry(editableMesh) : 
+          convertToBufferGeometry(editableMesh);
+        
+        // Create UV grid texture
+        const texture = createUVGridTexture();
+        
+        const material = new THREE.MeshStandardMaterial({ 
+          color: color,
+          side: THREE.DoubleSide,
+          map: texture
+        });
+        
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          wireframe: true
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        if (position) {
+          mesh.position.copy(position);
+        }
+        scene.add(mesh);
+        
+        const wireframe = new THREE.Mesh(geometry.clone(), wireframeMaterial);
+        if (position) {
+          wireframe.position.copy(position);
+        }
+        scene.add(wireframe);
+        
+        return mesh;
+      } catch (error) {
+        console.error("Error creating mesh:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+        return null;
+      }
+    }
+    
+    // Test planar UV mapping
+    document.getElementById('test-planar').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing planar UV mapping...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.uv) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Apply planar UV mapping
+          const mappedMesh = window.threeEdit.uv.planarProjection(cube, {
+            direction: { x: 0, y: 1, z: 0 }, // Project from top
+            center: { x: 0, y: 0, z: 0 },
+            scale: { x: 1, y: 1 }
+          });
+          
+          console.log(`UV mapped mesh created with ${mappedMesh.vertices.length} vertices and ${mappedMesh.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, mappedMesh, 0xffffff);
+          document.getElementById('info').textContent = 'Planar UV Mapping Example';
+        } else {
+          console.error("threeEdit.uv.planarProjection not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.uv.planarProjection not found';
+        }
+      } catch (error) {
+        console.error("Error in test-planar:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test box UV mapping
+    document.getElementById('test-box').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing box UV mapping...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.uv) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Apply box UV mapping
+          const mappedMesh = window.threeEdit.uv.boxProjection(cube, {
+            center: { x: 0, y: 0, z: 0 },
+            size: { x: 1, y: 1, z: 1 }
+          });
+          
+          console.log(`UV mapped mesh created with ${mappedMesh.vertices.length} vertices and ${mappedMesh.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, mappedMesh, 0xffffff);
+          document.getElementById('info').textContent = 'Box UV Mapping Example';
+        } else {
+          console.error("threeEdit.uv.boxProjection not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.uv.boxProjection not found';
+        }
+      } catch (error) {
+        console.error("Error in test-box:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test cylindrical UV mapping
+    document.getElementById('test-cylindrical').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing cylindrical UV mapping...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.uv) {
+          // Create a cylinder as base mesh
+          const cylinder = window.threeEdit.primitives.createCylinder({ 
+            radiusTop: 0.5,
+            radiusBottom: 0.5,
+            height: 2,
+            radialSegments: 16,
+            heightSegments: 1
+          });
+          
+          // Apply cylindrical UV mapping
+          const mappedMesh = window.threeEdit.uv.cylindricalProjection(cylinder, {
+            center: { x: 0, y: 0, z: 0 },
+            axis: { x: 0, y: 1, z: 0 },
+            radius: 0.5,
+            height: 2
+          });
+          
+          console.log(`UV mapped mesh created with ${mappedMesh.vertices.length} vertices and ${mappedMesh.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, mappedMesh, 0xffffff);
+          document.getElementById('info').textContent = 'Cylindrical UV Mapping Example';
+        } else {
+          console.error("threeEdit.uv.cylindricalProjection not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.uv.cylindricalProjection not found';
+        }
+      } catch (error) {
+        console.error("Error in test-cylindrical:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test spherical UV mapping
+    document.getElementById('test-spherical').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing spherical UV mapping...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.uv) {
+          // Create a sphere as base mesh
+          const sphere = window.threeEdit.primitives.createSphere({ 
+            radius: 1,
+            widthSegments: 16,
+            heightSegments: 12
+          });
+          
+          // Apply spherical UV mapping
+          const mappedMesh = window.threeEdit.uv.sphericalProjection(sphere, {
+            center: { x: 0, y: 0, z: 0 },
+            radius: 1
+          });
+          
+          console.log(`UV mapped mesh created with ${mappedMesh.vertices.length} vertices and ${mappedMesh.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, mappedMesh, 0xffffff);
+          document.getElementById('info').textContent = 'Spherical UV Mapping Example';
+        } else {
+          console.error("threeEdit.uv.sphericalProjection not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.uv.sphericalProjection not found';
+        }
+      } catch (error) {
+        console.error("Error in test-spherical:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test smart unwrap
+    document.getElementById('test-unwrap').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing smart unwrap...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.uv) {
+          // Create a complex mesh
+          const torus = window.threeEdit.primitives.createTorus({ 
+            radius: 1,
+            tube: 0.4,
+            radialSegments: 16,
+            tubularSegments: 16
+          });
+          
+          // Apply smart unwrap
+          const mappedMesh = window.threeEdit.uv.smartUnwrap(torus, {
+            angleThreshold: 45 // Degrees
+          });
+          
+          console.log(`UV mapped mesh created with ${mappedMesh.vertices.length} vertices and ${mappedMesh.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, mappedMesh, 0xffffff);
+          document.getElementById('info').textContent = 'Smart Unwrap Example';
+        } else {
+          console.error("threeEdit.uv.smartUnwrap not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.uv.smartUnwrap not found';
+        }
+      } catch (error) {
+        console.error("Error in test-unwrap:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test all
+    document.getElementById('test-all').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing all UV mapping methods...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.uv) {
+          const spacing = 2.5;
+          
+          // Planar projection
+          const cubePlanar = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const planarMapped = window.threeEdit.uv.planarProjection(cubePlanar, {
+            direction: { x: 0, y: 1, z: 0 },
+            center: { x: 0, y: 0, z: 0 },
+            scale: { x: 1, y: 1 }
+          });
+          CommonUtils.createAndAddMesh(scene, planarMapped, 0xffffff, new THREE.Vector3(-spacing, 0, -spacing));
+          
+          // Box projection
+          const cubeBox = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const boxMapped = window.threeEdit.uv.boxProjection(cubeBox, {
+            center: { x: 0, y: 0, z: 0 },
+            size: { x: 1, y: 1, z: 1 }
+          });
+          CommonUtils.createAndAddMesh(scene, boxMapped, 0xffffff, new THREE.Vector3(spacing, 0, -spacing));
+          
+          // Cylindrical projection
+          const cylinder = window.threeEdit.primitives.createCylinder({ radiusTop: 0.5, radiusBottom: 0.5, height: 2, radialSegments: 16 });
+          const cylindricalMapped = window.threeEdit.uv.cylindricalProjection(cylinder, {
+            center: { x: 0, y: 0, z: 0 },
+            axis: { x: 0, y: 1, z: 0 },
+            radius: 0.5,
+            height: 2
+          });
+          CommonUtils.createAndAddMesh(scene, cylindricalMapped, 0xffffff, new THREE.Vector3(-spacing, 0, spacing));
+          
+          // Spherical projection
+          const sphere = window.threeEdit.primitives.createSphere({ radius: 1, widthSegments: 16, heightSegments: 12 });
+          const sphericalMapped = window.threeEdit.uv.sphericalProjection(sphere, {
+            center: { x: 0, y: 0, z: 0 },
+            radius: 1
+          });
+          CommonUtils.createAndAddMesh(scene, sphericalMapped, 0xffffff, new THREE.Vector3(spacing, 0, spacing));
+          
+          document.getElementById('info').textContent = 'All UV Mapping Examples';
+        } else {
+          console.error("threeEdit.uv not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.uv not found';
+        }
+      } catch (error) {
+        console.error("Error in test-all:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Check if three-edit is loaded
+    window.addEventListener('load', () => {
+      console.log('Window loaded, checking for three-edit...');
+      console.log('window.threeEdit:', window.threeEdit);
+      
+      if (window.threeEdit) {
+        console.log('three-edit library loaded successfully!');
+        console.log('Available modules:', Object.keys(window.threeEdit));
+        document.getElementById('info').textContent = 'three-edit loaded! Click a test button to begin.';
+        
+        // Auto-run the test-all function to show something immediately
+        setTimeout(() => {
+          document.getElementById('test-all').click();
+        }, 500);
+      } else {
+        console.error('three-edit library not found!');
+        document.getElementById('info').textContent = 'Error: three-edit library not found! Check console for details.';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { createCube } from '../primitives/index.ts';
-import { exportSTL } from '../io/stl.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { createCube } from '../primitives/index';
+import { exportSTL } from '../io/stl';
 
 describe('External Format Support', () => {
   let cube: EditableMesh;

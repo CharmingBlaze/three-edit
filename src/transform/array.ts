@@ -1,7 +1,7 @@
 import { Vector3, Matrix4 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Edge } from '../core/Edge.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Edge } from '../core/Edge';
+import { Face } from '../core/Face';
 
 /**
  * Options for array operations

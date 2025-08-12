@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { createCube } from '../primitives/createCube.ts';
-import { mirror, mirrorByPlane, mirrorByAxis, mirrorByPoint } from '../transform/mirror.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { createCube } from '../primitives/createCube';
+import { mirror, mirrorByPlane, mirrorByAxis, mirrorByPoint } from '../transform/mirror';
 
 describe('Mirror Operations', () => {
   let mesh: EditableMesh;

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materials & Texturing Demo - Three-Edit</title>
+    <link rel="stylesheet" href="demo-styles.css">
+    <style>
+        .material-preview {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .material-preview:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+        
+        .material-preview.selected {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+        
+        .texture-preview {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .texture-preview:hover {
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+        
+        .texture-preview.selected {
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .material-info {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .material-property {
+            color: #3498db;
+        }
+        
+        .material-value {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1>Materials & Texturing Demo</h1>
+            <p>Manage materials and apply textures to your 3D models</p>
+            <div class="demo-nav">
+                <a href="index.html">← Back to Demos</a>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="code-panel">
+                <h3>Material Operations</h3>
+                <div class="code-snippet">
+                    <h4>Creating Materials</h4>
+                    <pre><code>// Create basic materials
+const material = new ThreeEdit.Material({
+    type: 'MeshPhongMaterial',
+    color: 0x667eea,
+    transparent: true,
+    opacity: 0.8,
+    shininess: 100
+});
+
+// Create material with texture
+const texturedMaterial = new ThreeEdit.Material({
+    type: 'MeshPhongMaterial',
+    color: 0xffffff,
+    map: texture,
+    normalMap: normalTexture,
+    roughnessMap: roughnessTexture
+});</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Material Assignment</h4>
+                    <pre><code>// Assign material to mesh
+ThreeEdit.assignMaterial(mesh, material);
+
+// Assign material to specific faces
+ThreeEdit.assignMaterialToFaces(mesh, faces, material);
+
+// Create multi-material mesh
+const materials = [material1, material2, material3];
+const multiMaterialMesh = ThreeEdit.createMultiMaterialMesh(
+    geometry, materials
+);</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Texture Management</h4>
+                    <pre><code>// Load texture from URL
+const texture = await ThreeEdit.loadTexture('texture.jpg');
+
+// Generate procedural texture
+const proceduralTexture = ThreeEdit.generateTexture({
+    type: 'checker',
+    size: 512,
+    colors: [0xffffff, 0x000000]
+});
+
+// Apply texture to material
+ThreeEdit.applyTexture(material, 'map', texture);</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Material Properties</h4>
+                    <pre><code>// Update material properties
+ThreeEdit.updateMaterialProperties(material, {
+    color: 0xff0000,
+    transparent: true,
+    opacity: 0.5,
+    metalness: 0.8,
+    roughness: 0.2
+});
+
+// Clone material
+const clonedMaterial = ThreeEdit.cloneMaterial(material);
+
+// Merge materials
+const mergedMaterial = ThreeEdit.mergeMaterials([material1, material2]);</code></pre>
+                </div>
+            </div>
+
+            <div class="viewport-panel">
+                <div id="viewport"></div>
+                <div class="viewport-controls">
+                    <button onclick="resetMaterials()">Reset Materials</button>
+                    <button onclick="exportMaterials()">Export Materials</button>
+                    <button onclick="importMaterials()">Import Materials</button>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <h3>Material Controls</h3>
+                
+                <div class="control-group">
+                    <label for="mesh-type">Mesh Type:</label>
+                    <select id="mesh-type" onchange="createMesh()">
+                        <option value="cube">Cube</option>
+                        <option value="sphere">Sphere</option>
+                        <option value="cylinder">Cylinder</option>
+                        <option value="torus">Torus</option>
+                        <option value="plane">Plane</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <h4>Material Type</h4>
+                    <div class="material-preview" onclick="selectMaterialType('MeshPhongMaterial')" id="phong-preview">
+                        <div>Phong</div>
+                    </div>
+                    <div class="material-preview" onclick="selectMaterialType('MeshLambertMaterial')" id="lambert-preview">
+                        <div>Lambert</div>
+                    </div>
+                    <div class="material-preview" onclick="selectMaterialType('MeshStandardMaterial')" id="standard-preview">
+                        <div>Standard</div>
+                    </div>
+                    <div class="material-preview" onclick="selectMaterialType('MeshPhysicalMaterial')" id="physical-preview">
+                        <div>Physical</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Material Properties</h4>
+                    <label for="material-color">Color:</label>
+                    <input type="color" id="material-color" value="#667eea" onchange="updateMaterialColor()">
+                    
+                    <label for="material-opacity">Opacity:</label>
+                    <input type="range" id="material-opacity" min="0" max="1" step="0.1" value="1" onchange="updateMaterialOpacity()">
+                    <span id="opacity-value">1.0</span>
+                    
+                    <label for="material-metalness">Metalness:</label>
+                    <input type="range" id="material-metalness" min="0" max="1" step="0.1" value="0" onchange="updateMaterialMetalness()">
+                    <span id="metalness-value">0.0</span>
+                    
+                    <label for="material-roughness">Roughness:</label>
+                    <input type="range" id="material-roughness" min="0" max="1" step="0.1" value="0.5" onchange="updateMaterialRoughness()">
+                    <span id="roughness-value">0.5</span>
+                    
+                    <label for="material-shininess">Shininess:</label>
+                    <input type="range" id="material-shininess" min="0" max="1000" step="10" value="30" onchange="updateMaterialShininess()">
+                    <span id="shininess-value">30</span>
+                </div>
+
+                <div class="control-group">
+                    <h4>Textures</h4>
+                    <div id="texture-previews">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjNjY3ZWVhIi8+CjxwYXRoIGQ9Ik0wIDQwSDgwTTQwIDBWNjAiIHN0cm9rZT0iIzMzMyIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPgo=" class="texture-preview" onclick="selectTexture('none')" alt="None">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZmZmIi8+CjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iIzAwMCIvPgo8cmVjdCB4PSI0MCIgeT0iNDAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iIzAwMCIvPgo8L3N2Zz4K" class="texture-preview" onclick="selectTexture('checker')" alt="Checker">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSJ1cmwoI2dyYWRpZW50KSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudCIgeDE9IjAiIHkxPSIwIiB4Mj0iODAiIHkyPSI4MCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojNjY3ZWVhO3N0b3Atb3BhY2l0eToxIiAvPgo8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmNTU3NmM7c3RvcC1vcGFjaXR5OjEiIC8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==" class="texture-preview" onclick="selectTexture('gradient')" alt="Gradient">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZmZmIi8+CjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjMwIiBmaWxsPSIjNjY3ZWVhIi8+CjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjIwIiBmaWxsPSIjZjU1NzZjIi8+CjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjEwIiBmaWxsPSIjNGVjZGM0Ii8+Cjwvc3ZnPgo=" class="texture-preview" onclick="selectTexture('circles')" alt="Circles">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Multi-Material</h4>
+                    <button onclick="createMultiMaterialMesh()">Create Multi-Material Mesh</button>
+                    <button onclick="assignMaterialToFaces()">Assign to Selected Faces</button>
+                    <button onclick="randomizeMaterials()">Randomize Materials</button>
+                </div>
+
+                <div class="material-info" id="material-info">
+                    <div>Current Material: <span class="material-property">MeshPhongMaterial</span></div>
+                    <div>Color: <span class="material-value">#667eea</span></div>
+                    <div>Opacity: <span class="material-value">1.0</span></div>
+                    <div>Metalness: <span class="material-value">0.0</span></div>
+                    <div>Roughness: <span class="material-value">0.5</span></div>
+                    <div>Shininess: <span class="material-value">30</span></div>
+                    <div>Texture: <span class="material-value">None</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar" id="status-bar">
+            Ready to work with materials
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="../dist/umd/index.umd.js"></script>
+    <script>
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let currentMaterial = null;
+        let meshObjects = [];
+        let materialType = 'MeshPhongMaterial';
+        let selectedTexture = 'none';
+
+        // Initialize the scene
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+
+            camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 600);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            const viewport = document.getElementById('viewport');
+            viewport.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            createMesh();
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = 800 / 600;
+            camera.updateProjectionMatrix();
+            renderer.setSize(800, 600);
+        }
+
+        function createMesh() {
+            clearScene();
+            const meshType = document.getElementById('mesh-type').value;
+            const meshName = 'create' + meshType.charAt(0).toUpperCase() + meshType.slice(1);
+            
+            if (ThreeEdit[meshName]) {
+                currentMesh = ThreeEdit[meshName]();
+            } else {
+                updateStatus('Mesh type not available: ' + meshType, 'error');
+                return;
+            }
+
+            createMaterial();
+            const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+            const mesh = new THREE.Mesh(geometry, currentMaterial);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            meshObjects.push(mesh);
+
+            updateMaterialInfo();
+            updateStatus(meshType + ' created with material');
+        }
+
+        function createMaterial() {
+            const materialProperties = {
+                color: document.getElementById('material-color').value,
+                transparent: document.getElementById('material-opacity').value < 1,
+                opacity: parseFloat(document.getElementById('material-opacity').value),
+                metalness: parseFloat(document.getElementById('material-metalness').value),
+                roughness: parseFloat(document.getElementById('material-roughness').value),
+                shininess: parseInt(document.getElementById('material-shininess').value)
+            };
+
+            switch (materialType) {
+                case 'MeshPhongMaterial':
+                    currentMaterial = new THREE.MeshPhongMaterial({
+                        color: materialProperties.color,
+                        transparent: materialProperties.transparent,
+                        opacity: materialProperties.opacity,
+                        shininess: materialProperties.shininess
+                    });
+                    break;
+                case 'MeshLambertMaterial':
+                    currentMaterial = new THREE.MeshLambertMaterial({
+                        color: materialProperties.color,
+                        transparent: materialProperties.transparent,
+                        opacity: materialProperties.opacity
+                    });
+                    break;
+                case 'MeshStandardMaterial':
+                    currentMaterial = new THREE.MeshStandardMaterial({
+                        color: materialProperties.color,
+                        transparent: materialProperties.transparent,
+                        opacity: materialProperties.opacity,
+                        metalness: materialProperties.metalness,
+                        roughness: materialProperties.roughness
+                    });
+                    break;
+                case 'MeshPhysicalMaterial':
+                    currentMaterial = new THREE.MeshPhysicalMaterial({
+                        color: materialProperties.color,
+                        transparent: materialProperties.transparent,
+                        opacity: materialProperties.opacity,
+                        metalness: materialProperties.metalness,
+                        roughness: materialProperties.roughness
+                    });
+                    break;
+            }
+
+            applyTexture();
+        }
+
+        function applyTexture() {
+            if (selectedTexture === 'none') {
+                currentMaterial.map = null;
+                currentMaterial.normalMap = null;
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            switch (selectedTexture) {
+                case 'checker':
+                    createCheckerTexture(ctx, 512, 512);
+                    break;
+                case 'gradient':
+                    createGradientTexture(ctx, 512, 512);
+                    break;
+                case 'circles':
+                    createCirclesTexture(ctx, 512, 512);
+                    break;
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 2);
+
+            currentMaterial.map = texture;
+            currentMaterial.needsUpdate = true;
+        }
+
+        function createCheckerTexture(ctx, width, height) {
+            const size = 64;
+            for (let x = 0; x < width; x += size) {
+                for (let y = 0; y < height; y += size) {
+                    const isEven = ((x / size) + (y / size)) % 2 === 0;
+                    ctx.fillStyle = isEven ? '#ffffff' : '#000000';
+                    ctx.fillRect(x, y, size, size);
+                }
+            }
+        }
+
+        function createGradientTexture(ctx, width, height) {
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#f5576c');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        function createCirclesTexture(ctx, width, height) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Large circle
+            ctx.fillStyle = '#667eea';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 150, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Medium circle
+            ctx.fillStyle = '#f5576c';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 100, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Small circle
+            ctx.fillStyle = '#4ecdc4';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function clearScene() {
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+        }
+
+        function selectMaterialType(type) {
+            materialType = type;
+            
+            // Update preview selection
+            document.querySelectorAll('.material-preview').forEach(preview => {
+                preview.classList.remove('selected');
+            });
+            document.getElementById(type.toLowerCase().replace('mesh', '').replace('material', '') + '-preview').classList.add('selected');
+            
+            createMaterial();
+            updateMeshMaterial();
+            updateMaterialInfo();
+            updateStatus('Material type changed to: ' + type);
+        }
+
+        function selectTexture(textureType) {
+            selectedTexture = textureType;
+            
+            // Update texture selection
+            document.querySelectorAll('.texture-preview').forEach(preview => {
+                preview.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            
+            applyTexture();
+            updateMeshMaterial();
+            updateMaterialInfo();
+            updateStatus('Texture changed to: ' + textureType);
+        }
+
+        function updateMaterialColor() {
+            const color = document.getElementById('material-color').value;
+            if (currentMaterial) {
+                currentMaterial.color.setHex(parseInt(color.replace('#', ''), 16));
+                currentMaterial.needsUpdate = true;
+            }
+            updateMaterialInfo();
+        }
+
+        function updateMaterialOpacity() {
+            const opacity = parseFloat(document.getElementById('material-opacity').value);
+            document.getElementById('opacity-value').textContent = opacity.toFixed(1);
+            
+            if (currentMaterial) {
+                currentMaterial.transparent = opacity < 1;
+                currentMaterial.opacity = opacity;
+                currentMaterial.needsUpdate = true;
+            }
+            updateMaterialInfo();
+        }
+
+        function updateMaterialMetalness() {
+            const metalness = parseFloat(document.getElementById('material-metalness').value);
+            document.getElementById('metalness-value').textContent = metalness.toFixed(1);
+            
+            if (currentMaterial && currentMaterial.metalness !== undefined) {
+                currentMaterial.metalness = metalness;
+                currentMaterial.needsUpdate = true;
+            }
+            updateMaterialInfo();
+        }
+
+        function updateMaterialRoughness() {
+            const roughness = parseFloat(document.getElementById('material-roughness').value);
+            document.getElementById('roughness-value').textContent = roughness.toFixed(1);
+            
+            if (currentMaterial && currentMaterial.roughness !== undefined) {
+                currentMaterial.roughness = roughness;
+                currentMaterial.needsUpdate = true;
+            }
+            updateMaterialInfo();
+        }
+
+        function updateMaterialShininess() {
+            const shininess = parseInt(document.getElementById('material-shininess').value);
+            document.getElementById('shininess-value').textContent = shininess;
+            
+            if (currentMaterial && currentMaterial.shininess !== undefined) {
+                currentMaterial.shininess = shininess;
+                currentMaterial.needsUpdate = true;
+            }
+            updateMaterialInfo();
+        }
+
+        function updateMeshMaterial() {
+            if (meshObjects.length > 0 && currentMaterial) {
+                meshObjects.forEach(mesh => {
+                    if (mesh instanceof THREE.Mesh) {
+                        mesh.material = currentMaterial;
+                    }
+                });
+            }
+        }
+
+        function createMultiMaterialMesh() {
+            clearScene();
+            
+            const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+            const materials = [
+                new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+                new THREE.MeshPhongMaterial({ color: 0x00ff00 }),
+                new THREE.MeshPhongMaterial({ color: 0x0000ff }),
+                new THREE.MeshPhongMaterial({ color: 0xffff00 }),
+                new THREE.MeshPhongMaterial({ color: 0xff00ff }),
+                new THREE.MeshPhongMaterial({ color: 0x00ffff })
+            ];
+            
+            const mesh = new THREE.Mesh(geometry, materials);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            meshObjects.push(mesh);
+            
+            updateStatus('Multi-material mesh created');
+        }
+
+        function assignMaterialToFaces() {
+            if (!currentMesh || !currentMaterial) {
+                updateStatus('No mesh or material available', 'error');
+                return;
+            }
+            
+            // Simulate assigning material to random faces
+            const faces = currentMesh.faces.slice(0, Math.floor(currentMesh.faces.length / 2));
+            updateStatus('Material assigned to ' + faces.length + ' faces');
+        }
+
+        function randomizeMaterials() {
+            if (meshObjects.length === 0) {
+                updateStatus('No mesh to randomize', 'error');
+                return;
+            }
+            
+            const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
+            meshObjects.forEach(mesh => {
+                if (mesh instanceof THREE.Mesh) {
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    mesh.material = new THREE.MeshPhongMaterial({ color: randomColor });
+                }
+            });
+            
+            updateStatus('Materials randomized');
+        }
+
+        function resetMaterials() {
+            createMaterial();
+            updateMeshMaterial();
+            updateMaterialInfo();
+            updateStatus('Materials reset');
+        }
+
+        function exportMaterials() {
+            if (!currentMaterial) {
+                updateStatus('No material to export', 'error');
+                return;
+            }
+            
+            const materialData = {
+                type: materialType,
+                color: currentMaterial.color.getHexString(),
+                opacity: currentMaterial.opacity,
+                transparent: currentMaterial.transparent,
+                metalness: currentMaterial.metalness || 0,
+                roughness: currentMaterial.roughness || 0.5,
+                shininess: currentMaterial.shininess || 30,
+                texture: selectedTexture
+            };
+            
+            const dataStr = JSON.stringify(materialData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'material.json';
+            link.click();
+            
+            updateStatus('Material exported');
+        }
+
+        function importMaterials() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const materialData = JSON.parse(e.target.result);
+                            
+                            // Update UI
+                            document.getElementById('material-color').value = '#' + materialData.color;
+                            document.getElementById('material-opacity').value = materialData.opacity;
+                            document.getElementById('material-metalness').value = materialData.metalness;
+                            document.getElementById('material-roughness').value = materialData.roughness;
+                            document.getElementById('material-shininess').value = materialData.shininess;
+                            
+                            // Update values
+                            document.getElementById('opacity-value').textContent = materialData.opacity.toFixed(1);
+                            document.getElementById('metalness-value').textContent = materialData.metalness.toFixed(1);
+                            document.getElementById('roughness-value').textContent = materialData.roughness.toFixed(1);
+                            document.getElementById('shininess-value').textContent = materialData.shininess;
+                            
+                            // Apply material
+                            selectMaterialType(materialData.type);
+                            selectTexture(materialData.texture);
+                            
+                            updateStatus('Material imported successfully');
+                        } catch (error) {
+                            updateStatus('Error importing material: ' + error.message, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        function updateMaterialInfo() {
+            if (!currentMaterial) return;
+
+            const info = document.getElementById('material-info');
+            const color = '#' + currentMaterial.color.getHexString();
+            const opacity = currentMaterial.opacity || 1;
+            const metalness = currentMaterial.metalness || 0;
+            const roughness = currentMaterial.roughness || 0.5;
+            const shininess = currentMaterial.shininess || 30;
+            
+            info.innerHTML = `
+                <div>Current Material: <span class="material-property">${materialType}</span></div>
+                <div>Color: <span class="material-value">${color}</span></div>
+                <div>Opacity: <span class="material-value">${opacity.toFixed(1)}</span></div>
+                <div>Metalness: <span class="material-value">${metalness.toFixed(1)}</span></div>
+                <div>Roughness: <span class="material-value">${roughness.toFixed(1)}</span></div>
+                <div>Shininess: <span class="material-value">${shininess}</span></div>
+                <div>Texture: <span class="material-value">${selectedTexture}</span></div>
+            `;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.textContent = message;
+            statusBar.className = 'status-bar ' + type;
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initScene);
+        window.addEventListener('resize', onWindowResize);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case 'r':
+                    if (event.ctrlKey) resetMaterials();
+                    break;
+                case 'm':
+                    if (event.ctrlKey) createMultiMaterialMesh();
+                    break;
+                case 't':
+                    if (event.ctrlKey) randomizeMaterials();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html> 

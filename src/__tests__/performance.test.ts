@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh, Vertex, Face } from '../core/index.ts';
-import { Octree, LODSystem, MeshSimplifier, MemoryOptimizer, GPUAccelerator } from '../performance/index.ts';
-import { createCube } from '../primitives/index.ts';
+import { EditableMesh, Vertex, Face } from '../core/index';
+import { Octree, LODSystem, MeshSimplifier, MemoryOptimizer, GPUAccelerator } from '../performance/index';
+import { createCube } from '../primitives/index';
 
 describe('Performance Optimization Features', () => {
   let mesh: EditableMesh;

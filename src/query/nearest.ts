@@ -1,5 +1,5 @@
 import { Vector3, Triangle } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { EditableMesh } from '../core/EditableMesh';
 import { NearestElementResult, NearestElementOptions } from './types';
 import { closestPointOnLineSegment, closestPointOnTriangle } from './geometry';
 

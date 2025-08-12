@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced 3D Editor - Three-Edit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #ffffff;
+            overflow: hidden;
+        }
+        
+        .editor-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.8);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-right: 2px solid #4CAF50;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .main-viewport {
+            flex: 1;
+            position: relative;
+        }
+        
+        .toolbar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #4CAF50;
+        }
+        
+        .toolbar button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .toolbar button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .toolbar button.active {
+            background: #ff9800;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section h3 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+        
+        .primitive-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .primitive-btn {
+            background: #2a2a2a;
+            color: #ffffff;
+            border: 1px solid #4CAF50;
+            padding: 12px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .primitive-btn:hover {
+            background: #4CAF50;
+            transform: scale(1.05);
+        }
+        
+        .controls-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #ffffff;
+        }
+        
+        .control-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        .control-group span {
+            color: #4CAF50;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .scene-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #4CAF50;
+        }
+        
+        .scene-info h4 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .scene-info p {
+            color: #ffffff;
+            margin: 5px 0;
+            font-size: 11px;
+        }
+        
+        .status-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid #4CAF50;
+            font-size: 12px;
+            z-index: 100;
+        }
+        
+        .help-text {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #4CAF50;
+            max-width: 250px;
+            font-size: 11px;
+            z-index: 100;
+        }
+        
+        .help-text h4 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .help-text ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .help-text li {
+            margin-bottom: 5px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .help-text li:before {
+            content: "•";
+            color: #4CAF50;
+            position: absolute;
+            left: 0;
+        }
+        
+        .scene-control-btn {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .scene-control-btn:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="sidebar">
+            <div class="section">
+                <h3>🎨 Primitives</h3>
+                <div class="primitive-grid">
+                    <button class="primitive-btn" onclick="createPrimitive('cube')">🧱 Cube</button>
+                    <button class="primitive-btn" onclick="createPrimitive('sphere')">🔵 Sphere</button>
+                    <button class="primitive-btn" onclick="createPrimitive('cylinder')">🔘 Cylinder</button>
+                    <button class="primitive-btn" onclick="createPrimitive('cone')">🔺 Cone</button>
+                    <button class="primitive-btn" onclick="createPrimitive('torus')">🍩 Torus</button>
+                    <button class="primitive-btn" onclick="createPrimitive('plane')">📄 Plane</button>
+                    <button class="primitive-btn" onclick="createPrimitive('pyramid')">🔺 Pyramid</button>
+                    <button class="primitive-btn" onclick="createPrimitive('capsule')">💊 Capsule</button>
+                    <button class="primitive-btn" onclick="createPrimitive('octahedron')">🔷 Octahedron</button>
+                    <button class="primitive-btn" onclick="createPrimitive('dodecahedron')">🔶 Dodecahedron</button>
+                    <button class="primitive-btn" onclick="createPrimitive('icosahedron')">🔷 Icosahedron</button>
+                    <button class="primitive-btn" onclick="createPrimitive('torusKnot')">🎀 Torus Knot</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>⚙️ Primitive Options</h3>
+                <div class="controls-section">
+                    <div class="control-group">
+                        <label for="sizeSlider">Size/Radius:</label>
+                        <input type="range" id="sizeSlider" min="0.1" max="3" step="0.1" value="1" oninput="updateSize()">
+                        <span id="sizeValue">1.0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="segmentsSlider">Segments:</label>
+                        <input type="range" id="segmentsSlider" min="3" max="32" step="1" value="8" oninput="updateSegments()">
+                        <span id="segmentsValue">8</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="heightSlider">Height:</label>
+                        <input type="range" id="heightSlider" min="0.1" max="3" step="0.1" value="1" oninput="updateHeight()">
+                        <span id="heightValue">1.0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>🎯 Scene Controls</h3>
+                <div class="controls-section">
+                    <button class="scene-control-btn" onclick="clearScene()">🗑️ Clear Scene</button>
+                    <button class="scene-control-btn" onclick="resetCamera()">📷 Reset Camera</button>
+                    <button class="scene-control-btn" onclick="toggleWireframe()">🔲 Toggle Wireframe</button>
+                    <button class="scene-control-btn" onclick="toggleRotation()">🔄 Toggle Rotation</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>📊 Scene Info</h3>
+                <div class="scene-info" id="sceneInfo">
+                    <h4>Objects: 0</h4>
+                    <p>Vertices: 0</p>
+                    <p>Faces: 0</p>
+                    <p>Memory: 0 MB</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-viewport" id="viewport">
+            <div class="toolbar">
+                <button id="selectBtn" onclick="setMode('select')" class="active">👆 Select</button>
+                <button id="moveBtn" onclick="setMode('move')">↔️ Move</button>
+                <button id="rotateBtn" onclick="setMode('rotate')">🔄 Rotate</button>
+                <button id="scaleBtn" onclick="setMode('scale')">📏 Scale</button>
+            </div>
+            
+            <div class="help-text">
+                <h4>🎮 Controls</h4>
+                <ul>
+                    <li><strong>Mouse:</strong> Rotate camera</li>
+                    <li><strong>Scroll:</strong> Zoom in/out</li>
+                    <li><strong>Right-click:</strong> Pan camera</li>
+                    <li><strong>Shift+Click:</strong> Multi-select</li>
+                    <li><strong>Delete:</strong> Remove selected</li>
+                </ul>
+            </div>
+            
+            <div class="status-bar" id="statusBar">
+                Ready - Click primitives to create objects
+            </div>
+        </div>
+    </div>
+
+                <!-- Load Three.js and OrbitControls from local node_modules -->
+            <script src="../node_modules/three/build/three.min.js"></script>
+            <script src="../node_modules/three/examples/js/controls/OrbitControls.js"></script>
+            
+                    <!-- Load our three-edit library for editing functionality -->
+        <script src="../browser/three-edit.browser.iife.js"></script>
+            
+            <!-- Initialize editor after all scripts are loaded -->
+            <script>
+                if (window.initEditor) {
+                    window.initEditor();
+                }
+            </script>
+    
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let meshes = [];
+        let selectedMeshes = [];
+        let currentMode = 'select';
+        let isRotating = true;
+        let isWireframe = false;
+        
+        // Primitive options
+        let currentOptions = {
+            size: 1.0,
+            segments: 8,
+            height: 1.0
+        };
+        
+        // Initialize the 3D editor
+        function initEditor() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(10, 10, 10);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth - 300, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Add renderer to viewport
+            const viewport = document.getElementById('viewport');
+            viewport.appendChild(renderer.domElement);
+            
+            // Setup controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Add lights
+            setupLighting();
+            
+            // Add grid
+            addGrid();
+            
+            // Start animation loop
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Handle keyboard shortcuts
+            document.addEventListener('keydown', handleKeyDown);
+            
+            updateStatus('3D Editor ready - Create primitives from the sidebar');
+        }
+        
+        // Setup lighting
+        function setupLighting() {
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            const pointLight = new THREE.PointLight(0x4CAF50, 0.5, 100);
+            pointLight.position.set(-10, 10, -10);
+            scene.add(pointLight);
+        }
+        
+        // Add grid
+        function addGrid() {
+            const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+            scene.add(gridHelper);
+            
+            const axesHelper = new THREE.AxesHelper(5);
+            scene.add(axesHelper);
+        }
+        
+        // Create primitive
+        function createPrimitive(type) {
+            try {
+                let editableMesh;
+                const position = new THREE.Vector3(
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                );
+                
+                switch(type) {
+                    case 'cube':
+                        editableMesh = ThreeEdit.createCube({ size: currentOptions.size });
+                        break;
+                    case 'sphere':
+                        editableMesh = ThreeEdit.createSphere({ 
+                            radius: currentOptions.size,
+                            segments: currentOptions.segments 
+                        });
+                        break;
+                    case 'cylinder':
+                        editableMesh = ThreeEdit.createCylinder({ 
+                            radius: currentOptions.size,
+                            height: currentOptions.height,
+                            segments: currentOptions.segments 
+                        });
+                        break;
+                    case 'cone':
+                        editableMesh = ThreeEdit.createCone({ 
+                            radius: currentOptions.size,
+                            height: currentOptions.height,
+                            segments: currentOptions.segments 
+                        });
+                        break;
+                    case 'torus':
+                        editableMesh = ThreeEdit.createTorus({ 
+                            radius: currentOptions.size,
+                            tube: currentOptions.size * 0.3,
+                            segments: currentOptions.segments 
+                        });
+                        break;
+                    case 'plane':
+                        editableMesh = ThreeEdit.createPlane({ 
+                            width: currentOptions.size * 2,
+                            height: currentOptions.size * 2,
+                            segments: currentOptions.segments 
+                        });
+                        break;
+                    case 'pyramid':
+                        editableMesh = ThreeEdit.createPyramid({ 
+                            size: currentOptions.size,
+                            height: currentOptions.height 
+                        });
+                        break;
+                    case 'capsule':
+                        editableMesh = ThreeEdit.createCapsule({ 
+                            radius: currentOptions.size,
+                            height: currentOptions.height 
+                        });
+                        break;
+                    case 'octahedron':
+                        editableMesh = ThreeEdit.createOctahedron({ size: currentOptions.size });
+                        break;
+                    case 'dodecahedron':
+                        editableMesh = ThreeEdit.createDodecahedron({ size: currentOptions.size });
+                        break;
+                    case 'icosahedron':
+                        editableMesh = ThreeEdit.createIcosahedron({ size: currentOptions.size });
+                        break;
+                    case 'torusKnot':
+                        editableMesh = ThreeEdit.createTorusKnot({ 
+                            radius: currentOptions.size,
+                            tube: currentOptions.size * 0.3,
+                            segments: currentOptions.segments 
+                        });
+                        break;
+                }
+                
+                if (editableMesh) {
+                    const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                    const material = new THREE.MeshPhongMaterial({ 
+                        color: Math.random() * 0xffffff,
+                        wireframe: isWireframe
+                    });
+                    
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.copy(position);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    
+                    // Store reference to editable mesh
+                    mesh.userData.editableMesh = editableMesh;
+                    mesh.userData.type = type;
+                    
+                    scene.add(mesh);
+                    meshes.push(mesh);
+                    
+                    updateSceneInfo();
+                    updateStatus(`${type.charAt(0).toUpperCase() + type.slice(1)} created successfully`);
+                }
+                
+            } catch (error) {
+                console.error('Error creating primitive:', error);
+                updateStatus(`Error creating ${type}: ${error.message}`);
+            }
+        }
+        
+        // Set interaction mode
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // Update button states
+            document.getElementById('selectBtn').classList.remove('active');
+            document.getElementById('moveBtn').classList.remove('active');
+            document.getElementById('rotateBtn').classList.remove('active');
+            document.getElementById('scaleBtn').classList.remove('active');
+            
+            document.getElementById(mode + 'Btn').classList.add('active');
+            
+            updateStatus(`Mode: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
+        }
+        
+        // Update primitive options
+        function updateSize() {
+            const value = parseFloat(document.getElementById('sizeSlider').value);
+            document.getElementById('sizeValue').textContent = value.toFixed(1);
+            currentOptions.size = value;
+        }
+        
+        function updateSegments() {
+            const value = parseInt(document.getElementById('segmentsSlider').value);
+            document.getElementById('segmentsValue').textContent = value;
+            currentOptions.segments = value;
+        }
+        
+        function updateHeight() {
+            const value = parseFloat(document.getElementById('heightSlider').value);
+            document.getElementById('heightValue').textContent = value.toFixed(1);
+            currentOptions.height = value;
+        }
+        
+        // Scene controls
+        function clearScene() {
+            meshes.forEach(mesh => {
+                scene.remove(mesh);
+            });
+            meshes = [];
+            selectedMeshes = [];
+            updateSceneInfo();
+            updateStatus('Scene cleared');
+        }
+        
+        function resetCamera() {
+            camera.position.set(10, 10, 10);
+            camera.lookAt(0, 0, 0);
+            controls.reset();
+            updateStatus('Camera reset');
+        }
+        
+        function toggleWireframe() {
+            isWireframe = !isWireframe;
+            meshes.forEach(mesh => {
+                mesh.material.wireframe = isWireframe;
+            });
+            updateStatus(`Wireframe ${isWireframe ? 'enabled' : 'disabled'}`);
+        }
+        
+        function toggleRotation() {
+            isRotating = !isRotating;
+            updateStatus(`Rotation ${isRotating ? 'enabled' : 'disabled'}`);
+        }
+        
+        // Update scene information
+        function updateSceneInfo() {
+            let totalVertices = 0;
+            let totalFaces = 0;
+            
+            meshes.forEach(mesh => {
+                if (mesh.userData.editableMesh) {
+                    totalVertices += mesh.userData.editableMesh.vertices.length;
+                    totalFaces += mesh.userData.editableMesh.faces.length;
+                }
+            });
+            
+            const memoryUsage = (totalVertices * 12 + totalFaces * 12) / (1024 * 1024); // Rough estimate
+            
+            document.getElementById('sceneInfo').innerHTML = `
+                <h4>Objects: ${meshes.length}</h4>
+                <p>Vertices: ${totalVertices.toLocaleString()}</p>
+                <p>Faces: ${totalFaces.toLocaleString()}</p>
+                <p>Memory: ${memoryUsage.toFixed(2)} MB</p>
+            `;
+        }
+        
+        // Update status
+        function updateStatus(message) {
+            document.getElementById('statusBar').textContent = message;
+        }
+        
+        // Handle keyboard shortcuts
+        function handleKeyDown(event) {
+            switch(event.key) {
+                case 'Delete':
+                case 'Backspace':
+                    if (selectedMeshes.length > 0) {
+                        selectedMeshes.forEach(mesh => {
+                            const index = meshes.indexOf(mesh);
+                            if (index > -1) {
+                                meshes.splice(index, 1);
+                                scene.remove(mesh);
+                            }
+                        });
+                        selectedMeshes = [];
+                        updateSceneInfo();
+                        updateStatus('Selected objects deleted');
+                    }
+                    break;
+                case 'Escape':
+                    selectedMeshes = [];
+                    updateStatus('Selection cleared');
+                    break;
+            }
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+            camera.aspect = (window.innerWidth - 300) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 300, window.innerHeight);
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (isRotating) {
+                meshes.forEach((mesh, index) => {
+                    mesh.rotation.x += 0.005;
+                    mesh.rotation.y += 0.005;
+                });
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', initEditor);
+    </script>
+</body>
+</html>

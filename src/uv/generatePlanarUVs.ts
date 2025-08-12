@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { EditableMesh } from '../core/EditableMesh';
 // import { UVGenerationParams } from './types';
 
 /**

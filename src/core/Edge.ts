@@ -1,5 +1,8 @@
+import { UserData, EdgeOptions } from '../types/core';
+
 /**
  * Represents an edge between two vertices in the mesh
+ * An edge connects exactly two vertices and can be part of multiple faces
  */
 export class Edge {
   /** Index of the first vertex */
@@ -9,22 +12,22 @@ export class Edge {
   v2: number;
   
   /** Custom user data for storing additional information */
-  userData: Record<string, any>;
+  userData: UserData;
   
   /**
    * Creates a new Edge
    * @param v1 Index of the first vertex
    * @param v2 Index of the second vertex
-   * @param userData Optional user data
+   * @param options Optional parameters for edge creation
    */
   constructor(
     v1: number,
     v2: number,
-    userData: Record<string, any> = {}
+    options: EdgeOptions = {}
   ) {
     this.v1 = v1;
     this.v2 = v2;
-    this.userData = userData;
+    this.userData = options.userData || {};
   }
   
   /**
@@ -35,7 +38,7 @@ export class Edge {
     return new Edge(
       this.v1,
       this.v2,
-      { ...this.userData }
+      { userData: { ...this.userData } }
     );
   }
   

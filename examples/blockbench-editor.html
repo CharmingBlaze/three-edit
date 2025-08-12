@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockbench-Style 3D Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2b2b2b;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .toolbar {
+            background: #3c3c3c;
+            border-right: 1px solid #555;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        .toolbar-section {
+            background: #4a4a4a;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .toolbar-section h3 {
+            color: #fff;
+            margin: 20px 0 10px 0;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        .toolbar-button {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: #444;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: left;
+            transition: background 0.2s;
+        }
+
+        .toolbar-button:hover {
+            background: #6a6a6a;
+        }
+
+        .toolbar-button.active {
+            background: #007acc;
+        }
+
+        .center-viewport {
+            flex: 1;
+            min-width: 0;
+            background-color: #1e1e1e;
+            position: relative;
+        }
+
+        .center-viewport canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .right-panel {
+            width: 250px;
+            background-color: #2d2d2d;
+            border-left: 1px solid #444;
+            padding: 20px;
+            overflow-y: auto;
+            color: #fff;
+        }
+
+        .panel-section {
+            margin-bottom: 20px;
+        }
+
+        .panel-section h3 {
+            margin-bottom: 10px;
+            color: #ddd;
+            font-size: 14px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        .property-group {
+            margin-bottom: 15px;
+        }
+
+        .property-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+            font-size: 12px;
+        }
+
+        .property-group input,
+        .property-group select {
+            width: 100%;
+            padding: 5px;
+            background: #4a4a4a;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 3px;
+        }
+
+        .property-group input:focus,
+        .property-group select:focus {
+            outline: none;
+            border-color: #007acc;
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1e1e1e;
+            border-top: 1px solid #555;
+            padding: 5px 15px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .viewport-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .left-panel {
+            width: 200px;
+            background: #2d2d2d;
+            border-right: 1px solid #444;
+            padding: 15px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Left Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <h3>Primitives</h3>
+                <button class="toolbar-button" onclick="createPrimitive('cube')">Cube</button>
+                <button class="toolbar-button" onclick="createPrimitive('sphere')">Sphere</button>
+                <button class="toolbar-button" onclick="createPrimitive('cylinder')">Cylinder</button>
+                <button class="toolbar-button" onclick="createPrimitive('cone')">Cone</button>
+                <button class="toolbar-button" onclick="createPrimitive('plane')">Plane</button>
+                <button class="toolbar-button" onclick="createPrimitive('torus')">Torus</button>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>Tools</h3>
+                <button class="toolbar-button" onclick="selectTool('select')">Select</button>
+                <button class="toolbar-button" onclick="selectTool('move')">Move</button>
+                <button class="toolbar-button" onclick="selectTool('rotate')">Rotate</button>
+                <button class="toolbar-button" onclick="selectTool('scale')">Scale</button>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>Operations</h3>
+                <button class="toolbar-button" onclick="deleteSelected()">Delete</button>
+                <button class="toolbar-button" onclick="duplicateSelected()">Duplicate</button>
+                <button class="toolbar-button" onclick="centerView()">Center View</button>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>Camera Controls</h3>
+                <button class="toolbar-button" onclick="resetCamera()">Reset Camera</button>
+                <button class="toolbar-button" onclick="frontView()">Front View</button>
+                <button class="toolbar-button" onclick="sideView()">Side View</button>
+                <button class="toolbar-button" onclick="topView()">Top View</button>
+                <button class="toolbar-button" onclick="perspectiveView()">Perspective</button>
+            </div>
+            
+            <div class="toolbar-section">
+                <h3>Gizmo Mode</h3>
+                <button class="toolbar-button active" onclick="setGizmoMode('translate')">Translate</button>
+                <button class="toolbar-button" onclick="setGizmoMode('rotate')">Rotate</button>
+                <button class="toolbar-button" onclick="setGizmoMode('scale')">Scale</button>
+            </div>
+        </div>
+
+        <!-- Center Viewport -->
+        <div class="center-viewport">
+            <div class="viewport-info">
+                <div>Objects: <span id="object-count">0</span></div>
+                <div>FPS: <span id="fps">0</span></div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <div class="panel-section">
+                <h3>Object Properties</h3>
+                <div class="property-group">
+                    <label for="position-x">Position X:</label>
+                    <input type="number" id="position-x" step="0.1" onchange="updateObjectProperty('position-x', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="position-y">Position Y:</label>
+                    <input type="number" id="position-y" step="0.1" onchange="updateObjectProperty('position-y', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="position-z">Position Z:</label>
+                    <input type="number" id="position-z" step="0.1" onchange="updateObjectProperty('position-z', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="rotation-x">Rotation X:</label>
+                    <input type="number" id="rotation-x" step="0.1" onchange="updateObjectProperty('rotation-x', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="rotation-y">Rotation Y:</label>
+                    <input type="number" id="rotation-y" step="0.1" onchange="updateObjectProperty('rotation-y', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="rotation-z">Rotation Z:</label>
+                    <input type="number" id="rotation-z" step="0.1" onchange="updateObjectProperty('rotation-z', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="scale-x">Scale X:</label>
+                    <input type="number" id="scale-x" step="0.1" value="1" onchange="updateObjectProperty('scale-x', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="scale-y">Scale Y:</label>
+                    <input type="number" id="scale-y" step="0.1" value="1" onchange="updateObjectProperty('scale-y', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="scale-z">Scale Z:</label>
+                    <input type="number" id="scale-z" step="0.1" value="1" onchange="updateObjectProperty('scale-z', this.value)">
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>Material</h3>
+                <div class="property-group">
+                    <label for="material-color">Color:</label>
+                    <input type="color" id="material-color" onchange="updateMaterialProperty('color', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="material-metalness">Metalness:</label>
+                    <input type="range" id="material-metalness" min="0" max="1" step="0.1" value="0" onchange="updateMaterialProperty('metalness', this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="material-roughness">Roughness:</label>
+                    <input type="range" id="material-roughness" min="0" max="1" step="0.1" value="0.5" onchange="updateMaterialProperty('roughness', this.value)">
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>Scene</h3>
+                <div class="property-group">
+                    <label for="scene-background">Background:</label>
+                    <input type="color" id="scene-background" value="#1e1e1e" onchange="updateSceneBackground(this.value)">
+                </div>
+                <div class="property-group">
+                    <label for="scene-ambient">Ambient Light:</label>
+                    <input type="range" id="scene-ambient" min="0" max="1" step="0.1" value="0.3" onchange="updateSceneAmbient(this.value)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span>Ready</span> | <span>Tool: <span id="current-tool">Select</span></span> | <span>Selected: <span id="selected-count">0</span></span>
+    </div>
+
+    <!-- Load Three.js and OrbitControls using modern ES Modules -->
+    <script type="module">
+        // Import Three.js and OrbitControls using proper ES module syntax
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+        
+        // Make THREE globally available for onclick handlers
+        window.THREE = THREE;
+        
+        // Global variables
+        let scene, camera, renderer, controls;
+        let meshes = [];
+        let selectedMesh = null;
+        let currentTool = 'select';
+        let isMouseDown = false;
+        let mousePosition = { x: 0, y: 0 };
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        let clock = new THREE.Clock();
+        let frameCount = 0;
+        let lastTime = 0;
+        let selectionSystem; // Add selection system
+
+        // Enhanced OrbitControls implementation
+        class EnhancedOrbitControls extends OrbitControls {
+            constructor(camera, domElement) {
+                super(camera, domElement);
+                
+                // Override default settings
+                this.enableDamping = true;
+                this.dampingFactor = 0.05;
+                this.enableZoom = true;
+                this.enablePan = true;
+                this.enableRotate = true;
+                this.zoomSpeed = 1.0;
+                this.panSpeed = 1.0;
+                this.rotateSpeed = 1.0;
+                this.minDistance = 1;
+                this.maxDistance = 100;
+            }
+        }
+
+        // Gizmo system for manipulating selected objects
+        class Gizmo {
+            constructor() {
+                this.group = new THREE.Group();
+                this.mode = 'translate'; // translate, rotate, scale
+                this.visible = false;
+                this.selectedObject = null;
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
+                
+                this.createGizmoElements();
+                this.setupEventListeners();
+            }
+            
+            createGizmoElements() {
+                // Translation gizmo (arrows)
+                this.translateGizmo = new THREE.Group();
+                
+                // X-axis arrow (red)
+                const xArrow = this.createArrow(0xff0000, new THREE.Vector3(1, 0, 0));
+                this.translateGizmo.add(xArrow);
+                
+                // Y-axis arrow (green)
+                const yArrow = this.createArrow(0x00ff00, new THREE.Vector3(0, 1, 0));
+                this.translateGizmo.add(yArrow);
+                
+                // Z-axis arrow (blue)
+                const zArrow = this.createArrow(0x0000ff, new THREE.Vector3(0, 0, 1));
+                this.translateGizmo.add(zArrow);
+                
+                this.group.add(this.translateGizmo);
+                
+                // Rotation gizmo (circles)
+                this.rotateGizmo = new THREE.Group();
+                
+                // X-axis rotation (red circle)
+                const xCircle = this.createCircle(0xff0000, new THREE.Vector3(1, 0, 0));
+                this.rotateGizmo.add(xCircle);
+                
+                // Y-axis rotation (green circle)
+                const yCircle = this.createCircle(0x00ff00, new THREE.Vector3(0, 1, 0));
+                this.rotateGizmo.add(yCircle);
+                
+                // Z-axis rotation (blue circle)
+                const zCircle = this.createCircle(0x0000ff, new THREE.Vector3(0, 0, 1));
+                this.rotateGizmo.add(zCircle);
+                
+                this.group.add(this.rotateGizmo);
+                
+                // Scale gizmo (cubes)
+                this.scaleGizmo = new THREE.Group();
+                
+                // X-axis scale (red cube)
+                const xCube = this.createCube(0xff0000, new THREE.Vector3(1, 0, 0));
+                this.scaleGizmo.add(xCube);
+                
+                // Y-axis scale (green cube)
+                const yCube = this.createCube(0x00ff00, new THREE.Vector3(0, 1, 0));
+                this.scaleGizmo.add(yCube);
+                
+                // Z-axis scale (blue cube)
+                const zCube = this.createCube(0x0000ff, new THREE.Vector3(0, 0, 1));
+                this.scaleGizmo.add(zCube);
+                
+                this.group.add(this.scaleGizmo);
+                
+                // Center sphere
+                const centerGeometry = new THREE.SphereGeometry(0.1, 8, 6);
+                const centerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                this.centerSphere = new THREE.Mesh(centerGeometry, centerMaterial);
+                this.group.add(this.centerSphere);
+                
+                // Initially show translate gizmo
+                this.setMode('translate');
+            }
+            
+            createArrow(color, direction) {
+                const arrowGeometry = new THREE.ConeGeometry(0.05, 0.2, 8);
+                const arrowMaterial = new THREE.MeshBasicMaterial({ color: color });
+                const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+                
+                // Position and orient arrow
+                arrow.position.copy(direction.clone().multiplyScalar(0.6));
+                arrow.lookAt(0, 0, 0);
+                arrow.rotateX(Math.PI / 2);
+                
+                // Add shaft
+                const shaftGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.4, 8);
+                const shaftMaterial = new THREE.MeshBasicMaterial({ color: color });
+                const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
+                shaft.position.copy(direction.clone().multiplyScalar(0.2));
+                shaft.rotation.z = Math.PI / 2;
+                
+                const arrowGroup = new THREE.Group();
+                arrowGroup.add(arrow);
+                arrowGroup.add(shaft);
+                
+                return arrowGroup;
+            }
+            
+            createCircle(color, normal) {
+                const circleGeometry = new THREE.RingGeometry(0.4, 0.5, 32);
+                const circleMaterial = new THREE.MeshBasicMaterial({ 
+                    color: color, 
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+                
+                // Orient circle to face the normal direction
+                circle.lookAt(normal);
+                
+                return circle;
+            }
+            
+            createCube(color, direction) {
+                const cubeGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                const cubeMaterial = new THREE.MeshBasicMaterial({ color: color });
+                const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                
+                // Position cube along the direction
+                cube.position.copy(direction.clone().multiplyScalar(0.6));
+                
+                return cube;
+            }
+            
+            setMode(mode) {
+                this.mode = mode;
+                
+                // Hide all gizmos
+                this.translateGizmo.visible = false;
+                this.rotateGizmo.visible = false;
+                this.scaleGizmo.visible = false;
+                
+                // Show selected gizmo
+                switch (mode) {
+                    case 'translate':
+                        this.translateGizmo.visible = true;
+                        break;
+                    case 'rotate':
+                        this.rotateGizmo.visible = true;
+                        break;
+                    case 'scale':
+                        this.scaleGizmo.visible = true;
+                        break;
+                }
+            }
+            
+            selectObject(object) {
+                this.selectedObject = object;
+                this.group.visible = object !== null;
+                if (object) {
+                    this.updatePosition();
+                }
+            }
+            
+            updatePosition() {
+                if (this.selectedObject) {
+                    this.group.position.copy(this.selectedObject.position);
+                    this.group.quaternion.copy(this.selectedObject.quaternion);
+                    // Scale gizmo based on object size
+                    const box = new THREE.Box3().setFromObject(this.selectedObject);
+                    const size = box.getSize(new THREE.Vector3());
+                    const maxSize = Math.max(size.x, size.y, size.z);
+                    const scale = Math.max(0.5, maxSize * 0.8);
+                    this.group.scale.setScalar(scale);
+                }
+            }
+            
+            setupEventListeners() {
+                // Event listeners will be handled by SelectionSystem
+            }
+        }
+
+        // Selection system for managing object selection and gizmo interaction
+        class SelectionSystem {
+            constructor(gizmo) {
+                this.gizmo = gizmo;
+                this.selectedObjects = [];
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                // Set up click event on the renderer
+                renderer.domElement.addEventListener('click', (event) => this.onClick(event));
+            }
+            
+            onClick(event) {
+                // Calculate mouse position in normalized device coordinates
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                // Perform raycasting
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(meshes);
+                
+                if (intersects.length > 0) {
+                    // Find the top-level mesh (not a child of another mesh)
+                    let selectedMesh = intersects[0].object;
+                    while (selectedMesh.parent && selectedMesh.parent.type === 'Mesh') {
+                        selectedMesh = selectedMesh.parent;
+                    }
+                    
+                    this.selectObject(selectedMesh);
+                } else {
+                    this.clearSelection();
+                }
+            }
+            
+            selectObject(object) {
+                // Clear previous selection
+                this.clearSelection();
+                
+                // Add to selection
+                this.selectedObjects.push(object);
+                
+                // Highlight selected object
+                if (object.material.color) {
+                    object.userData.originalColor = object.material.color.getHex();
+                    object.material.color.setHex(0xffff00); // Yellow highlight
+                }
+                
+                // Show gizmo
+                this.gizmo.selectObject(object);
+                
+                // Update UI
+                updateStatusBar(`Selected: ${object.name || 'Object'}`);
+                updateObjectCount();
+            }
+            
+            clearSelection() {
+                // Restore original colors
+                this.selectedObjects.forEach(obj => {
+                    if (obj.userData.originalColor !== undefined) {
+                        obj.material.color.setHex(obj.userData.originalColor);
+                        delete obj.userData.originalColor;
+                    }
+                });
+                
+                this.selectedObjects = [];
+                
+                // Hide gizmo
+                this.gizmo.selectObject(null);
+                
+                // Update UI
+                updateStatusBar('Ready');
+                updateObjectCount();
+            }
+            
+            deleteSelected() {
+                this.selectedObjects.forEach(obj => {
+                    const index = meshes.indexOf(obj);
+                    if (index > -1) {
+                        scene.remove(obj);
+                        meshes.splice(index, 1);
+                    }
+                });
+                
+                this.clearSelection();
+                updateObjectCount();
+            }
+            
+            update() {
+                if (this.selectedObjects.length > 0) {
+                    this.gizmo.updatePosition();
+                }
+            }
+        }
+
+        // Initialize the editor
+        function initEditor() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1e1e1e);
+            
+            // Calculate viewport dimensions (accounting for left panel: 200px, right panel: 250px)
+            const leftPanelWidth = 200;
+            const rightPanelWidth = 250;
+            const viewportWidth = window.innerWidth - leftPanelWidth - rightPanelWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Create camera with correct aspect ratio
+            camera = new THREE.PerspectiveCamera(75, viewportWidth / viewportHeight, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+            
+            // Create renderer with correct size
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(viewportWidth, viewportHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.querySelector('.center-viewport').appendChild(renderer.domElement);
+            
+            // Create controls
+            controls = new EnhancedOrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Create gizmo
+            const gizmo = new Gizmo();
+            scene.add(gizmo.group);
+            
+            // Create selection system
+            selectionSystem = new SelectionSystem(gizmo);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            // Add grid helper
+            const gridHelper = new THREE.GridHelper(20, 20);
+            scene.add(gridHelper);
+            
+            // Add axes helper
+            const axesHelper = new THREE.AxesHelper(5);
+            scene.add(axesHelper);
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Start animation loop
+            animate();
+            
+            console.log('Editor initialized successfully');
+            console.log('Scene children:', scene.children.length);
+            console.log('Camera position:', camera.position);
+            console.log('Renderer size:', renderer.getSize(new THREE.Vector2()));
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', onKeyDown);
+        }
+
+        // Window resize handler
+        function onWindowResize() {
+            const leftPanelWidth = 200;
+            const rightPanelWidth = 250;
+            const viewportWidth = window.innerWidth - leftPanelWidth - rightPanelWidth;
+            const viewportHeight = window.innerHeight;
+            
+            camera.aspect = viewportWidth / viewportHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(viewportWidth, viewportHeight);
+        }
+
+        // Keyboard event handler
+        function onKeyDown(event) {
+            switch (event.key) {
+                case 'Delete':
+                case 'Backspace':
+                    if (selectionSystem.selectedObjects.length > 0) {
+                        selectionSystem.deleteSelected();
+                    }
+                    break;
+                case 'Escape':
+                    selectionSystem.clearSelection();
+                    break;
+            }
+        }
+
+        // Tool selection
+        function selectTool(tool) {
+            currentTool = tool;
+            document.getElementById('current-tool').textContent = tool.charAt(0).toUpperCase() + tool.slice(1);
+            
+            // Update gizmo mode
+            if (selectionSystem && selectionSystem.selectedObjects.length > 0) {
+                setGizmoMode(tool);
+            }
+        }
+
+        // Delete selected objects
+        function deleteSelected() {
+            if (selectionSystem) {
+                selectionSystem.deleteSelected();
+            }
+        }
+
+        // Duplicate selected objects
+        function duplicateSelected() {
+            if (selectionSystem && selectionSystem.selectedObjects.length > 0) {
+                const original = selectionSystem.selectedObjects[0];
+                const clone = original.clone();
+                clone.position.add(new THREE.Vector3(1, 0, 0));
+                scene.add(clone);
+                meshes.push(clone);
+                updateObjectCount();
+            }
+        }
+
+        // Center view on selected object
+        function centerView() {
+            if (selectionSystem && selectionSystem.selectedObjects.length > 0) {
+                const obj = selectionSystem.selectedObjects[0];
+                const box = new THREE.Box3().setFromObject(obj);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const fov = camera.fov * (Math.PI / 180);
+                let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+                cameraZ *= 1.5;
+                camera.position.copy(center);
+                camera.position.z += cameraZ;
+                camera.lookAt(center);
+                controls.target.copy(center);
+            }
+        }
+
+        // Update object properties
+        function updateObjectProperty(property, value) {
+            if (selectionSystem && selectionSystem.selectedObjects.length > 0) {
+                const obj = selectionSystem.selectedObjects[0];
+                switch (property) {
+                    case 'positionX':
+                        obj.position.x = parseFloat(value);
+                        break;
+                    case 'positionY':
+                        obj.position.y = parseFloat(value);
+                        break;
+                    case 'positionZ':
+                        obj.position.z = parseFloat(value);
+                        break;
+                    case 'rotationX':
+                        obj.rotation.x = parseFloat(value) * Math.PI / 180;
+                        break;
+                    case 'rotationY':
+                        obj.rotation.y = parseFloat(value) * Math.PI / 180;
+                        break;
+                    case 'rotationZ':
+                        obj.rotation.z = parseFloat(value) * Math.PI / 180;
+                        break;
+                    case 'scaleX':
+                        obj.scale.x = parseFloat(value);
+                        break;
+                    case 'scaleY':
+                        obj.scale.y = parseFloat(value);
+                        break;
+                    case 'scaleZ':
+                        obj.scale.z = parseFloat(value);
+                        break;
+                }
+                
+                if (selectionSystem.gizmo) {
+                    selectionSystem.gizmo.updatePosition();
+                }
+            }
+        }
+
+        // Update material properties
+        function updateMaterialProperty(property, value) {
+            if (selectionSystem && selectionSystem.selectedObjects.length > 0) {
+                const obj = selectionSystem.selectedObjects[0];
+                if (obj.material) {
+                    switch (property) {
+                        case 'color':
+                            obj.material.color.setHex(parseInt(value.replace('#', ''), 16));
+                            break;
+                        case 'opacity':
+                            obj.material.opacity = parseFloat(value);
+                            obj.material.transparent = parseFloat(value) < 1;
+                            break;
+                    }
+                }
+            }
+        }
+
+        // Update scene background
+        function updateSceneBackground(color) {
+            scene.background.setHex(parseInt(color.replace('#', ''), 16));
+        }
+
+        // Update scene ambient light
+        function updateSceneAmbient(intensity) {
+            const ambientLight = scene.children.find(child => child.type === 'AmbientLight');
+            if (ambientLight) {
+                ambientLight.intensity = parseFloat(intensity);
+            }
+        }
+
+        // Camera control functions
+        function resetCamera() {
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
+        }
+
+        function frontView() {
+            camera.position.set(0, 0, 10);
+            camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
+        }
+
+        function sideView() {
+            camera.position.set(10, 0, 0);
+            camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
+        }
+
+        function topView() {
+            camera.position.set(0, 10, 0);
+            camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
+        }
+
+        function perspectiveView() {
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
+        }
+
+        // Gizmo mode functions
+        function setGizmoMode(mode) {
+            if (selectionSystem && selectionSystem.gizmo) {
+                selectionSystem.gizmo.setMode(mode);
+            }
+        }
+
+        // Update status bar
+        function updateStatusBar(message) {
+            const statusBar = document.querySelector('.status-bar span:first-child');
+            if (statusBar) {
+                statusBar.textContent = message;
+            }
+        }
+
+        // Update object count
+        function updateObjectCount() {
+            const countElement = document.getElementById('selected-count');
+            if (countElement) {
+                countElement.textContent = selectionSystem ? selectionSystem.selectedObjects.length : 0;
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Update controls
+            if (controls) {
+                controls.update();
+            }
+            
+            // Update selection system
+            if (selectionSystem) {
+                selectionSystem.update();
+            }
+            
+            // Render scene
+            renderer.render(scene, camera);
+            
+            // Update frame count
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                lastTime = currentTime;
+                frameCount = 0;
+            }
+        }
+
+        // Create primitive objects
+        function createPrimitive(type) {
+            let geometry, material, mesh;
+            
+            switch (type) {
+                case 'cube':
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: Math.random() * 0xffffff,
+                        roughness: 0.7,
+                        metalness: 0.3
+                    });
+                    break;
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(0.5, 32, 16);
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: Math.random() * 0xffffff,
+                        roughness: 0.5,
+                        metalness: 0.5
+                    });
+                    break;
+                case 'cylinder':
+                    geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: Math.random() * 0xffffff,
+                        roughness: 0.6,
+                        metalness: 0.4
+                    });
+                    break;
+                case 'cone':
+                    geometry = new THREE.ConeGeometry(0.5, 1, 32);
+                    material = new THREE.MeshBasicMaterial({ 
+                        color: Math.random() * 0xffffff,
+                        roughness: 0.6,
+                        metalness: 0.4
+                    });
+                    break;
+                case 'torus':
+                    geometry = new THREE.TorusGeometry(0.5, 0.2, 16, 32);
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: Math.random() * 0xffffff,
+                        roughness: 0.6,
+                        metalness: 0.4
+                    });
+                    break;
+                case 'plane':
+                    geometry = new THREE.PlaneGeometry(2, 2);
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: Math.random() * 0xffffff,
+                        roughness: 0.8,
+                        metalness: 0.2,
+                        side: THREE.DoubleSide
+                    });
+                    break;
+            }
+            
+            if (geometry && material) {
+                mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                );
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
+                scene.add(mesh);
+                meshes.push(mesh);
+                updateObjectCount();
+                
+                console.log(`Created ${type} with ID:`, mesh.id);
+            }
+        }
+
+        // Expose functions globally for HTML onclick attributes
+        window.initEditor = initEditor;
+        window.setupEventListeners = setupEventListeners;
+        window.onMouseDown = onMouseDown;
+        window.onMouseMove = onMouseMove;
+        window.onMouseUp = onMouseUp;
+        window.onWindowResize = onWindowResize;
+        window.onKeyDown = onKeyDown;
+        window.selectTool = selectTool;
+        window.deleteSelected = deleteSelected;
+        window.duplicateSelected = duplicateSelected;
+        window.centerView = centerView;
+        window.updateObjectProperty = updateObjectProperty;
+        window.updateMaterialProperty = updateMaterialProperty;
+        window.updateSceneBackground = updateSceneBackground;
+        window.updateSceneAmbient = updateSceneAmbient;
+        window.resetCamera = resetCamera;
+        window.frontView = frontView;
+        window.sideView = sideView;
+        window.topView = topView;
+        window.perspectiveView = perspectiveView;
+        window.setGizmoMode = setGizmoMode;
+        window.updateStatusBar = updateStatusBar;
+        window.updateObjectCount = updateObjectCount;
+        window.animate = animate;
+        window.createPrimitive = createPrimitive;
+
+        // Initialize the editor when the page loads
+        document.addEventListener('DOMContentLoaded', initEditor);
+    </script>
+</body>
+</html>

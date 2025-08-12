@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Selection } from '../selection/Selection.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Selection } from '../selection/Selection';
 
 /**
  * Options for transform operations

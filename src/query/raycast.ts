@@ -1,5 +1,5 @@
 import { Vector3, Ray, Triangle } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { EditableMesh } from '../core/EditableMesh';
 import { RayIntersectionOptions, RayIntersectionResult } from './types';
 import { rayIntersectsSphere, rayIntersectsTriangle, rayIntersectsLineSegment } from './geometry';
 

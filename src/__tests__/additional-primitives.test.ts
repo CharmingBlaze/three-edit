@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/index.ts';
+import { EditableMesh } from '../core/index';
 import { 
   createTetrahedron,
   createOctahedron,
@@ -8,7 +8,7 @@ import {
   createIcosahedron,
   createTorusKnot,
   createMobiusStrip
-} from '../primitives/index.ts';
+} from '../primitives/index';
 
 describe('Additional Primitives', () => {
   describe('Regular Polyhedra', () => {

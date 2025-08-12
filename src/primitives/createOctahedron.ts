@@ -5,6 +5,7 @@ import { validatePrimitive } from './validation';
 
 /**
  * Creates an octahedron as an EditableMesh.
+ * Note: Octahedrons naturally have triangular faces, so this creates triangles intentionally.
  * @param options - Options for creating the octahedron.
  * @returns A new EditableMesh instance representing an octahedron.
  */
@@ -52,7 +53,7 @@ export function createOctahedron(options: CreateOctahedronOptions = {}): Editabl
     vertices.push(result.id);
   }
 
-  // Create the 8 triangular faces
+  // Create the 8 triangular faces (octahedrons naturally have triangular faces)
   const faceDefinitions = [
     [vertices[0], vertices[2], vertices[4]], // +X, +Y, +Z
     [vertices[0], vertices[4], vertices[3]], // +X, +Z, -Y

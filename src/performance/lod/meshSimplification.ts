@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { EditableMesh, Vertex, Face } from '../../core/index.ts';
+import { EditableMesh, Vertex, Face } from '../../core/index';
 import { LODOptions } from './types';
 
 /**

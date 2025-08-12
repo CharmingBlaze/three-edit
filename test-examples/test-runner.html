@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three-edit Test Runner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .test-section {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      margin-top: 0;
+    }
+    .test-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .test-frame {
+      width: 100%;
+      height: 500px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .console-output {
+      background-color: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: monospace;
+      height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>three-edit Test Runner</h1>
+    
+    <div class="test-section">
+      <h2>Original Primitives Tests</h2>
+      <div class="test-buttons">
+        <button id="run-original-tests">Run Original Tests</button>
+      </div>
+      <div id="original-console" class="console-output">Console output will appear here...</div>
+      <iframe id="original-frame" class="test-frame" style="display: none;"></iframe>
+    </div>
+    
+    <div class="test-section">
+      <h2>Fixed Implementation Tests</h2>
+      <div class="test-buttons">
+        <button id="run-fixed-tests">Run Fixed Tests</button>
+      </div>
+      <div id="fixed-console" class="console-output">Console output will appear here...</div>
+      <iframe id="fixed-frame" class="test-frame" style="display: none;"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Function to create a test HTML file
+    function createTestHTML(scriptPath) {
+      return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>three-edit Test</title>
+          <style>
+            body { margin: 0; overflow: hidden; }
+            canvas { display: block; }
+          </style>
+        </head>
+        <body>
+          <script type="module" src="${scriptPath}"><\/script>
+        </body>
+        </html>
+      `;
+    }
+
+    // Function to run tests in an iframe
+    function runTest(scriptPath, frameId, consoleId) {
+      const frame = document.getElementById(frameId);
+      const consoleOutput = document.getElementById(consoleId);
+      
+      // Create a blob URL for the HTML content
+      const htmlContent = createTestHTML(scriptPath);
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      // Set up console logging
+      consoleOutput.textContent = 'Running test...';
+      
+      // Load the iframe with the test
+      frame.style.display = 'block';
+      frame.src = url;
+      
+      // Capture console output from the iframe
+      frame.onload = function() {
+        const originalConsole = frame.contentWindow.console;
+        frame.contentWindow.console = {
+          log: function(...args) {
+            originalConsole.log(...args);
+            consoleOutput.textContent += '\n' + args.map(arg => {
+              if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+              return arg;
+            }).join(' ');
+          },
+          error: function(...args) {
+            originalConsole.error(...args);
+            consoleOutput.textContent += '\n[ERROR] ' + args.map(arg => {
+              if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+              return arg;
+            }).join(' ');
+          },
+          warn: function(...args) {
+            originalConsole.warn(...args);
+            consoleOutput.textContent += '\n[WARNING] ' + args.map(arg => {
+              if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+              return arg;
+            }).join(' ');
+          }
+        };
+      };
+    }
+
+    // Event listeners for buttons
+    document.getElementById('run-original-tests').addEventListener('click', function() {
+      runTest('./test-bugs.js', 'original-frame', 'original-console');
+    });
+
+    document.getElementById('run-fixed-tests').addEventListener('click', function() {
+      runTest('./test-fixed.js', 'fixed-frame', 'fixed-console');
+    });
+  </script>
+</body>
+</html>

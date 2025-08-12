@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Edit Debug Test</title>
+</head>
+<body>
+    <h1>Three-Edit Debug Test</h1>
+    <div id="output"></div>
+    
+    <!-- Load Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"></script>
+    
+    <!-- Load three-edit browser version -->
+    <script src="browser/three-edit.js"></script>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            output.innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        log('Testing Three-Edit library loading...');
+        
+        // Check what's available globally
+        log('THREE available: ' + (typeof THREE !== 'undefined'));
+        log('ThreeEdit available: ' + (typeof ThreeEdit !== 'undefined'));
+        
+        if (typeof ThreeEdit !== 'undefined') {
+            log('ThreeEdit object keys: ' + Object.keys(ThreeEdit).slice(0, 20).join(', '));
+            
+            // Check for specific functions
+            log('createCube available: ' + (typeof ThreeEdit.createCube === 'function'));
+            log('createSphere available: ' + (typeof ThreeEdit.createSphere === 'function'));
+            log('toBufferGeometry available: ' + (typeof ThreeEdit.toBufferGeometry === 'function'));
+            
+            // Try to create a simple cube
+            try {
+                if (typeof ThreeEdit.createCube === 'function') {
+                    const cube = ThreeEdit.createCube();
+                    log('✅ Cube created successfully! Vertices: ' + cube.vertices.length);
+                } else {
+                    log('❌ createCube function not found');
+                }
+            } catch (error) {
+                log('❌ Error creating cube: ' + error.message);
+            }
+        } else {
+            log('❌ ThreeEdit not found in global scope');
+            
+            // Check window object
+            log('Window keys containing "Three": ' + Object.keys(window).filter(key => key.includes('Three')).join(', '));
+        }
+    </script>
+</body>
+</html>

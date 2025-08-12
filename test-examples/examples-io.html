@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three-edit IO Examples</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: #ffffff;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    #controls {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .back-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #555;
+    }
+    #fileInput {
+      display: none;
+    }
+    #dropZone {
+      border: 2px dashed #ccc;
+      border-radius: 5px;
+      padding: 20px;
+      text-align: center;
+      margin: 10px 0;
+      background-color: rgba(255,255,255,0.1);
+      cursor: pointer;
+    }
+    #dropZone:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+    #exportArea {
+      margin-top: 10px;
+      display: none;
+    }
+    #exportContent {
+      width: 100%;
+      height: 100px;
+      background-color: rgba(0,0,0,0.5);
+      color: white;
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 5px;
+      font-family: monospace;
+      overflow: auto;
+      resize: vertical;
+    }
+    #downloadLink {
+      display: none;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">three-edit IO Examples</div>
+  <a href="index.html" class="back-button button">Back to Index</a>
+  <div id="controls">
+    <button id="test-obj-export">Export OBJ</button>
+    <button id="test-gltf-export">Export GLTF</button>
+    <div id="dropZone">
+      Drop OBJ/GLTF file here or click to select
+      <input type="file" id="fileInput" accept=".obj,.gltf,.glb">
+    </div>
+    <div id="exportArea">
+      <textarea id="exportContent" readonly></textarea>
+      <a id="downloadLink" href="#" download>Download File</a>
+    </div>
+    <button id="test-create-cube">Create Test Cube</button>
+  </div>
+  
+  <script src="../browser/three-edit.js"></script>
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+  </script>
+  
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import * as CommonUtils from './common-utils.js';
+    // Fallback conversion function in case window.threeEdit.conversion is not available
+    function convertToBufferGeometry(editableMesh) {
+      console.log('Using fallback conversion function');
+      const geometry = new THREE.BufferGeometry();
+      
+      // Extract vertices
+      const vertices = [];
+      editableMesh.vertices.forEach(vertex => {
+        vertices.push(vertex.x, vertex.y, vertex.z);
+      });
+      
+      // Extract faces (indices)
+      const indices = [];
+      editableMesh.faces.forEach(face => {
+        if (face.vertexIds.length === 3) {
+          // Triangle
+          indices.push(face.vertexIds[0], face.vertexIds[1], face.vertexIds[2]);
+        } else if (face.vertexIds.length === 4) {
+          // Quad - split into two triangles
+          indices.push(
+            face.vertexIds[0], face.vertexIds[1], face.vertexIds[2],
+            face.vertexIds[0], face.vertexIds[2], face.vertexIds[3]
+          );
+        }
+      });
+      
+      // Set attributes
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      
+      return geometry;
+    }
+
+    // Set up scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x333333);
+    
+    // Add controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+    
+    // Add grid helper
+    const gridHelper = new THREE.GridHelper(10, 10);
+    scene.add(gridHelper);
+    
+    // Current mesh for export/import
+    let currentMesh = null;
+    
+    // Clear existing meshes
+    function clearMeshes() {
+      const toRemove = [];
+      scene.children.forEach(child => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.Object3D) {
+          if (!(child instanceof THREE.GridHelper) && 
+              !(child instanceof THREE.DirectionalLight) && 
+              !(child instanceof THREE.AmbientLight)) {
+            toRemove.push(child);
+          }
+        }
+      });
+      
+      toRemove.forEach(obj => scene.remove(obj));
+      currentMesh = null;
+    }
+    
+    // Create and add mesh to scene
+    function createAndAddMesh(editableMesh, color, position) {
+      try {
+        // Convert to Three.js BufferGeometry
+        const geometry = window.threeEdit.conversion ? 
+          window.threeEdit.conversion.toBufferGeometry(editableMesh) : 
+          convertToBufferGeometry(editableMesh);
+        
+        const material = new THREE.MeshStandardMaterial({ 
+          color: color,
+          side: THREE.DoubleSide
+        });
+        
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          wireframe: true
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        if (position) {
+          mesh.position.copy(position);
+        }
+        scene.add(mesh);
+        
+        const wireframe = new THREE.Mesh(geometry.clone(), wireframeMaterial);
+        if (position) {
+          wireframe.position.copy(position);
+        }
+        scene.add(wireframe);
+        
+        currentMesh = editableMesh;
+        return mesh;
+      } catch (error) {
+        console.error("Error creating mesh:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+        return null;
+      }
+    }
+    
+    // Test OBJ export
+    document.getElementById('test-obj-export').addEventListener('click', () => {
+      try {
+        console.log("Testing OBJ export...");
+        if (window.threeEdit && window.threeEdit.io && window.threeEdit.io.obj) {
+          if (!currentMesh) {
+            document.getElementById('info').textContent = 'Create a mesh first before exporting';
+            return;
+          }
+          
+          // Export to OBJ
+          const objData = window.threeEdit.io.obj.exportOBJ(currentMesh);
+          
+          console.log("OBJ export successful");
+          document.getElementById('info').textContent = 'OBJ Export Successful';
+          
+          // Show export content
+          document.getElementById('exportArea').style.display = 'block';
+          document.getElementById('exportContent').value = objData;
+          
+          // Create download link
+          const blob = new Blob([objData], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const downloadLink = document.getElementById('downloadLink');
+          downloadLink.href = url;
+          downloadLink.download = 'exported-model.obj';
+          downloadLink.textContent = 'Download OBJ File';
+          downloadLink.style.display = 'inline-block';
+        } else {
+          console.error("threeEdit.io.obj.exportOBJ not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.io.obj.exportOBJ not found';
+        }
+      } catch (error) {
+        console.error("Error in test-obj-export:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test GLTF export
+    document.getElementById('test-gltf-export').addEventListener('click', () => {
+      try {
+        console.log("Testing GLTF export...");
+        if (window.threeEdit && window.threeEdit.io && window.threeEdit.io.gltf) {
+          if (!currentMesh) {
+            document.getElementById('info').textContent = 'Create a mesh first before exporting';
+            return;
+          }
+          
+          // Export to GLTF
+          const gltfData = window.threeEdit.io.gltf.exportGLTF(currentMesh);
+          
+          console.log("GLTF export successful");
+          document.getElementById('info').textContent = 'GLTF Export Successful';
+          
+          // Show export content
+          document.getElementById('exportArea').style.display = 'block';
+          document.getElementById('exportContent').value = JSON.stringify(gltfData, null, 2);
+          
+          // Create download link
+          const blob = new Blob([JSON.stringify(gltfData)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const downloadLink = document.getElementById('downloadLink');
+          downloadLink.href = url;
+          downloadLink.download = 'exported-model.gltf';
+          downloadLink.textContent = 'Download GLTF File';
+          downloadLink.style.display = 'inline-block';
+        } else {
+          console.error("threeEdit.io.gltf.exportGLTF not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.io.gltf.exportGLTF not found';
+        }
+      } catch (error) {
+        console.error("Error in test-gltf-export:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Create test cube
+    document.getElementById('test-create-cube').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Creating test cube...");
+        if (window.threeEdit && window.threeEdit.primitives) {
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          console.log(`Cube created with ${cube.vertices.length} vertices and ${cube.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, cube, 0x00ff00);
+          document.getElementById('info').textContent = 'Test Cube Created';
+        } else {
+          console.error("threeEdit.primitives.createCube not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.primitives.createCube not found';
+        }
+      } catch (error) {
+        console.error("Error in test-create-cube:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // File drop zone functionality
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+    
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = '#4CAF50';
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = '#ccc';
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = '#ccc';
+      
+      if (e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        handleFile(fileInput.files[0]);
+      }
+    });
+    
+    // Handle imported file
+    function handleFile(file) {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const fileContent = e.target.result;
+        const fileName = file.name.toLowerCase();
+        
+        try {
+          if (fileName.endsWith('.obj')) {
+            // Import OBJ
+            if (window.threeEdit && window.threeEdit.io && window.threeEdit.io.obj) {
+              const importedMesh = window.threeEdit.io.obj.importOBJ(fileContent);
+              CommonUtils.clearMeshes(scene);
+              CommonUtils.createAndAddMesh(scene, importedMesh, 0x00aaff);
+              document.getElementById('info').textContent = 'OBJ Import Successful';
+            } else {
+              console.error("threeEdit.io.obj.importOBJ not found");
+              document.getElementById('info').textContent = 'Error: threeEdit.io.obj.importOBJ not found';
+            }
+          } else if (fileName.endsWith('.gltf') || fileName.endsWith('.glb')) {
+            // Import GLTF
+            if (window.threeEdit && window.threeEdit.io && window.threeEdit.io.gltf) {
+              const importedMesh = window.threeEdit.io.gltf.importGLTF(fileContent);
+              CommonUtils.clearMeshes(scene);
+              CommonUtils.createAndAddMesh(scene, importedMesh, 0xffaa00);
+              document.getElementById('info').textContent = 'GLTF Import Successful';
+            } else {
+              console.error("threeEdit.io.gltf.importGLTF not found");
+              document.getElementById('info').textContent = 'Error: threeEdit.io.gltf.importGLTF not found';
+            }
+          } else {
+            document.getElementById('info').textContent = 'Unsupported file format';
+          }
+        } catch (error) {
+          console.error("Error importing file:", error);
+          document.getElementById('info').textContent = 'Error importing file: ' + error.message;
+        }
+      };
+      
+      if (file.name.toLowerCase().endsWith('.obj') || 
+          file.name.toLowerCase().endsWith('.gltf')) {
+        reader.readAsText(file);
+      } else if (file.name.toLowerCase().endsWith('.glb')) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        document.getElementById('info').textContent = 'Unsupported file format';
+      }
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Check if three-edit is loaded
+    window.addEventListener('load', () => {
+      console.log('Window loaded, checking for three-edit...');
+      console.log('window.threeEdit:', window.threeEdit);
+      
+      if (window.threeEdit) {
+        console.log('three-edit library loaded successfully!');
+        console.log('Available modules:', Object.keys(window.threeEdit));
+        document.getElementById('info').textContent = 'three-edit loaded! Create a mesh and try import/export.';
+        
+        // Auto-create a test cube
+        setTimeout(() => {
+          document.getElementById('test-create-cube').click();
+        }, 500);
+      } else {
+        console.error('three-edit library not found!');
+        document.getElementById('info').textContent = 'Error: three-edit library not found! Check console for details.';
+      }
+    });
+  </script>
+</body>
+</html>

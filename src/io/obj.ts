@@ -1,8 +1,8 @@
 import { Vector3, Vector2 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Face } from '../core/Face.ts';
-import { Edge } from '../core/Edge.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Vertex } from '../core/Vertex';
+import { Face } from '../core/Face';
+import { Edge } from '../core/Edge';
 
 /**
  * Options for OBJ import/export
@@ -215,7 +215,7 @@ export function exportOBJ(mesh: EditableMesh, options: OBJOptions = {}): string 
     }
   }
 
-  // Export faces
+  // Export faces - preserve quads, tris, and n-gons
   for (let i = 0; i < mesh.getFaceCount(); i++) {
     const face = mesh.getFace(i);
     if (face) {

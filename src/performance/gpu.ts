@@ -1,5 +1,5 @@
 // Legacy exports for backward compatibility
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { EditableMesh } from '../core/EditableMesh';
 import { GPUOptions, GPUOperationResult, TransformOperation, NoiseType, NoiseOptions, GPUCapabilities } from './gpu/types';
 import { GPUInitializer } from './gpu/initialization';
 import { GPUOperations } from './gpu/operations';

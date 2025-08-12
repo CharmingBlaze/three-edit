@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three-edit Examples</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #333;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #444;
+      margin-top: 30px;
+    }
+    .module-section {
+      background-color: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    a {
+      display: inline-block;
+      color: #0066cc;
+      text-decoration: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      transition: background-color 0.2s;
+    }
+    a:hover {
+      background-color: #f0f0f0;
+      text-decoration: underline;
+    }
+    .description {
+      color: #666;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+    .bug-note {
+      color: #cc0000;
+      font-style: italic;
+    }
+    .fixed-note {
+      color: #008800;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>three-edit Examples</h1>
+  <p>This page contains examples for each major module of the three-edit library.</p>
+  
+  <div class="module-section">
+    <h2>Primitives</h2>
+    <ul>
+      <li>
+        <a href="examples-primitives.html">Primitives Examples</a>
+        <p class="description">Examples of creating basic 3D primitives like planes, cubes, spheres, cones, cylinders, and arrows.</p>
+      </li>
+      <li>
+        <a href="examples-primitives-bugs.html">Primitives Bug Examples</a>
+        <p class="description">Examples demonstrating known bugs in primitives.</p>
+        <p class="bug-note">Note: Contains examples of known bugs in createCone and createArrow.</p>
+      </li>
+      <li>
+        <a href="examples-primitives-fixed.html">Fixed Primitives Examples</a>
+        <p class="description">Examples using fixed implementations of primitives.</p>
+        <p class="fixed-note">Note: Contains fixed implementations of createCone and createArrow.</p>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="module-section">
+    <h2>Core</h2>
+    <ul>
+      <li>
+        <a href="examples-core-basics.html">Core Basics Examples</a>
+        <p class="description">Basic examples of core functionality like EditableMesh, Vertex, Edge, and Face.</p>
+      </li>
+      <li>
+        <a href="examples-core-advanced.html">Core Advanced Examples</a>
+        <p class="description">Advanced examples of core functionality like topology operations, history/undo, and mesh queries.</p>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="module-section">
+    <h2>Editing</h2>
+    <ul>
+      <li>
+        <a href="examples-editing.html">Editing Examples</a>
+        <p class="description">Examples of mesh editing operations like extrude, bevel, inset, loop cut, and bridge.</p>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="module-section">
+    <h2>Transform</h2>
+    <ul>
+      <li>
+        <a href="examples-transform.html">Transform Examples</a>
+        <p class="description">Examples of transform operations like translate, rotate, scale, and mirror.</p>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="module-section">
+    <h2>Selection</h2>
+    <ul>
+      <li>
+        <a href="examples-selection.html">Selection Examples</a>
+        <p class="description">Examples of selection utilities like vertex selection, edge selection, face selection, edge loop selection, and edge ring selection.</p>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="module-section">
+    <h2>UV Mapping</h2>
+    <ul>
+      <li>
+        <a href="examples-uv.html">UV Mapping Examples</a>
+        <p class="description">Examples of UV mapping operations like planar projection, box projection, cylindrical projection, spherical projection, and smart unwrap.</p>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="module-section">
+    <h2>IO (Import/Export)</h2>
+    <ul>
+      <li>
+        <a href="examples-io.html">IO Examples</a>
+        <p class="description">Examples of importing and exporting 3D models in OBJ and GLTF formats.</p>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="module-section">
+    <h2>All-in-One Examples</h2>
+    <ul>
+      <li>
+        <a href="direct-test.html">Direct Test</a>
+        <p class="description">A simple test page that loads and tests the three-edit library directly.</p>
+      </li>
+      <li>
+        <a href="simple-test.html">Simple Test</a>
+        <p class="description">A minimal test page that loads Three.js primitives for comparison.</p>
+      </li>
+    </ul>
+  </div>
+
+  <script>
+    // Check if the server is running
+    window.addEventListener('load', () => {
+      console.log('Examples index page loaded');
+    });
+  </script>
+</body>
+</html>

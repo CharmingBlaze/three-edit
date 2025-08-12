@@ -12,9 +12,9 @@ import { Vertex } from '../../core/Vertex';
 import { Face } from '../../core/Face';
 
 /**
- * Create a simple cube
+ * Create a simple cube (helper version)
  */
-export function createCube(
+export function createCubeHelper(
   size: number = 1,
   materialIndex: number = 0
 ): PrimitiveResult {
@@ -22,9 +22,9 @@ export function createCube(
 }
 
 /**
- * Create a simple sphere
+ * Create a simple sphere (helper version)
  */
-export function createSphere(
+export function createSphereHelper(
   radius: number = 0.5,
   segments: number = 8,
   materialIndex: number = 0
@@ -33,9 +33,9 @@ export function createSphere(
 }
 
 /**
- * Create a simple plane
+ * Create a simple plane (helper version)
  */
-export function createPlane(
+export function createPlaneHelper(
   size: number = 1,
   segments: number = 1,
   materialIndex: number = 0
@@ -44,9 +44,9 @@ export function createPlane(
 }
 
 /**
- * Create a simple cylinder
+ * Create a simple cylinder (helper version)
  */
-export function createCylinder(
+export function createCylinderHelper(
   radius: number = 0.5,
   height: number = 1,
   segments: number = 8,
@@ -56,9 +56,9 @@ export function createCylinder(
 }
 
 /**
- * Create a simple cone
+ * Create a simple cone (helper version)
  */
-export function createCone(
+export function createConeHelper(
   radius: number = 0.5,
   height: number = 1,
   segments: number = 8,
@@ -68,9 +68,9 @@ export function createCone(
 }
 
 /**
- * Create a simple torus
+ * Create a simple torus (helper version)
  */
-export function createTorus(
+export function createTorusHelper(
   radius: number = 0.5,
   tube: number = 0.2,
   segments: number = 8,
@@ -80,9 +80,9 @@ export function createTorus(
 }
 
 /**
- * Create a simple circle
+ * Create a simple circle (helper version)
  */
-export function createCircle(
+export function createCircleHelper(
   radius: number = 0.5,
   segments: number = 8,
   materialIndex: number = 0
@@ -91,9 +91,9 @@ export function createCircle(
 }
 
 /**
- * Create a simple ring
+ * Create a simple ring (helper version)
  */
-export function createRing(
+export function createRingHelper(
   innerRadius: number = 0.3,
   outerRadius: number = 0.5,
   segments: number = 8,
@@ -103,9 +103,9 @@ export function createRing(
 }
 
 /**
- * Create a simple capsule
+ * Create a simple capsule (helper version)
  */
-export function createCapsule(
+export function createCapsuleHelper(
   radius: number = 0.5,
   height: number = 1,
   segments: number = 8,
@@ -115,9 +115,9 @@ export function createCapsule(
 }
 
 /**
- * Create a simple pyramid
+ * Create a simple pyramid (helper version)
  */
-export function createPyramid(
+export function createPyramidHelper(
   size: number = 1,
   height: number = 1,
   materialIndex: number = 0
@@ -126,9 +126,9 @@ export function createPyramid(
 }
 
 /**
- * Create a simple tetrahedron
+ * Create a simple tetrahedron (helper version)
  */
-export function createTetrahedron(
+export function createTetrahedronHelper(
   radius: number = 0.5,
   materialIndex: number = 0
 ): PrimitiveResult {
@@ -136,9 +136,9 @@ export function createTetrahedron(
 }
 
 /**
- * Create a simple octahedron
+ * Create a simple octahedron (helper version)
  */
-export function createOctahedron(
+export function createOctahedronHelper(
   radius: number = 0.5,
   materialIndex: number = 0
 ): PrimitiveResult {
@@ -146,9 +146,9 @@ export function createOctahedron(
 }
 
 /**
- * Create a simple box with rounded corners
+ * Create a simple box with rounded corners (helper version)
  */
-export function createRoundedBox(
+export function createRoundedBoxHelper(
   width: number = 1,
   height: number = 1,
   depth: number = 1,
@@ -166,9 +166,9 @@ export function createRoundedBox(
 }
 
 /**
- * Create a simple wedge (triangular prism)
+ * Create a simple wedge (triangular prism) (helper version)
  */
-export function createWedge(
+export function createWedgeHelper(
   width: number = 1,
   height: number = 1,
   depth: number = 1,
@@ -210,9 +210,9 @@ export function createWedge(
 }
 
 /**
- * Create a simple ramp
+ * Create a simple ramp (helper version)
  */
-export function createRamp(
+export function createRampHelper(
   width: number = 1,
   height: number = 1,
   depth: number = 1,
@@ -262,7 +262,7 @@ export function createRamp(
 /**
  * Create a simple stairs
  */
-export function createStairs(
+export function createStairsHelper(
   width: number = 1,
   height: number = 1,
   depth: number = 1,

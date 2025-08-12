@@ -21,6 +21,23 @@ export interface CreatePrimitiveOptions {
   validate?: boolean;
   /** Custom user data */
   userData?: Record<string, any>;
+  /** Smoothing options */
+  smoothing?: {
+    /** Whether to apply smoothing after creation */
+    enabled?: boolean;
+    /** Type of smoothing to apply */
+    type?: 'vertex' | 'laplacian' | 'subdivision';
+    /** Number of smoothing iterations */
+    iterations?: number;
+    /** Smoothing factor (0-1) */
+    factor?: number;
+    /** For subdivision: number of subdivision levels */
+    levels?: number;
+    /** For subdivision: subdivision scheme */
+    scheme?: 'catmullClark' | 'loop' | 'butterfly';
+    /** For laplacian: lambda parameter */
+    lambda?: number;
+  };
 }
 
 /**

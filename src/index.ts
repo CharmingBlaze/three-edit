@@ -86,18 +86,65 @@ export { parseOBJ, exportOBJ, loadOBJ, saveOBJ } from './io/obj';
 export { parsePLY, exportPLY, loadPLY, savePLY } from './io/ply';
 export { importSTL, exportSTL, validateSTL, getSTLInfo } from './io/stl';
 
-// Validation
-export { validateMesh } from './validation/validateMesh';
-export { validateGeometryIntegrity } from './validation/validateGeometryIntegrity';
-export { repairMesh } from './validation/repairMesh';
-export { fixWindingOrder } from './validation/fixWindingOrder';
+// Validation System
+export type {
+  ValidationResult,
+  PrimitiveValidationOptions,
+  MeshValidationOptions,
+  GeometryValidationOptions,
+  TopologyValidationOptions,
+  UVValidationOptions,
+  NormalValidationOptions,
+  DetailedValidationResult
+} from './validation';
+
+export {
+  validateMesh,
+  validateTopology,
+  validateGeometry,
+  findOrphanedVertices,
+  findNonManifoldEdges,
+  findBoundaryEdges,
+  findConnectedComponents,
+  isWatertight,
+  isManifold,
+  calculateGenus,
+  mergeVerticesWithFaces,
+  validatePrimitiveOptions,
+  validateNumericValue,
+  validateCubeOptions,
+  validateSphereOptions,
+  validateCylinderOptions,
+  validateConeOptions,
+  validatePlaneOptions,
+  validateTorusOptions,
+  validateUVs,
+  validateNormals
+} from './validation';
+
+// Mesh Operations & Queries
+export * from './mesh';
+
+// Unified Math System
+export * from './math';
+
+// Unified Geometry System (excluding functions already in mesh)
+export { 
+  extrudeFace as extrudeFaceHelper
+} from './geometry';
+
+// Unified Type System
+export * from './types';
 
 // Utilities
-export { calculateFaceNormal, calculateFaceCenter } from './utils/mathUtils';
+export { triangulateForExport, mergeTrianglesToQuads } from './utils/triangulation';
 export { generateUVs } from './uv/generateUVs';
 export { generatePlanarUVs } from './uv/generatePlanarUVs';
 export { generateCylindricalUVs } from './uv/cylindricalUVs';
 export { generateSphericalUVs } from './uv/sphericalUVs';
+
+// Visual Helpers (Blender-style modular system)
+export * from './visuals';
 export { generateCubicUVs } from './uv/cubicUVs';
 export { transformUVs } from './uv/transformUVs';
 
@@ -126,5 +173,5 @@ export { findNearestElement, findNearestVertex, findNearestEdge, findNearestFace
 export { querySelection } from './query/querySelection';
 export { queryTopology } from './query/queryTopology';
 
-// Helper Functions
-export { mergeVertices, triangulatePolygon, subdivideFace, extrudeFace as extrudeFaceHelper, createVertexGrid, createFacesFromGrid } from './helpers/geometry';
+// Helper Functions (from geometry module)
+export { mergeVertices, triangulatePolygon, subdivideFace, createVertexGrid, createFacesFromGrid } from './geometry';

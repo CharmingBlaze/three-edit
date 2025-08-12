@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance & Optimization Demo - Three-Edit</title>
+    <link rel="stylesheet" href="demo-styles.css">
+    <style>
+        .performance-stats {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        
+        .stat-label {
+            color: #3498db;
+        }
+        
+        .stat-value {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .stat-good {
+            color: #27ae60;
+        }
+        
+        .stat-warning {
+            color: #f39c12;
+        }
+        
+        .stat-bad {
+            color: #e74c3c;
+        }
+        
+        .optimization-preview {
+            width: 100%;
+            height: 150px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .lod-level {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .lod-level:hover {
+            transform: scale(1.05);
+        }
+        
+        .lod-level.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .lod-level.inactive {
+            background: #e9ecef;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1>Performance & Optimization Demo</h1>
+            <p>Optimize your meshes for better performance and memory usage</p>
+            <div class="demo-nav">
+                <a href="index.html">← Back to Demos</a>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="code-panel">
+                <h3>Performance Operations</h3>
+                <div class="code-snippet">
+                    <h4>Level of Detail (LOD)</h4>
+                    <pre><code>// Create LOD system
+const lodSystem = new ThreeEdit.LODSystem();
+
+// Add different detail levels
+lodSystem.addLevel(mesh, 0, 100);    // High detail
+lodSystem.addLevel(simplifiedMesh, 100, 500);  // Medium detail
+lodSystem.addLevel(lowPolyMesh, 500, Infinity); // Low detail
+
+// Update LOD based on camera distance
+lodSystem.update(camera.position, mesh.position);</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Mesh Simplification</h4>
+                    <pre><code>// Simplify mesh with target ratio
+const simplifiedMesh = ThreeEdit.simplifyMesh(mesh, {
+    targetRatio: 0.5,  // Keep 50% of faces
+    preserveEdges: true,
+    preserveUVs: true
+});
+
+// Progressive simplification
+const levels = ThreeEdit.createSimplificationLevels(mesh, [0.8, 0.5, 0.2]);</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Memory Optimization</h4>
+                    <pre><code>// Optimize vertex data
+ThreeEdit.optimizeVertices(mesh, {
+    mergeThreshold: 0.001,
+    removeUnused: true
+});
+
+// Optimize face data
+ThreeEdit.optimizeFaces(mesh, {
+    removeDegenerate: true,
+    mergeAdjacent: true
+});
+
+// Memory statistics
+const stats = ThreeEdit.getMemoryStatistics(mesh);</code></pre>
+                </div>
+
+                <div class="code-snippet">
+                    <h4>Octree Spatial Indexing</h4>
+                    <pre><code>// Create octree for spatial queries
+const octree = new ThreeEdit.Octree(mesh, {
+    maxDepth: 8,
+    maxObjects: 10
+});
+
+// Query objects in region
+const objects = octree.queryRegion(boundingBox);
+
+// Find nearest objects
+const nearest = octree.findNearest(point, radius);</code></pre>
+                </div>
+            </div>
+
+            <div class="viewport-panel">
+                <div id="viewport"></div>
+                <div class="viewport-controls">
+                    <button onclick="resetOptimization()">Reset</button>
+                    <button onclick="applyOptimization()">Apply Optimization</button>
+                    <button onclick="togglePerformanceMode()">Toggle Performance Mode</button>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <h3>Optimization Controls</h3>
+                
+                <div class="control-group">
+                    <label for="mesh-type">Mesh Type:</label>
+                    <select id="mesh-type" onchange="createMesh()">
+                        <option value="sphere">High-Poly Sphere</option>
+                        <option value="torus">Complex Torus</option>
+                        <option value="dodecahedron">Dodecahedron</option>
+                        <option value="icosahedron">Icosahedron</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <h4>Level of Detail (LOD)</h4>
+                    <div class="lod-level active" onclick="setLODLevel(0)">High Detail</div>
+                    <div class="lod-level inactive" onclick="setLODLevel(1)">Medium Detail</div>
+                    <div class="lod-level inactive" onclick="setLODLevel(2)">Low Detail</div>
+                    <div class="lod-level inactive" onclick="setLODLevel(3)">Ultra Low</div>
+                    
+                    <label for="lod-distance">LOD Distance:</label>
+                    <input type="range" id="lod-distance" min="1" max="20" step="1" value="5" onchange="updateLODDistance()">
+                    <span id="lod-distance-value">5</span>
+                </div>
+
+                <div class="control-group">
+                    <h4>Mesh Simplification</h4>
+                    <label for="simplification-ratio">Target Ratio:</label>
+                    <input type="range" id="simplification-ratio" min="0.1" max="1" step="0.1" value="1" onchange="updateSimplificationRatio()">
+                    <span id="simplification-ratio-value">1.0</span>
+                    
+                    <label for="preserve-edges">Preserve Edges:</label>
+                    <input type="checkbox" id="preserve-edges" checked>
+                    
+                    <label for="preserve-uvs">Preserve UVs:</label>
+                    <input type="checkbox" id="preserve-uvs" checked>
+                    
+                    <button onclick="applySimplification()">Apply Simplification</button>
+                </div>
+
+                <div class="control-group">
+                    <h4>Memory Optimization</h4>
+                    <label for="merge-threshold">Merge Threshold:</label>
+                    <input type="range" id="merge-threshold" min="0.001" max="0.1" step="0.001" value="0.01" onchange="updateMergeThreshold()">
+                    <span id="merge-threshold-value">0.01</span>
+                    
+                    <label for="remove-unused">Remove Unused Vertices:</label>
+                    <input type="checkbox" id="remove-unused" checked>
+                    
+                    <label for="remove-degenerate">Remove Degenerate Faces:</label>
+                    <input type="checkbox" id="remove-degenerate" checked>
+                    
+                    <button onclick="applyMemoryOptimization()">Apply Memory Optimization</button>
+                </div>
+
+                <div class="control-group">
+                    <h4>Octree Settings</h4>
+                    <label for="octree-depth">Max Depth:</label>
+                    <input type="range" id="octree-depth" min="4" max="10" step="1" value="6" onchange="updateOctreeDepth()">
+                    <span id="octree-depth-value">6</span>
+                    
+                    <label for="octree-objects">Max Objects per Node:</label>
+                    <input type="range" id="octree-objects" min="5" max="50" step="5" value="10" onchange="updateOctreeObjects()">
+                    <span id="octree-objects-value">10</span>
+                    
+                    <button onclick="buildOctree()">Build Octree</button>
+                    <button onclick="queryOctree()">Query Octree</button>
+                </div>
+
+                <div class="performance-stats" id="performance-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Vertices:</span>
+                        <span class="stat-value" id="vertex-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Faces:</span>
+                        <span class="stat-value" id="face-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Memory Usage:</span>
+                        <span class="stat-value" id="memory-usage">0 KB</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Render Time:</span>
+                        <span class="stat-value" id="render-time">0ms</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">FPS:</span>
+                        <span class="stat-value" id="fps">60</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Optimization Level:</span>
+                        <span class="stat-value" id="optimization-level">None</span>
+                    </div>
+                </div>
+
+                <div class="optimization-preview" id="optimization-preview">
+                    <div>Performance optimization preview will appear here</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar" id="status-bar">
+            Ready for optimization
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="../dist/umd/index.umd.js"></script>
+    <script>
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let meshObjects = [];
+        let lodLevels = [];
+        let currentLODLevel = 0;
+        let performanceMode = false;
+        let octree = null;
+        let frameCount = 0;
+        let lastTime = performance.now();
+        let renderTimes = [];
+
+        // Initialize the scene
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+
+            camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 600);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            const viewport = document.getElementById('viewport');
+            viewport.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            createMesh();
+            animate();
+        }
+
+        function animate() {
+            const startTime = performance.now();
+            
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+            
+            const endTime = performance.now();
+            const renderTime = endTime - startTime;
+            renderTimes.push(renderTime);
+            if (renderTimes.length > 60) renderTimes.shift();
+            
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                document.getElementById('fps').textContent = fps;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+            
+            updatePerformanceStats();
+        }
+
+        function onWindowResize() {
+            camera.aspect = 800 / 600;
+            camera.updateProjectionMatrix();
+            renderer.setSize(800, 600);
+        }
+
+        function createMesh() {
+            clearScene();
+            const meshType = document.getElementById('mesh-type').value;
+            let meshName;
+            
+            switch (meshType) {
+                case 'sphere':
+                    currentMesh = ThreeEdit.createSphere({ radius: 2, segments: 64, rings: 32 });
+                    break;
+                case 'torus':
+                    currentMesh = ThreeEdit.createTorus({ radius: 2, tube: 0.5, radialSegments: 64, tubularSegments: 32 });
+                    break;
+                case 'dodecahedron':
+                    currentMesh = ThreeEdit.createDodecahedron({ radius: 2 });
+                    break;
+                case 'icosahedron':
+                    currentMesh = ThreeEdit.createIcosahedron({ radius: 2 });
+                    break;
+                default:
+                    currentMesh = ThreeEdit.createSphere({ radius: 2, segments: 32, rings: 16 });
+            }
+
+            createLODLevels();
+            addMeshToScene(currentMesh);
+            updatePerformanceStats();
+            updateStatus(meshType + ' created');
+        }
+
+        function createLODLevels() {
+            lodLevels = [];
+            
+            // High detail (original)
+            lodLevels.push(currentMesh);
+            
+            // Medium detail
+            const mediumMesh = ThreeEdit.simplifyMesh(currentMesh, { targetRatio: 0.5 });
+            lodLevels.push(mediumMesh);
+            
+            // Low detail
+            const lowMesh = ThreeEdit.simplifyMesh(currentMesh, { targetRatio: 0.2 });
+            lodLevels.push(lowMesh);
+            
+            // Ultra low detail
+            const ultraLowMesh = ThreeEdit.simplifyMesh(currentMesh, { targetRatio: 0.1 });
+            lodLevels.push(ultraLowMesh);
+        }
+
+        function addMeshToScene(mesh) {
+            const geometry = ThreeEdit.toBufferGeometry(mesh);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x667eea, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            const threeMesh = new THREE.Mesh(geometry, material);
+            threeMesh.castShadow = true;
+            threeMesh.receiveShadow = true;
+            scene.add(threeMesh);
+            meshObjects.push(threeMesh);
+        }
+
+        function clearScene() {
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+        }
+
+        function setLODLevel(level) {
+            if (level >= lodLevels.length) return;
+            
+            currentLODLevel = level;
+            
+            // Update LOD level indicators
+            document.querySelectorAll('.lod-level').forEach((el, index) => {
+                el.classList.toggle('active', index === level);
+                el.classList.toggle('inactive', index !== level);
+            });
+            
+            // Update mesh
+            clearScene();
+            addMeshToScene(lodLevels[level]);
+            updatePerformanceStats();
+            updateStatus('LOD level changed to: ' + level);
+        }
+
+        function updateLODDistance() {
+            const distance = parseInt(document.getElementById('lod-distance').value);
+            document.getElementById('lod-distance-value').textContent = distance;
+            
+            // Simulate LOD based on distance
+            const cameraDistance = camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
+            const level = Math.min(Math.floor(cameraDistance / distance), lodLevels.length - 1);
+            setLODLevel(level);
+        }
+
+        function updateSimplificationRatio() {
+            const ratio = parseFloat(document.getElementById('simplification-ratio').value);
+            document.getElementById('simplification-ratio-value').textContent = ratio.toFixed(1);
+        }
+
+        function applySimplification() {
+            if (!currentMesh) {
+                updateStatus('No mesh to simplify', 'error');
+                return;
+            }
+            
+            const ratio = parseFloat(document.getElementById('simplification-ratio').value);
+            const preserveEdges = document.getElementById('preserve-edges').checked;
+            const preserveUVs = document.getElementById('preserve-uvs').checked;
+            
+            const simplifiedMesh = ThreeEdit.simplifyMesh(currentMesh, {
+                targetRatio: ratio,
+                preserveEdges: preserveEdges,
+                preserveUVs: preserveUVs
+            });
+            
+            currentMesh = simplifiedMesh;
+            clearScene();
+            addMeshToScene(currentMesh);
+            updatePerformanceStats();
+            updateStatus('Mesh simplified with ratio: ' + ratio);
+        }
+
+        function updateMergeThreshold() {
+            const threshold = parseFloat(document.getElementById('merge-threshold').value);
+            document.getElementById('merge-threshold-value').textContent = threshold.toFixed(3);
+        }
+
+        function applyMemoryOptimization() {
+            if (!currentMesh) {
+                updateStatus('No mesh to optimize', 'error');
+                return;
+            }
+            
+            const threshold = parseFloat(document.getElementById('merge-threshold').value);
+            const removeUnused = document.getElementById('remove-unused').checked;
+            const removeDegenerate = document.getElementById('remove-degenerate').checked;
+            
+            // Optimize vertices
+            ThreeEdit.optimizeVertices(currentMesh, {
+                mergeThreshold: threshold,
+                removeUnused: removeUnused
+            });
+            
+            // Optimize faces
+            ThreeEdit.optimizeFaces(currentMesh, {
+                removeDegenerate: removeDegenerate,
+                mergeAdjacent: true
+            });
+            
+            clearScene();
+            addMeshToScene(currentMesh);
+            updatePerformanceStats();
+            updateStatus('Memory optimization applied');
+        }
+
+        function updateOctreeDepth() {
+            const depth = parseInt(document.getElementById('octree-depth').value);
+            document.getElementById('octree-depth-value').textContent = depth;
+        }
+
+        function updateOctreeObjects() {
+            const objects = parseInt(document.getElementById('octree-objects').value);
+            document.getElementById('octree-objects-value').textContent = objects;
+        }
+
+        function buildOctree() {
+            if (!currentMesh) {
+                updateStatus('No mesh to build octree for', 'error');
+                return;
+            }
+            
+            const depth = parseInt(document.getElementById('octree-depth').value);
+            const maxObjects = parseInt(document.getElementById('octree-objects').value);
+            
+            octree = new ThreeEdit.Octree(currentMesh, {
+                maxDepth: depth,
+                maxObjects: maxObjects
+            });
+            
+            updateStatus('Octree built with depth: ' + depth + ', max objects: ' + maxObjects);
+        }
+
+        function queryOctree() {
+            if (!octree) {
+                updateStatus('No octree built', 'error');
+                return;
+            }
+            
+            // Simulate query
+            const boundingBox = new THREE.Box3().setFromObject(meshObjects[0]);
+            const objects = octree.queryRegion(boundingBox);
+            
+            updateStatus('Octree query returned ' + objects.length + ' objects');
+        }
+
+        function resetOptimization() {
+            createMesh();
+            currentLODLevel = 0;
+            performanceMode = false;
+            octree = null;
+            
+            // Reset UI
+            document.getElementById('simplification-ratio').value = 1;
+            document.getElementById('simplification-ratio-value').textContent = '1.0';
+            document.getElementById('merge-threshold').value = 0.01;
+            document.getElementById('merge-threshold-value').textContent = '0.01';
+            
+            setLODLevel(0);
+            updateStatus('Optimization reset');
+        }
+
+        function applyOptimization() {
+            applySimplification();
+            applyMemoryOptimization();
+            buildOctree();
+            updateStatus('All optimizations applied');
+        }
+
+        function togglePerformanceMode() {
+            performanceMode = !performanceMode;
+            
+            if (performanceMode) {
+                renderer.setPixelRatio(1);
+                renderer.shadowMap.enabled = false;
+                renderer.antialias = false;
+            } else {
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.shadowMap.enabled = true;
+                renderer.antialias = true;
+            }
+            
+            updateStatus('Performance mode: ' + (performanceMode ? 'ON' : 'OFF'));
+        }
+
+        function updatePerformanceStats() {
+            if (!currentMesh) return;
+            
+            const vertexCount = currentMesh.vertices.length;
+            const faceCount = currentMesh.faces.length;
+            const memoryUsage = (vertexCount * 12 + faceCount * 12) / 1024; // Rough estimate in KB
+            const avgRenderTime = renderTimes.length > 0 ? 
+                renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length : 0;
+            
+            document.getElementById('vertex-count').textContent = vertexCount.toLocaleString();
+            document.getElementById('face-count').textContent = faceCount.toLocaleString();
+            document.getElementById('memory-usage').textContent = memoryUsage.toFixed(1) + ' KB';
+            document.getElementById('render-time').textContent = avgRenderTime.toFixed(2) + 'ms';
+            
+            // Set optimization level
+            let optimizationLevel = 'None';
+            if (currentLODLevel > 0) optimizationLevel = 'LOD Level ' + currentLODLevel;
+            if (performanceMode) optimizationLevel += ' + Performance Mode';
+            document.getElementById('optimization-level').textContent = optimizationLevel;
+            
+            // Update preview
+            const preview = document.getElementById('optimization-preview');
+            preview.innerHTML = `
+                <div>
+                    <strong>Current Optimization:</strong><br>
+                    LOD Level: ${currentLODLevel}<br>
+                    Performance Mode: ${performanceMode ? 'ON' : 'OFF'}<br>
+                    Octree: ${octree ? 'Built' : 'Not Built'}
+                </div>
+            `;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.textContent = message;
+            statusBar.className = 'status-bar ' + type;
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initScene);
+        window.addEventListener('resize', onWindowResize);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                    setLODLevel(parseInt(event.key) - 1);
+                    break;
+                case 'o':
+                    if (event.ctrlKey) applyOptimization();
+                    break;
+                case 'p':
+                    if (event.ctrlKey) togglePerformanceMode();
+                    break;
+                case 'r':
+                    if (event.ctrlKey) resetOptimization();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html> 

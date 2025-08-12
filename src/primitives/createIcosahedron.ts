@@ -5,6 +5,7 @@ import { validatePrimitive } from './validation';
 
 /**
  * Creates an icosahedron as an EditableMesh.
+ * Note: Icosahedrons naturally have triangular faces, so this creates triangles intentionally.
  * @param options - Options for creating the icosahedron.
  * @returns A new EditableMesh instance representing an icosahedron.
  */
@@ -63,7 +64,7 @@ export function createIcosahedron(options: CreateIcosahedronOptions = {}): Edita
     vertices.push(result.id);
   }
 
-  // Create the 20 triangular faces
+  // Create the 20 triangular faces (icosahedrons naturally have triangular faces)
   const faceDefinitions = [
     [vertices[0], vertices[1], vertices[4]], [vertices[0], vertices[4], vertices[8]],
     [vertices[0], vertices[8], vertices[9]], [vertices[0], vertices[9], vertices[1]],

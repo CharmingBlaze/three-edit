@@ -1,7 +1,7 @@
 // Legacy exports for backward compatibility
-import { EditableMesh } from '../core/index.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/index';
+import { Vertex } from '../core/Vertex';
+import { Face } from '../core/Face';
 import { Vector3 } from 'three';
 import { MemoryOptimizationOptions, MemoryStatistics, CompressedVertex } from './memory/types';
 import { optimizeVertexSharing } from './memory/vertexOptimization';

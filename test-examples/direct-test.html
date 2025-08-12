@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three-edit Direct Test</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: #ffffff;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    #controls {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">three-edit Direct Test</div>
+  <div id="controls">
+    <button id="test-plane">Test Plane</button>
+    <button id="test-cone">Test Cone</button>
+    <button id="test-arrow">Test Arrow</button>
+    <button id="test-all">Test All</button>
+  </div>
+  
+  <script src="../browser/three-edit.js"></script>
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+  </script>
+  
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    // Fallback conversion function in case window.threeEdit.conversion is not available
+    function convertToBufferGeometry(editableMesh) {
+      console.log('Using fallback conversion function');
+      const geometry = new THREE.BufferGeometry();
+      
+      // Extract vertices
+      const vertices = [];
+      editableMesh.vertices.forEach(vertex => {
+        vertices.push(vertex.x, vertex.y, vertex.z);
+      });
+      
+      // Extract faces (indices)
+      const indices = [];
+      editableMesh.faces.forEach(face => {
+        if (face.vertexIds.length === 3) {
+          // Triangle
+          indices.push(face.vertexIds[0], face.vertexIds[1], face.vertexIds[2]);
+        } else if (face.vertexIds.length === 4) {
+          // Quad - split into two triangles
+          indices.push(
+            face.vertexIds[0], face.vertexIds[1], face.vertexIds[2],
+            face.vertexIds[0], face.vertexIds[2], face.vertexIds[3]
+          );
+        }
+      });
+      
+      // Set attributes
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      
+      return geometry;
+    }
+    // Set up scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x333333);
+    
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 5);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    
+    // Add controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+    
+    // Add grid helper
+    const gridHelper = new THREE.GridHelper(10, 10);
+    scene.add(gridHelper);
+    
+    // Clear existing meshes
+    function clearMeshes() {
+      const toRemove = [];
+      scene.children.forEach(child => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.Object3D) {
+          if (!(child instanceof THREE.GridHelper) && 
+              !(child instanceof THREE.DirectionalLight) && 
+              !(child instanceof THREE.AmbientLight)) {
+            toRemove.push(child);
+          }
+        }
+      });
+      
+      toRemove.forEach(obj => scene.remove(obj));
+    }
+    
+    // Test plane
+    document.getElementById('test-plane').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing createPlane...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.primitives.createPlane) {
+          const plane = window.threeEdit.primitives.createPlane({ 
+            width: 2, 
+            height: 2,
+            widthSegments: 4,
+            heightSegments: 4
+          });
+          
+          console.log(`Plane created with ${plane.vertices.length} vertices and ${plane.faces.length} faces`);
+          
+          // Convert to Three.js BufferGeometry
+          const geometry = window.threeEdit.conversion ? window.threeEdit.conversion.toBufferGeometry(plane) : convertToBufferGeometry(plane);
+          const material = new THREE.MeshStandardMaterial({ 
+            color: 0xff0000,
+            side: THREE.DoubleSide
+          });
+          const wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+          });
+          
+          const mesh = new THREE.Mesh(geometry, material);
+          scene.add(mesh);
+          
+          const wireframe = new THREE.Mesh(geometry.clone(), wireframeMaterial);
+          scene.add(wireframe);
+          
+          document.getElementById('info').textContent = 'Plane test successful!';
+        } else {
+          console.error("threeEdit.primitives.createPlane not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.primitives.createPlane not found';
+        }
+      } catch (error) {
+        console.error("Error in testCreatePlane:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test cone
+    document.getElementById('test-cone').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing createCone...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.primitives.createCone) {
+          const cone = window.threeEdit.primitives.createCone({ 
+            radius: 1, 
+            height: 2,
+            radialSegments: 16,
+            heightSegments: 1,
+            openEnded: false
+          });
+          
+          console.log(`Cone created with ${cone.vertices.length} vertices and ${cone.faces.length} faces`);
+          
+          // Convert to Three.js BufferGeometry
+          const geometry = window.threeEdit.conversion ? window.threeEdit.conversion.toBufferGeometry(cone) : convertToBufferGeometry(cone);
+          const material = new THREE.MeshStandardMaterial({ 
+            color: 0x00ff00,
+            side: THREE.DoubleSide
+          });
+          const wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+          });
+          
+          const mesh = new THREE.Mesh(geometry, material);
+          scene.add(mesh);
+          
+          const wireframe = new THREE.Mesh(geometry.clone(), wireframeMaterial);
+          scene.add(wireframe);
+          
+          document.getElementById('info').textContent = 'Cone test successful!';
+        } else {
+          console.error("threeEdit.primitives.createCone not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.primitives.createCone not found';
+        }
+      } catch (error) {
+        console.error("Error in testCreateCone:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test arrow
+    document.getElementById('test-arrow').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing createArrow...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.primitives.createArrow) {
+          const arrow = window.threeEdit.primitives.createArrow({ 
+            shaftRadius: 0.1,
+            shaftLength: 1,
+            headRadius: 0.2,
+            headLength: 0.3,
+            radialSegments: 8,
+            heightSegments: 4
+          });
+          
+          console.log(`Arrow created with ${arrow.vertices.length} vertices and ${arrow.faces.length} faces`);
+          
+          // Convert to Three.js BufferGeometry
+          const geometry = window.threeEdit.conversion ? window.threeEdit.conversion.toBufferGeometry(arrow) : convertToBufferGeometry(arrow);
+          const material = new THREE.MeshStandardMaterial({ 
+            color: 0x0000ff,
+            side: THREE.DoubleSide
+          });
+          const wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+          });
+          
+          const mesh = new THREE.Mesh(geometry, material);
+          scene.add(mesh);
+          
+          const wireframe = new THREE.Mesh(geometry.clone(), wireframeMaterial);
+          scene.add(wireframe);
+          
+          document.getElementById('info').textContent = 'Arrow test successful!';
+        } else {
+          console.error("threeEdit.primitives.createArrow not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.primitives.createArrow not found';
+        }
+      } catch (error) {
+        console.error("Error in testCreateArrow:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test all
+    document.getElementById('test-all').addEventListener('click', () => {
+      clearMeshes();
+      try {
+        console.log("Testing all primitives...");
+        if (window.threeEdit && window.threeEdit.primitives) {
+          const primitives = window.threeEdit.primitives;
+          
+          if (primitives.createPlane) {
+            const plane = primitives.createPlane({ width: 1, height: 1 });
+            const planeGeometry = window.threeEdit.conversion ? window.threeEdit.conversion.toBufferGeometry(plane) : convertToBufferGeometry(plane);
+            const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, side: THREE.DoubleSide });
+            const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+            planeMesh.position.x = -2;
+            scene.add(planeMesh);
+          }
+          
+          if (primitives.createCone) {
+            const cone = primitives.createCone({ radius: 0.5, height: 1 });
+            const coneGeometry = window.threeEdit.conversion ? window.threeEdit.conversion.toBufferGeometry(cone) : convertToBufferGeometry(cone);
+            const coneMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+            const coneMesh = new THREE.Mesh(coneGeometry, coneMaterial);
+            coneMesh.position.x = 0;
+            scene.add(coneMesh);
+          }
+          
+          if (primitives.createArrow) {
+            const arrow = primitives.createArrow({ shaftRadius: 0.1, shaftLength: 1, headRadius: 0.2, headLength: 0.3 });
+            const arrowGeometry = window.threeEdit.conversion ? window.threeEdit.conversion.toBufferGeometry(arrow) : convertToBufferGeometry(arrow);
+            const arrowMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, side: THREE.DoubleSide });
+            const arrowMesh = new THREE.Mesh(arrowGeometry, arrowMaterial);
+            arrowMesh.position.x = 2;
+            scene.add(arrowMesh);
+          }
+          
+          document.getElementById('info').textContent = 'All tests successful!';
+        } else {
+          console.error("threeEdit.primitives not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.primitives not found';
+        }
+      } catch (error) {
+        console.error("Error in testAll:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Check if three-edit is loaded
+    window.addEventListener('load', () => {
+      console.log('Window loaded, checking for three-edit...');
+      console.log('window.threeEdit:', window.threeEdit);
+      
+      if (window.threeEdit) {
+        console.log('three-edit library loaded successfully!');
+        console.log('Available modules:', Object.keys(window.threeEdit));
+        document.getElementById('info').textContent = 'three-edit loaded! Click a test button to begin.';
+        
+        // Auto-run the test-all function to show something immediately
+        setTimeout(() => {
+          document.getElementById('test-all').click();
+        }, 500);
+      } else {
+        console.error('three-edit library not found!');
+        document.getElementById('info').textContent = 'Error: three-edit library not found! Check console for details.';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/index.ts';
-import { createCube } from '../primitives/index.ts';
-import { SceneGraph, SceneNode } from '../scene/index.ts';
+import { EditableMesh } from '../core/index';
+import { createCube } from '../primitives/index';
+import { SceneGraph, SceneNode } from '../scene/index';
 import { 
   parseOBJ, 
   exportOBJ,
   parseGLTF,
   parsePLY,
   exportPLY
-} from '../io/index.ts';
-import { exportGLTF as legacyExportGLTF } from '../io/gltf.ts';
+} from '../io/index';
+import { exportGLTF as legacyExportGLTF } from '../io/gltf';
 
 describe('IO Operations', () => {
   let mesh: EditableMesh;

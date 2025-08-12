@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformations Demo - Three-Edit</title>
+    <link rel="stylesheet" href="demo-styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1>Transformations</h1>
+            <p>Move, rotate, scale, and deform meshes with precision</p>
+            <a href="index.html" class="back-link">← Back to Demos</a>
+        </div>
+
+        <div class="demo-nav">
+            <div class="nav-section">
+                <button class="nav-button active" onclick="showSection('basic')">Basic Transforms</button>
+                <button class="nav-button" onclick="showSection('array')">Array Operations</button>
+                <button class="nav-button" onclick="showSection('mirror')">Mirror Operations</button>
+                <button class="nav-button" onclick="showSection('deform')">Deformation</button>
+            </div>
+            <div class="nav-section">
+                <button class="nav-button" onclick="resetScene()">Reset</button>
+                <button class="nav-button" onclick="animateTransform()">Animate</button>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <div class="code-panel">
+                <div id="basic-code" class="code-section">
+                    <h3>Basic Transformations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Move mesh</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">moveMesh</span>(mesh, {
+    x: <span class="code-number">2</span>,
+    y: <span class="code-number">1</span>,
+    z: <span class="code-number">0</span>
+});
+
+<span class="code-comment">// Rotate mesh</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">rotateMesh</span>(mesh, {
+    x: Math.<span class="code-function">PI</span> / <span class="code-number">4</span>,
+    y: Math.<span class="code-function">PI</span> / <span class="code-number">2</span>,
+    z: <span class="code-number">0</span>
+});
+
+<span class="code-comment">// Scale mesh</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">scaleMesh</span>(mesh, {
+    x: <span class="code-number">1.5</span>,
+    y: <span class="code-number">0.8</span>,
+    z: <span class="code-number">2</span>
+});
+
+<span class="code-comment">// Transform vertices directly</span>
+<span class="code-function">ThreeEdit</span>.<span class="code-function">transformVertices</span>(mesh.<span class="code-function">vertices</span>, {
+    translation: { x: <span class="code-number">1</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+    rotation: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: Math.<span class="code-function">PI</span> / <span class="code-number">6</span> },
+    scale: { x: <span class="code-number">1</span>, y: <span class="code-number">1</span>, z: <span class="code-number">1</span> }
+});
+                    </div>
+                </div>
+
+                <div id="array-code" class="code-section hidden">
+                    <h3>Array Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Linear array</span>
+<span class="code-keyword">const</span> linearArray = <span class="code-function">ThreeEdit</span>.<span class="code-function">arrayLinear</span>(mesh, {
+    count: <span class="code-number">5</span>,
+    offset: { x: <span class="code-number">2</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> }
+});
+
+<span class="code-comment">// Radial array</span>
+<span class="code-keyword">const</span> radialArray = <span class="code-function">ThreeEdit</span>.<span class="code-function">arrayRadial</span>(mesh, {
+    count: <span class="code-number">8</span>,
+    radius: <span class="code-number">3</span>,
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> }
+});
+
+<span class="code-comment">// Grid array</span>
+<span class="code-keyword">const</span> gridArray = <span class="code-function">ThreeEdit</span>.<span class="code-function">arrayGrid</span>(mesh, {
+    rows: <span class="code-number">3</span>,
+    columns: <span class="code-number">4</span>,
+    offset: { x: <span class="code-number">2</span>, y: <span class="code-number">2</span>, z: <span class="code-number">0</span> }
+});
+                    </div>
+                </div>
+
+                <div id="mirror-code" class="code-section hidden">
+                    <h3>Mirror Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Mirror across X axis</span>
+<span class="code-keyword">const</span> mirroredX = <span class="code-function">ThreeEdit</span>.<span class="code-function">mirrorMesh</span>(mesh, {
+    axis: <span class="code-string">'x'</span>,
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> }
+});
+
+<span class="code-comment">// Mirror across Y axis</span>
+<span class="code-keyword">const</span> mirroredY = <span class="code-function">ThreeEdit</span>.<span class="code-function">mirrorMesh</span>(mesh, {
+    axis: <span class="code-string">'y'</span>,
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> }
+});
+
+<span class="code-comment">// Mirror across custom plane</span>
+<span class="code-keyword">const</span> customMirror = <span class="code-function">ThreeEdit</span>.<span class="code-function">mirrorMesh</span>(mesh, {
+    plane: {
+        point: { x: <span class="code-number">1</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> },
+        normal: { x: <span class="code-number">1</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> }
+    }
+});
+                    </div>
+                </div>
+
+                <div id="deform-code" class="code-section hidden">
+                    <h3>Deformation Operations</h3>
+                    <div class="code-block">
+<span class="code-comment">// Bend deformation</span>
+<span class="code-keyword">const</span> bentMesh = <span class="code-function">ThreeEdit</span>.<span class="code-function">bendMesh</span>(mesh, {
+    angle: Math.<span class="code-function">PI</span> / <span class="code-number">2</span>,
+    direction: { x: <span class="code-number">0</span>, y: <span class="code-number">1</span>, z: <span class="code-number">0</span> },
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> }
+});
+
+<span class="code-comment">// Twist deformation</span>
+<span class="code-keyword">const</span> twistedMesh = <span class="code-function">ThreeEdit</span>.<span class="code-function">twistMesh</span>(mesh, {
+    angle: Math.<span class="code-function">PI</span>,
+    axis: { x: <span class="code-number">0</span>, y: <span class="code-number">1</span>, z: <span class="code-number">0</span> },
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> }
+});
+
+<span class="code-comment">// Taper deformation</span>
+<span class="code-keyword">const</span> taperedMesh = <span class="code-function">ThreeEdit</span>.<span class="code-function">taperMesh</span>(mesh, {
+    factor: { x: <span class="code-number">0.5</span>, y: <span class="code-number">2</span>, z: <span class="code-number">1</span> },
+    center: { x: <span class="code-number">0</span>, y: <span class="code-number">0</span>, z: <span class="code-number">0</span> }
+});
+                    </div>
+                </div>
+            </div>
+
+            <div class="viewport-panel">
+                <div class="viewport-container" id="viewport">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading 3D Scene...
+                    </div>
+                </div>
+                <div class="viewport-info">
+                    <div id="transform-info">Apply transformations to see their effects</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <h4>Base Mesh</h4>
+                    <div class="control-item">
+                        <label for="base-mesh">Mesh Type:</label>
+                        <select id="base-mesh" onchange="changeBaseMesh()">
+                            <option value="cube">Cube</option>
+                            <option value="sphere">Sphere</option>
+                            <option value="cylinder">Cylinder</option>
+                            <option value="torus">Torus</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Basic Transform</h4>
+                    <div class="control-item">
+                        <label for="transform-x">X Position:</label>
+                        <input type="range" id="transform-x" min="-5" max="5" step="0.1" value="0" onchange="updateTransform()">
+                        <span id="x-value">0.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="transform-y">Y Position:</label>
+                        <input type="range" id="transform-y" min="-5" max="5" step="0.1" value="0" onchange="updateTransform()">
+                        <span id="y-value">0.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="transform-z">Z Position:</label>
+                        <input type="range" id="transform-z" min="-5" max="5" step="0.1" value="0" onchange="updateTransform()">
+                        <span id="z-value">0.0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Rotation</h4>
+                    <div class="control-item">
+                        <label for="rotate-x">X Rotation:</label>
+                        <input type="range" id="rotate-x" min="0" max="6.28" step="0.1" value="0" onchange="updateTransform()">
+                        <span id="rx-value">0.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="rotate-y">Y Rotation:</label>
+                        <input type="range" id="rotate-y" min="0" max="6.28" step="0.1" value="0" onchange="updateTransform()">
+                        <span id="ry-value">0.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="rotate-z">Z Rotation:</label>
+                        <input type="range" id="rotate-z" min="0" max="6.28" step="0.1" value="0" onchange="updateTransform()">
+                        <span id="rz-value">0.0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Scale</h4>
+                    <div class="control-item">
+                        <label for="scale-x">X Scale:</label>
+                        <input type="range" id="scale-x" min="0.1" max="3" step="0.1" value="1" onchange="updateTransform()">
+                        <span id="sx-value">1.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="scale-y">Y Scale:</label>
+                        <input type="range" id="scale-y" min="0.1" max="3" step="0.1" value="1" onchange="updateTransform()">
+                        <span id="sy-value">1.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="scale-z">Z Scale:</label>
+                        <input type="range" id="scale-z" min="0.1" max="3" step="0.1" value="1" onchange="updateTransform()">
+                        <span id="sz-value">1.0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Array Parameters</h4>
+                    <div class="control-item">
+                        <label for="array-count">Count:</label>
+                        <input type="range" id="array-count" min="2" max="10" step="1" value="3" onchange="updateArray()">
+                        <span id="count-value">3</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="array-offset">Offset:</label>
+                        <input type="range" id="array-offset" min="1" max="5" step="0.1" value="2" onchange="updateArray()">
+                        <span id="offset-value">2.0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Deformation</h4>
+                    <div class="control-item">
+                        <label for="deform-angle">Angle:</label>
+                        <input type="range" id="deform-angle" min="0" max="3.14" step="0.1" value="0" onchange="updateDeform()">
+                        <span id="angle-value">0.0</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="deform-factor">Factor:</label>
+                        <input type="range" id="deform-factor" min="0.1" max="3" step="0.1" value="1" onchange="updateDeform()">
+                        <span id="factor-value">1.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="applyTransform()">Apply Transform</button>
+                <button class="btn btn-secondary" onclick="createArray()">Create Array</button>
+                <button class="btn btn-secondary" onclick="createMirror()">Create Mirror</button>
+                <button class="btn btn-secondary" onclick="applyDeform()">Apply Deform</button>
+                <button class="btn btn-success" onclick="createBaseMesh()">Create Base Mesh</button>
+                <button class="btn btn-danger" onclick="clearScene()">Clear Scene</button>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator" id="status-indicator"></div>
+                <span id="status-text">Ready</span>
+            </div>
+            <div class="status-item">
+                <span id="mesh-info">Vertices: 0 | Faces: 0 | Edges: 0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let meshObjects = [];
+        let currentTransform = { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, sx: 1, sy: 1, sz: 1 };
+        let animationId = null;
+
+        // Initialize the scene
+        function initScene() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x2c3e50);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            camera.position.set(8, 8, 8);
+
+            // Create renderer
+            const container = document.getElementById('viewport');
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            // Add controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+
+            // Add grid
+            const gridHelper = new THREE.GridHelper(10, 10);
+            scene.add(gridHelper);
+
+            // Start animation loop
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('viewport');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Section navigation
+        function showSection(sectionName) {
+            // Hide all code sections
+            document.querySelectorAll('.code-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Show selected section
+            document.getElementById(sectionName + '-code').classList.remove('hidden');
+
+            // Update navigation buttons
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            updateStatus('Showing ' + sectionName + ' transformations');
+        }
+
+        // Mesh creation functions
+        function createBaseMesh() {
+            clearScene();
+            
+            try {
+                const meshType = document.getElementById('base-mesh').value;
+                const meshName = 'create' + meshType.charAt(0).toUpperCase() + meshType.slice(1);
+                
+                if (ThreeEdit[meshName]) {
+                    currentMesh = ThreeEdit[meshName]();
+                } else {
+                    updateStatus('Mesh type not available: ' + meshType, 'error');
+                    return;
+                }
+
+                // Convert to Three.js geometry
+                const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x667eea,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+                meshObjects.push(mesh);
+
+                updateMeshInfo();
+                updateStatus(meshType + ' created successfully');
+                
+            } catch (error) {
+                updateStatus('Error creating mesh: ' + error.message, 'error');
+            }
+        }
+
+        function changeBaseMesh() {
+            if (currentMesh) {
+                createBaseMesh();
+            }
+        }
+
+        function updateTransform() {
+            // Update value displays
+            document.getElementById('x-value').textContent = document.getElementById('transform-x').value;
+            document.getElementById('y-value').textContent = document.getElementById('transform-y').value;
+            document.getElementById('z-value').textContent = document.getElementById('transform-z').value;
+            document.getElementById('rx-value').textContent = document.getElementById('rotate-x').value;
+            document.getElementById('ry-value').textContent = document.getElementById('rotate-y').value;
+            document.getElementById('rz-value').textContent = document.getElementById('rotate-z').value;
+            document.getElementById('sx-value').textContent = document.getElementById('scale-x').value;
+            document.getElementById('sy-value').textContent = document.getElementById('scale-y').value;
+            document.getElementById('sz-value').textContent = document.getElementById('scale-z').value;
+
+            // Update current transform
+            currentTransform = {
+                x: parseFloat(document.getElementById('transform-x').value),
+                y: parseFloat(document.getElementById('transform-y').value),
+                z: parseFloat(document.getElementById('transform-z').value),
+                rx: parseFloat(document.getElementById('rotate-x').value),
+                ry: parseFloat(document.getElementById('rotate-y').value),
+                rz: parseFloat(document.getElementById('rotate-z').value),
+                sx: parseFloat(document.getElementById('scale-x').value),
+                sy: parseFloat(document.getElementById('scale-y').value),
+                sz: parseFloat(document.getElementById('scale-z').value)
+            };
+        }
+
+        function applyTransform() {
+            if (!currentMesh) {
+                updateStatus('No mesh to transform', 'error');
+                return;
+            }
+
+            try {
+                // Apply translation
+                ThreeEdit.moveMesh(currentMesh, {
+                    x: currentTransform.x,
+                    y: currentTransform.y,
+                    z: currentTransform.z
+                });
+
+                // Apply rotation
+                ThreeEdit.rotateMesh(currentMesh, {
+                    x: currentTransform.rx,
+                    y: currentTransform.ry,
+                    z: currentTransform.rz
+                });
+
+                // Apply scale
+                ThreeEdit.scaleMesh(currentMesh, {
+                    x: currentTransform.sx,
+                    y: currentTransform.sy,
+                    z: currentTransform.sz
+                });
+
+                // Update visualization
+                updateMeshVisualization();
+                updateStatus('Transform applied successfully');
+                
+            } catch (error) {
+                updateStatus('Error applying transform: ' + error.message, 'error');
+            }
+        }
+
+        function updateArray() {
+            document.getElementById('count-value').textContent = document.getElementById('array-count').value;
+            document.getElementById('offset-value').textContent = document.getElementById('array-offset').value;
+        }
+
+        function createArray() {
+            if (!currentMesh) {
+                updateStatus('No mesh to array', 'error');
+                return;
+            }
+
+            try {
+                const count = parseInt(document.getElementById('array-count').value);
+                const offset = parseFloat(document.getElementById('array-offset').value);
+
+                // Create linear array
+                const arrayResult = ThreeEdit.arrayLinear(currentMesh, {
+                    count: count,
+                    offset: { x: offset, y: 0, z: 0 }
+                });
+
+                // Add arrayed meshes to scene
+                arrayResult.forEach((mesh, index) => {
+                    const geometry = ThreeEdit.toBufferGeometry(mesh);
+                    const material = new THREE.MeshPhongMaterial({ 
+                        color: getColorForIndex(index),
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    
+                    const threeMesh = new THREE.Mesh(geometry, material);
+                    scene.add(threeMesh);
+                    meshObjects.push(threeMesh);
+                });
+
+                updateStatus('Array created with ' + count + ' instances');
+                
+            } catch (error) {
+                updateStatus('Error creating array: ' + error.message, 'error');
+            }
+        }
+
+        function createMirror() {
+            if (!currentMesh) {
+                updateStatus('No mesh to mirror', 'error');
+                return;
+            }
+
+            try {
+                // Mirror across X axis
+                const mirroredMesh = ThreeEdit.mirrorMesh(currentMesh, {
+                    axis: 'x',
+                    center: { x: 0, y: 0, z: 0 }
+                });
+
+                // Add mirrored mesh to scene
+                const geometry = ThreeEdit.toBufferGeometry(mirroredMesh);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0xf5576c,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const threeMesh = new THREE.Mesh(geometry, material);
+                scene.add(threeMesh);
+                meshObjects.push(threeMesh);
+
+                updateStatus('Mirror created successfully');
+                
+            } catch (error) {
+                updateStatus('Error creating mirror: ' + error.message, 'error');
+            }
+        }
+
+        function updateDeform() {
+            document.getElementById('angle-value').textContent = document.getElementById('deform-angle').value;
+            document.getElementById('factor-value').textContent = document.getElementById('deform-factor').value;
+        }
+
+        function applyDeform() {
+            if (!currentMesh) {
+                updateStatus('No mesh to deform', 'error');
+                return;
+            }
+
+            try {
+                const angle = parseFloat(document.getElementById('deform-angle').value);
+                const factor = parseFloat(document.getElementById('deform-factor').value);
+
+                // Apply bend deformation
+                const deformedMesh = ThreeEdit.bendMesh(currentMesh, {
+                    angle: angle,
+                    direction: { x: 0, y: 1, z: 0 },
+                    center: { x: 0, y: 0, z: 0 }
+                });
+
+                // Update current mesh
+                currentMesh = deformedMesh;
+                updateMeshVisualization();
+                updateStatus('Deformation applied successfully');
+                
+            } catch (error) {
+                updateStatus('Error applying deformation: ' + error.message, 'error');
+            }
+        }
+
+        function animateTransform() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                updateStatus('Animation stopped');
+                return;
+            }
+
+            let time = 0;
+            const animate = () => {
+                time += 0.02;
+                
+                // Update transform values
+                document.getElementById('transform-x').value = Math.sin(time) * 3;
+                document.getElementById('transform-y').value = Math.cos(time) * 2;
+                document.getElementById('rotate-y').value = time * 2;
+                
+                updateTransform();
+                applyTransform();
+                
+                animationId = requestAnimationFrame(animate);
+            };
+            
+            animate();
+            updateStatus('Animation started');
+        }
+
+        function updateMeshVisualization() {
+            // Remove existing mesh objects
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+
+            // Create new visualization
+            const geometry = ThreeEdit.toBufferGeometry(currentMesh);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x667eea,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            meshObjects.push(mesh);
+        }
+
+        function clearScene() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            meshObjects.forEach(obj => scene.remove(obj));
+            meshObjects = [];
+            currentMesh = null;
+            
+            updateMeshInfo();
+            updateStatus('Scene cleared');
+        }
+
+        function resetScene() {
+            clearScene();
+            createBaseMesh();
+        }
+
+        // Utility functions
+        function getColorForIndex(index) {
+            const colors = [0x667eea, 0x764ba2, 0xf093fb, 0xf5576c, 0x4facfe, 0x00f2fe, 0x43e97b, 0x38f9d7];
+            return colors[index % colors.length];
+        }
+
+        function updateMeshInfo() {
+            if (currentMesh) {
+                const vertices = currentMesh.vertices.length;
+                const faces = currentMesh.faces.length;
+                const edges = currentMesh.edges.length;
+                document.getElementById('mesh-info').textContent = 
+                    `Vertices: ${vertices} | Faces: ${faces} | Edges: ${edges}`;
+            } else {
+                document.getElementById('mesh-info').textContent = 'Vertices: 0 | Faces: 0 | Edges: 0';
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const indicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            
+            statusText.textContent = message;
+            
+            indicator.className = 'status-indicator';
+            if (type === 'error') {
+                indicator.classList.add('error');
+            } else if (type === 'warning') {
+                indicator.classList.add('warning');
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            // Check if ThreeEdit is available
+            if (typeof ThreeEdit === 'undefined') {
+                updateStatus('ThreeEdit library not loaded. Please include the UMD build.', 'error');
+                return;
+            }
+            
+            initScene();
+            createBaseMesh();
+        });
+    </script>
+</body>
+</html> 

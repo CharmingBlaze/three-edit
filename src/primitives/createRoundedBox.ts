@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/index.ts';
-import { Vertex } from '../core/index.ts';
-import { Edge } from '../core/index.ts';
-import { Face } from '../core/index.ts';
+import { EditableMesh } from '../core/index';
+import { Vertex } from '../core/index';
+import { Edge } from '../core/index';
+import { Face } from '../core/index';
 
 /**
  * Options for creating a rounded box

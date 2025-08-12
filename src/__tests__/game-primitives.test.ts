@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 
-import { createLowPolySphere } from '../primitives/createLowPolySphere.ts';
-import { createRoundedBox } from '../primitives/createRoundedBox.ts';
-import { createStairs } from '../primitives/createStairs.ts';
-import { createRamp } from '../primitives/createRamp.ts';
-import { createArrow } from '../primitives/createArrow.ts';
-import { validateMesh } from '../validation/validateMesh.ts';
-import { toBufferGeometry } from '../conversion/toBufferGeometry.ts';
+import { createLowPolySphere } from '../primitives/createLowPolySphere';
+import { createRoundedBox } from '../primitives/createRoundedBox';
+import { createStairs } from '../primitives/createStairs';
+import { createRamp } from '../primitives/createRamp';
+import { createArrow } from '../primitives/createArrow';
+import { validateMesh } from '../validation/validateMesh';
+import { toBufferGeometry } from '../conversion/toBufferGeometry';
 
 describe('Game Development Primitives', () => {
   describe('createLowPolySphere', () => {

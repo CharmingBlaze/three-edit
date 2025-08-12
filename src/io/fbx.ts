@@ -1,7 +1,7 @@
-import { EditableMesh } from '../core/index.ts';
-import { createCube } from '../primitives/index.ts';
-import { Vertex } from '../core/Vertex.ts';
-import { Face } from '../core/Face.ts';
+import { EditableMesh } from '../core/index';
+import { createCube } from '../primitives/index';
+import { Vertex } from '../core/Vertex';
+import { Face } from '../core/Face';
 
 /**
  * FBX import/export options

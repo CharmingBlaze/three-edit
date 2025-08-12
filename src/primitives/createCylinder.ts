@@ -1,7 +1,8 @@
 import { EditableMesh } from '../core/EditableMesh';
 import { CreateCylinderOptions } from './types';
-import { createVertex, createFace, createPrimitiveContext, normalizeOptions } from './helpers';
+import { createVertex, createFace, createPrimitiveContext, normalizeOptions, createFacesFromGrid } from './helpers';
 import { validatePrimitive } from './validation';
+import { Vector3 } from 'three';
 
 /**
  * Creates a cylinder as an EditableMesh.
@@ -82,20 +83,8 @@ export function createCylinder(options: CreateCylinderOptions = {}): EditableMes
     grid.push(row);
   }
 
-  // Create side faces
-  for (let h = 0; h < normalizedOptions.heightSegments; h++) {
-    for (let r = 0; r < normalizedOptions.radialSegments; r++) {
-      const v1 = grid[h][r];
-      const v2 = grid[h + 1][r];
-      const v3 = grid[h + 1][r + 1];
-      const v4 = grid[h][r + 1];
-      
-      createFace(mesh, {
-        vertexIds: [v1, v2, v3, v4],
-        materialId: normalizedOptions.materialId
-      }, context);
-    }
-  }
+  // Create side faces as quads using the helper function
+  createFacesFromGrid(mesh, grid, normalizedOptions.materialId, context);
 
   // Create caps if not open-ended
   if (!normalizedOptions.openEnded) {
@@ -113,7 +102,7 @@ export function createCylinder(options: CreateCylinderOptions = {}): EditableMes
         const v2 = grid[0][r + 1];
         
         createFace(mesh, {
-          vertexIds: [bottomCenterVertex.id, v2, v1],
+          vertexIds: [bottomCenterVertex.id, v1, v2],
           materialId: normalizedOptions.materialId
         }, context);
       }
@@ -133,12 +122,28 @@ export function createCylinder(options: CreateCylinderOptions = {}): EditableMes
         const v2 = grid[normalizedOptions.heightSegments][r + 1];
         
         createFace(mesh, {
-          vertexIds: [topCenterVertex.id, v1, v2],
+          vertexIds: [topCenterVertex.id, v2, v1],
           materialId: normalizedOptions.materialId
         }, context);
       }
     }
   }
+
+  // Calculate face normals
+  mesh.faces.forEach(face => {
+    if (face.normal) {
+      // Recalculate normal to ensure it's correct
+      const v1 = mesh.getVertex(face.vertices[0]);
+      const v2 = mesh.getVertex(face.vertices[1]);
+      const v3 = mesh.getVertex(face.vertices[2]);
+      
+      if (v1 && v2 && v3) {
+        const edge1 = new Vector3(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);
+        const edge2 = new Vector3(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z);
+        face.normal = new Vector3().crossVectors(edge1, edge2).normalize();
+      }
+    }
+  });
 
   // Validate if requested
   if (normalizedOptions.validate) {

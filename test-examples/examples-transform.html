@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three-edit Transform Examples</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: #ffffff;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    #controls {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .back-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">three-edit Transform Examples</div>
+  <a href="index.html" class="back-button button">Back to Index</a>
+  <div id="controls">
+    <button id="test-translate">Translate</button>
+    <button id="test-rotate">Rotate</button>
+    <button id="test-scale">Scale</button>
+    <button id="test-mirror">Mirror</button>
+    <button id="test-all">Show All</button>
+  </div>
+  
+  <script src="../browser/three-edit.js"></script>
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+  </script>
+  
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import * as CommonUtils from './common-utils.js';
+    // Fallback conversion function in case window.threeEdit.conversion is not available
+    function convertToBufferGeometry(editableMesh) {
+      console.log('Using fallback conversion function');
+      const geometry = new THREE.BufferGeometry();
+      
+      // Extract vertices
+      const vertices = [];
+      editableMesh.vertices.forEach(vertex => {
+        vertices.push(vertex.x, vertex.y, vertex.z);
+      });
+      
+      // Extract faces (indices)
+      const indices = [];
+      editableMesh.faces.forEach(face => {
+        if (face.vertexIds.length === 3) {
+          // Triangle
+          indices.push(face.vertexIds[0], face.vertexIds[1], face.vertexIds[2]);
+        } else if (face.vertexIds.length === 4) {
+          // Quad - split into two triangles
+          indices.push(
+            face.vertexIds[0], face.vertexIds[1], face.vertexIds[2],
+            face.vertexIds[0], face.vertexIds[2], face.vertexIds[3]
+          );
+        }
+      });
+      
+      // Set attributes
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      
+      return geometry;
+    }
+
+    // Set up scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x333333);
+    
+    // Add controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+    
+    // Add grid helper
+    const gridHelper = new THREE.GridHelper(10, 10);
+    scene.add(gridHelper);
+    
+    // Clear existing meshes
+    function clearMeshes() {
+      const toRemove = [];
+      scene.children.forEach(child => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.Object3D) {
+          if (!(child instanceof THREE.GridHelper) && 
+              !(child instanceof THREE.DirectionalLight) && 
+              !(child instanceof THREE.AmbientLight)) {
+            toRemove.push(child);
+          }
+        }
+      });
+      
+      toRemove.forEach(obj => scene.remove(obj));
+    }
+    
+    // Create and add mesh to scene
+    function createAndAddMesh(editableMesh, color, position) {
+      try {
+        // Convert to Three.js BufferGeometry
+        const geometry = window.threeEdit.conversion ? 
+          window.threeEdit.conversion.toBufferGeometry(editableMesh) : 
+          convertToBufferGeometry(editableMesh);
+        
+        const material = new THREE.MeshStandardMaterial({ 
+          color: color,
+          side: THREE.DoubleSide
+        });
+        
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          wireframe: true
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        if (position) {
+          mesh.position.copy(position);
+        }
+        scene.add(mesh);
+        
+        const wireframe = new THREE.Mesh(geometry.clone(), wireframeMaterial);
+        if (position) {
+          wireframe.position.copy(position);
+        }
+        scene.add(wireframe);
+        
+        return mesh;
+      } catch (error) {
+        console.error("Error creating mesh:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+        return null;
+      }
+    }
+    
+    // Test translate
+    document.getElementById('test-translate').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing translate...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.transform) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Create original mesh for comparison
+          CommonUtils.createAndAddMesh(scene, cube, 0x888888, new THREE.Vector3(-1.5, 0, 0));
+          
+          // Translate the mesh
+          const translatedMesh = window.threeEdit.transform.translate(cube, {
+            vertexIds: cube.vertices.map(v => v.id),
+            translation: { x: 0, y: 1, z: 0 }
+          });
+          
+          console.log(`Translated mesh created with ${translatedMesh.vertices.length} vertices and ${translatedMesh.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, translatedMesh, 0xff0000, new THREE.Vector3(1.5, 0, 0));
+          document.getElementById('info').textContent = 'Translate Example';
+        } else {
+          console.error("threeEdit.transform.translate not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.transform.translate not found';
+        }
+      } catch (error) {
+        console.error("Error in test-translate:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test rotate
+    document.getElementById('test-rotate').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing rotate...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.transform) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Create original mesh for comparison
+          CommonUtils.createAndAddMesh(scene, cube, 0x888888, new THREE.Vector3(-1.5, 0, 0));
+          
+          // Rotate the mesh
+          const rotatedMesh = window.threeEdit.transform.rotate(cube, {
+            vertexIds: cube.vertices.map(v => v.id),
+            rotation: { x: 0, y: Math.PI / 4, z: 0 },
+            pivot: { x: 0, y: 0, z: 0 }
+          });
+          
+          console.log(`Rotated mesh created with ${rotatedMesh.vertices.length} vertices and ${rotatedMesh.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, rotatedMesh, 0x00ff00, new THREE.Vector3(1.5, 0, 0));
+          document.getElementById('info').textContent = 'Rotate Example';
+        } else {
+          console.error("threeEdit.transform.rotate not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.transform.rotate not found';
+        }
+      } catch (error) {
+        console.error("Error in test-rotate:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test scale
+    document.getElementById('test-scale').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing scale...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.transform) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Create original mesh for comparison
+          CommonUtils.createAndAddMesh(scene, cube, 0x888888, new THREE.Vector3(-1.5, 0, 0));
+          
+          // Scale the mesh
+          const scaledMesh = window.threeEdit.transform.scale(cube, {
+            vertexIds: cube.vertices.map(v => v.id),
+            scale: { x: 1.5, y: 0.5, z: 1.5 },
+            pivot: { x: 0, y: 0, z: 0 }
+          });
+          
+          console.log(`Scaled mesh created with ${scaledMesh.vertices.length} vertices and ${scaledMesh.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, scaledMesh, 0x0000ff, new THREE.Vector3(1.5, 0, 0));
+          document.getElementById('info').textContent = 'Scale Example';
+        } else {
+          console.error("threeEdit.transform.scale not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.transform.scale not found';
+        }
+      } catch (error) {
+        console.error("Error in test-scale:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test mirror
+    document.getElementById('test-mirror').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing mirror...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.transform) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Create original mesh for comparison
+          CommonUtils.createAndAddMesh(scene, cube, 0x888888, new THREE.Vector3(-1.5, 0, 0));
+          
+          // Mirror the mesh
+          const mirroredMesh = window.threeEdit.transform.mirror(cube, {
+            vertexIds: cube.vertices.map(v => v.id),
+            plane: { normal: { x: 1, y: 0, z: 0 }, constant: 0 }
+          });
+          
+          console.log(`Mirrored mesh created with ${mirroredMesh.vertices.length} vertices and ${mirroredMesh.faces.length} faces`);
+          CommonUtils.createAndAddMesh(scene, mirroredMesh, 0xff00ff, new THREE.Vector3(1.5, 0, 0));
+          document.getElementById('info').textContent = 'Mirror Example';
+        } else {
+          console.error("threeEdit.transform.mirror not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.transform.mirror not found';
+        }
+      } catch (error) {
+        console.error("Error in test-mirror:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test all
+    document.getElementById('test-all').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing all transform operations...");
+        if (window.threeEdit && window.threeEdit.primitives && window.threeEdit.transform) {
+          const spacing = 2.5;
+          
+          // Create base cube
+          const baseCube = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          CommonUtils.createAndAddMesh(scene, baseCube, 0x888888, new THREE.Vector3(0, 0, 0));
+          
+          // Translate example
+          const cubeTranslate = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const translatedMesh = window.threeEdit.transform.translate(cubeTranslate, {
+            vertexIds: cubeTranslate.vertices.map(v => v.id),
+            translation: { x: 0, y: 1, z: 0 }
+          });
+          CommonUtils.createAndAddMesh(scene, translatedMesh, 0xff0000, new THREE.Vector3(-spacing, 0, -spacing));
+          
+          // Rotate example
+          const cubeRotate = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const rotatedMesh = window.threeEdit.transform.rotate(cubeRotate, {
+            vertexIds: cubeRotate.vertices.map(v => v.id),
+            rotation: { x: 0, y: Math.PI / 4, z: 0 },
+            pivot: { x: 0, y: 0, z: 0 }
+          });
+          CommonUtils.createAndAddMesh(scene, rotatedMesh, 0x00ff00, new THREE.Vector3(spacing, 0, -spacing));
+          
+          // Scale example
+          const cubeScale = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const scaledMesh = window.threeEdit.transform.scale(cubeScale, {
+            vertexIds: cubeScale.vertices.map(v => v.id),
+            scale: { x: 1.5, y: 0.5, z: 1.5 },
+            pivot: { x: 0, y: 0, z: 0 }
+          });
+          CommonUtils.createAndAddMesh(scene, scaledMesh, 0x0000ff, new THREE.Vector3(-spacing, 0, spacing));
+          
+          // Mirror example
+          const cubeMirror = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+          const mirroredMesh = window.threeEdit.transform.mirror(cubeMirror, {
+            vertexIds: cubeMirror.vertices.map(v => v.id),
+            plane: { normal: { x: 1, y: 0, z: 0 }, constant: 0 }
+          });
+          CommonUtils.createAndAddMesh(scene, mirroredMesh, 0xff00ff, new THREE.Vector3(spacing, 0, spacing));
+          
+          document.getElementById('info').textContent = 'All Transform Examples';
+        } else {
+          console.error("threeEdit.transform not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.transform not found';
+        }
+      } catch (error) {
+        console.error("Error in test-all:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Check if three-edit is loaded
+    window.addEventListener('load', () => {
+      console.log('Window loaded, checking for three-edit...');
+      console.log('window.threeEdit:', window.threeEdit);
+      
+      if (window.threeEdit) {
+        console.log('three-edit library loaded successfully!');
+        console.log('Available modules:', Object.keys(window.threeEdit));
+        document.getElementById('info').textContent = 'three-edit loaded! Click a test button to begin.';
+        
+        // Auto-run the test-all function to show something immediately
+        setTimeout(() => {
+          document.getElementById('test-all').click();
+        }, 500);
+      } else {
+        console.error('three-edit library not found!');
+        document.getElementById('info').textContent = 'Error: three-edit library not found! Check console for details.';
+      }
+    });
+  </script>
+</body>
+</html>

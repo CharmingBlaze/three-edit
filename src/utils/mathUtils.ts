@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
-import { EditableMesh } from '../core/EditableMesh.ts';
-import { Face } from '../core/Face.ts';
-import { Vertex } from '../core/Vertex.ts';
+import { EditableMesh } from '../core/EditableMesh';
+import { Face } from '../core/Face';
+import { Vertex } from '../core/Vertex';
 
 /**
  * Calculates the normal vector of a face

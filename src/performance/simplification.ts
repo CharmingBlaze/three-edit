@@ -1,5 +1,5 @@
 // Legacy exports for backward compatibility
-import { EditableMesh } from '../core/index.ts';
+import { EditableMesh } from '../core/index';
 import { SimplificationOptions, SimplificationResult, SimplificationStatistics } from './simplification/types';
 import { findBestEdgeCollapse } from './simplification/edgeCollapse';
 import { collapseEdge, calculateErrorMetric } from './simplification/meshOperations';

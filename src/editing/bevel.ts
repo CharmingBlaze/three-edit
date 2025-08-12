@@ -1,4 +1,4 @@
-import { EditableMesh } from '../core/EditableMesh.ts';
+import { EditableMesh } from '../core/EditableMesh';
 
 // Re-export from modular structure
 export * from './bevel/types';

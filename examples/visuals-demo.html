@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Edit Visuals Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #00ff88;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        
+        .demo-section h2 {
+            color: #00ff88;
+            margin-top: 0;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #00ff88;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #00cc6a;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .viewport {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 4px;
+            position: relative;
+        }
+        
+        .info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #ccc;
+        }
+        
+        .grid-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .control-group label {
+            font-size: 12px;
+            color: #ccc;
+        }
+        
+        .control-group input {
+            padding: 5px;
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Three-Edit Visuals Demo</h1>
+        <p style="text-align: center; color: #ccc; margin-bottom: 30px;">
+            Showcasing the new modular Blender-style visual system
+        </p>
+        
+        <!-- Grid Helpers Demo -->
+        <div class="demo-section">
+            <h2>📐 Grid Helpers</h2>
+            <div class="grid-controls">
+                <div class="control-group">
+                    <label for="gridSize">Grid Size:</label>
+                    <input type="range" id="gridSize" min="10" max="200" value="100" aria-label="Grid size slider">
+                    <span id="gridSizeValue">100</span>
+                </div>
+                <div class="control-group">
+                    <label for="gridDivisions">Divisions:</label>
+                    <input type="range" id="gridDivisions" min="10" max="200" value="100" aria-label="Grid divisions slider">
+                    <span id="gridDivisionsValue">100</span>
+                </div>
+                <div class="control-group">
+                    <label for="gridColor">Grid Color:</label>
+                    <input type="color" id="gridColor" value="#888888" aria-label="Grid color picker">
+                </div>
+            </div>
+            <div class="controls">
+                <button onclick="toggle3DGrid()">Toggle 3D Grid</button>
+                <button onclick="toggleAxisHelper()">Toggle Axis Helper</button>
+                <button onclick="toggleOrthoGrid()">Toggle Ortho Grid</button>
+                <button onclick="clearGrids()">Clear All Grids</button>
+            </div>
+            <div class="viewport" id="gridViewport"></div>
+            <div class="info">
+                Grid helpers provide spatial reference and snapping guides. Try adjusting the controls above!
+            </div>
+        </div>
+        
+        <!-- Highlight Helpers Demo -->
+        <div class="demo-section">
+            <h2>✨ Highlight Helpers</h2>
+            <div class="controls">
+                <button onclick="createTestMesh()">Create Test Mesh</button>
+                <button onclick="highlightVertices()">Highlight Vertices</button>
+                <button onclick="highlightEdges()">Highlight Edges</button>
+                <button onclick="highlightFaces()">Highlight Faces</button>
+                <button onclick="clearHighlights()">Clear Highlights</button>
+            </div>
+            <div class="viewport" id="highlightViewport"></div>
+            <div class="info">
+                Highlight helpers show selected vertices, edges, and faces with visual feedback.
+            </div>
+        </div>
+        
+        <!-- Overlay Helpers Demo -->
+        <div class="demo-section">
+            <h2>📦 Overlay Helpers</h2>
+            <div class="controls">
+                <button onclick="createTestObjects()">Create Test Objects</button>
+                <button onclick="showBoundingBox()">Show Bounding Box</button>
+                <button onclick="clearOverlays()">Clear Overlays</button>
+            </div>
+            <div class="viewport" id="overlayViewport"></div>
+            <div class="info">
+                Overlay helpers provide bounding boxes, centers, and other visual aids.
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Three-Edit -->
+    <script src="../browser/three-edit.browser.iife.js"></script>
+    <script>
+        // Global variables
+        let gridScene, gridCamera, gridRenderer;
+        let highlightScene, highlightCamera, highlightRenderer;
+        let overlayScene, overlayCamera, overlayRenderer;
+        
+        let gridHelpers = [];
+        let highlightHelpers = [];
+        let overlayHelpers = [];
+        let testMeshes = [];
+        
+        // Initialize all viewports
+        function initViewports() {
+            initGridViewport();
+            initHighlightViewport();
+            initOverlayViewport();
+        }
+        
+        // Grid Viewport
+        function initGridViewport() {
+            const container = document.getElementById('gridViewport');
+            
+            gridScene = new THREE.Scene();
+            gridCamera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            gridRenderer = new THREE.WebGLRenderer({ antialias: true });
+            
+            gridRenderer.setSize(container.clientWidth, container.clientHeight);
+            gridRenderer.setClearColor(0x1a1a1a);
+            container.appendChild(gridRenderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            gridScene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(10, 10, 5);
+            gridScene.add(directionalLight);
+            
+            gridCamera.position.set(5, 5, 5);
+            gridCamera.lookAt(0, 0, 0);
+            
+            animateGridViewport();
+        }
+        
+        // Highlight Viewport
+        function initHighlightViewport() {
+            const container = document.getElementById('highlightViewport');
+            
+            highlightScene = new THREE.Scene();
+            highlightCamera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            highlightRenderer = new THREE.WebGLRenderer({ antialias: true });
+            
+            highlightRenderer.setSize(container.clientWidth, container.clientHeight);
+            highlightRenderer.setClearColor(0x1a1a1a);
+            container.appendChild(highlightRenderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            highlightScene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(10, 10, 5);
+            highlightScene.add(directionalLight);
+            
+            highlightCamera.position.set(5, 5, 5);
+            highlightCamera.lookAt(0, 0, 0);
+            
+            animateHighlightViewport();
+        }
+        
+        // Overlay Viewport
+        function initOverlayViewport() {
+            const container = document.getElementById('overlayViewport');
+            
+            overlayScene = new THREE.Scene();
+            overlayCamera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            overlayRenderer = new THREE.WebGLRenderer({ antialias: true });
+            
+            overlayRenderer.setSize(container.clientWidth, container.clientHeight);
+            overlayRenderer.setClearColor(0x1a1a1a);
+            container.appendChild(overlayRenderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            overlayScene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(10, 10, 5);
+            overlayScene.add(directionalLight);
+            
+            overlayCamera.position.set(5, 5, 5);
+            overlayCamera.lookAt(0, 0, 0);
+            
+            animateOverlayViewport();
+        }
+        
+        // Animation loops
+        function animateGridViewport() {
+            requestAnimationFrame(animateGridViewport);
+            gridRenderer.render(gridScene, gridCamera);
+        }
+        
+        function animateHighlightViewport() {
+            requestAnimationFrame(animateHighlightViewport);
+            highlightRenderer.render(highlightScene, highlightCamera);
+        }
+        
+        function animateOverlayViewport() {
+            requestAnimationFrame(animateOverlayViewport);
+            overlayRenderer.render(overlayScene, overlayCamera);
+        }
+        
+        // Grid Helper Functions
+        function toggle3DGrid() {
+            if (gridHelpers.length > 0 && gridHelpers[0].userData.type === 'grid-3d') {
+                clearGrids();
+            } else {
+                const size = parseInt(document.getElementById('gridSize').value);
+                const divisions = parseInt(document.getElementById('gridDivisions').value);
+                const color = parseInt(document.getElementById('gridColor').value.replace('#', '0x'));
+                
+                const grid = ThreeEdit.GridHelper3D({
+                    size: size,
+                    divisions: divisions,
+                    color: color
+                });
+                
+                gridScene.add(grid);
+                gridHelpers = [grid];
+            }
+        }
+        
+        function toggleAxisHelper() {
+            if (gridHelpers.length > 0 && gridHelpers[0].userData.type === 'axis-helper') {
+                clearGrids();
+            } else {
+                const axis = ThreeEdit.AxisHelper({ size: 3 });
+                gridScene.add(axis);
+                gridHelpers = [axis];
+            }
+        }
+        
+        function toggleOrthoGrid() {
+            if (gridHelpers.length > 0 && gridHelpers[0].userData.type === 'ortho-grid') {
+                clearGrids();
+            } else {
+                const orthoGrid = ThreeEdit.OrthoGridHelper({
+                    size: 20,
+                    divisions: 20,
+                    plane: 'xz'
+                });
+                gridScene.add(orthoGrid);
+                gridHelpers = [orthoGrid];
+            }
+        }
+        
+        function clearGrids() {
+            gridHelpers.forEach(helper => {
+                gridScene.remove(helper);
+                ThreeEdit.disposeGrid(helper);
+            });
+            gridHelpers = [];
+        }
+        
+        // Highlight Helper Functions
+        function createTestMesh() {
+            // Clear existing meshes
+            testMeshes.forEach(mesh => highlightScene.remove(mesh));
+            testMeshes = [];
+            
+            // Create a simple cube mesh
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshPhongMaterial({ color: 0x888888 });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            highlightScene.add(mesh);
+            testMeshes.push(mesh);
+        }
+        
+        function highlightVertices() {
+            if (testMeshes.length === 0) {
+                alert('Please create a test mesh first!');
+                return;
+            }
+            
+            clearHighlights();
+            
+            const mesh = testMeshes[0];
+            const selectedIndices = [0, 1, 2, 3, 4, 5, 6, 7]; // All vertices
+            
+            const highlights = ThreeEdit.HighlightVertices(mesh, selectedIndices, {
+                color: 0x00ff00,
+                size: 0.1
+            });
+            
+            highlightScene.add(highlights);
+            highlightHelpers.push(highlights);
+        }
+        
+        function highlightEdges() {
+            if (testMeshes.length === 0) {
+                alert('Please create a test mesh first!');
+                return;
+            }
+            
+            clearHighlights();
+            
+            const mesh = testMeshes[0];
+            const selectedEdges = [
+                { start: 0, end: 1 },
+                { start: 1, end: 2 },
+                { start: 2, end: 3 },
+                { start: 3, end: 0 }
+            ];
+            
+            const highlights = ThreeEdit.HighlightEdges(mesh, selectedEdges, {
+                color: 0x00ff00,
+                lineWidth: 3
+            });
+            
+            highlightScene.add(highlights);
+            highlightHelpers.push(highlights);
+        }
+        
+        function highlightFaces() {
+            if (testMeshes.length === 0) {
+                alert('Please create a test mesh first!');
+                return;
+            }
+            
+            clearHighlights();
+            
+            const mesh = testMeshes[0];
+            const selectedFaces = [0, 1, 2]; // First 3 faces
+            
+            const highlights = ThreeEdit.HighlightFaces(mesh, selectedFaces, {
+                color: 0x00ff00,
+                opacity: 0.3,
+                wireframe: true
+            });
+            
+            highlightScene.add(highlights);
+            highlightHelpers.push(highlights);
+        }
+        
+        function clearHighlights() {
+            highlightHelpers.forEach(helper => {
+                highlightScene.remove(helper);
+                if (helper.userData.type === 'vertex-highlights') {
+                    ThreeEdit.disposeVertexHighlights(helper);
+                } else if (helper.userData.type === 'edge-highlights') {
+                    ThreeEdit.disposeEdgeHighlights(helper);
+                } else if (helper.userData.type === 'face-highlights') {
+                    ThreeEdit.disposeFaceHighlights(helper);
+                }
+            });
+            highlightHelpers = [];
+        }
+        
+        // Overlay Helper Functions
+        function createTestObjects() {
+            // Clear existing objects
+            testMeshes.forEach(mesh => overlayScene.remove(mesh));
+            testMeshes = [];
+            
+            // Create multiple test objects
+            const geometries = [
+                new THREE.BoxGeometry(1, 1, 1),
+                new THREE.SphereGeometry(0.5, 8, 6),
+                new THREE.CylinderGeometry(0.3, 0.3, 1, 8)
+            ];
+            
+            const positions = [
+                new THREE.Vector3(-2, 0, 0),
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(2, 0, 0)
+            ];
+            
+            geometries.forEach((geometry, index) => {
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x888888,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.copy(positions[index]);
+                overlayScene.add(mesh);
+                testMeshes.push(mesh);
+            });
+        }
+        
+        function showBoundingBox() {
+            if (testMeshes.length === 0) {
+                alert('Please create test objects first!');
+                return;
+            }
+            
+            clearOverlays();
+            
+            const boundingBox = ThreeEdit.createMultiObjectBoundingBoxHelper(testMeshes, {
+                color: 0x00ff00,
+                opacity: 0.8,
+                showCenter: true
+            });
+            
+            overlayScene.add(boundingBox);
+            overlayHelpers.push(boundingBox);
+        }
+        
+        function clearOverlays() {
+            overlayHelpers.forEach(helper => {
+                overlayScene.remove(helper);
+                ThreeEdit.disposeBoundingBoxHelper(helper);
+            });
+            overlayHelpers = [];
+        }
+        
+        // Control event listeners
+        document.getElementById('gridSize').addEventListener('input', function() {
+            document.getElementById('gridSizeValue').textContent = this.value;
+            if (gridHelpers.length > 0 && gridHelpers[0].userData.type === 'grid-3d') {
+                toggle3DGrid(); // Recreate grid with new size
+            }
+        });
+        
+        document.getElementById('gridDivisions').addEventListener('input', function() {
+            document.getElementById('gridDivisionsValue').textContent = this.value;
+            if (gridHelpers.length > 0 && gridHelpers[0].userData.type === 'grid-3d') {
+                toggle3DGrid(); // Recreate grid with new divisions
+            }
+        });
+        
+        document.getElementById('gridColor').addEventListener('input', function() {
+            if (gridHelpers.length > 0 && gridHelpers[0].userData.type === 'grid-3d') {
+                toggle3DGrid(); // Recreate grid with new color
+            }
+        });
+        
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            console.log('🚀 Three-Edit Visuals Demo loaded!');
+            console.log('Available visual helpers:', Object.keys(ThreeEdit).filter(key => 
+                key.includes('Grid') || key.includes('Highlight') || key.includes('BoundingBox') || key.includes('Axis')
+            ));
+            
+            initViewports();
+        });
+    </script>
+</body>
+</html> 

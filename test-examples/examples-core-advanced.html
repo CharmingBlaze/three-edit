@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three-edit Core Advanced Examples</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: #ffffff;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    #controls {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      background-color: rgba(0,0,0,0.7);
+      padding: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .back-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">three-edit Core Advanced Examples</div>
+  <a href="index.html" class="back-button button">Back to Index</a>
+  <div id="controls">
+    <button id="test-topology">Topology Operations</button>
+    <button id="test-history">History/Undo</button>
+    <button id="test-query">Mesh Queries</button>
+    <button id="test-all">Show All</button>
+  </div>
+  
+  <script src="../browser/three-edit.js"></script>
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+  </script>
+  
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import * as CommonUtils from './common-utils.js';
+    // Set up scene using common-utils.js
+    const { scene, camera, renderer } = CommonUtils.setupScene();
+    
+    // Add controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+    
+    // Add grid helper
+    const gridHelper = new THREE.GridHelper(10, 10);
+    scene.add(gridHelper);
+    
+    // Clear existing meshes
+    function clearMeshes() {
+      const toRemove = [];
+      scene.children.forEach(child => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.Object3D) {
+          if (!(child instanceof THREE.GridHelper) && 
+              !(child instanceof THREE.DirectionalLight) && 
+              !(child instanceof THREE.AmbientLight)) {
+            toRemove.push(child);
+          }
+        }
+      });
+      
+      toRemove.forEach(obj => scene.remove(obj));
+    }
+    
+    // Create and add mesh to scene
+    function createAndAddMesh(editableMesh, color, position) {
+      try {
+        // Convert to Three.js BufferGeometry
+        const geometry = window.threeEdit.conversion ? 
+          window.threeEdit.conversion.toBufferGeometry(editableMesh) : 
+          convertToBufferGeometry(editableMesh);
+        
+        const material = new THREE.MeshStandardMaterial({ 
+          color: color,
+          side: THREE.DoubleSide
+        });
+        
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          wireframe: true
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        if (position) {
+          mesh.position.copy(position);
+        }
+        scene.add(mesh);
+        
+        const wireframe = new THREE.Mesh(geometry.clone(), wireframeMaterial);
+        if (position) {
+          wireframe.position.copy(position);
+        }
+        scene.add(wireframe);
+        
+        return mesh;
+      } catch (error) {
+        console.error("Error creating mesh:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+        return null;
+      }
+    }
+    
+    // Helper function to visualize vertices
+    function visualizeVertices(mesh, color, position) {
+      CommonUtils.visualizeVertices(scene, mesh, color || 0x00ff00, position);
+    }
+    
+    // Helper function to visualize edges
+    function visualizeEdges(mesh, color, position) {
+      CommonUtils.visualizeEdges(scene, mesh, color || 0xff0000, position);
+    }
+    
+    // Fallback conversion function in case window.threeEdit.conversion is not available
+    function convertToBufferGeometry(editableMesh) {
+      console.log('Using fallback conversion function');
+      const geometry = new THREE.BufferGeometry();
+      
+      // Extract vertices
+      const vertices = [];
+      editableMesh.vertices.forEach(vertex => {
+        vertices.push(vertex.x, vertex.y, vertex.z);
+      });
+      
+      // Extract faces (indices)
+      const indices = [];
+      editableMesh.faces.forEach(face => {
+        if (face.vertexIds.length === 3) {
+          // Triangle
+          indices.push(face.vertexIds[0], face.vertexIds[1], face.vertexIds[2]);
+        } else if (face.vertexIds.length === 4) {
+          // Quad - split into two triangles
+          indices.push(
+            face.vertexIds[0], face.vertexIds[1], face.vertexIds[2],
+            face.vertexIds[0], face.vertexIds[2], face.vertexIds[3]
+          );
+        }
+      });
+      
+      // Set attributes
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      
+      return geometry;
+    }
+
+    // Test Topology Operations
+    document.getElementById('test-topology').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing Topology Operations...");
+        if (window.threeEdit && window.threeEdit.core && window.threeEdit.topology) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Create a copy for modification
+          const modifiedCube = window.threeEdit.core.cloneMesh(cube);
+          
+          // Perform a topology operation - for example, split an edge
+          const edgeToSplit = modifiedCube.edges[0]; // Get the first edge
+          const splitResult = window.threeEdit.topology.splitEdge(modifiedCube, edgeToSplit.id, 0.5);
+          
+          // Log the result
+          console.log("Edge split result:", {
+            newVertexId: splitResult.newVertexId,
+            newEdgeIds: splitResult.newEdgeIds
+          });
+          
+          // Display both meshes for comparison
+          CommonUtils.createAndAddMesh(scene, cube, 0xff0000, new THREE.Vector3(-1.5, 0, 0));
+          CommonUtils.createAndAddMesh(scene, modifiedCube, 0x00ff00, new THREE.Vector3(1.5, 0, 0));
+          
+          // Visualize the new vertex
+          if (splitResult && splitResult.newVertexId !== undefined) {
+            const newVertex = modifiedCube.vertices[splitResult.newVertexId];
+            const sphereGeom = new THREE.SphereGeometry(0.1, 16, 16);
+            const sphereMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            const sphere = new THREE.Mesh(sphereGeom, sphereMat);
+            sphere.position.set(newVertex.x, newVertex.y, newVertex.z);
+            sphere.position.add(new THREE.Vector3(1.5, 0, 0));
+            scene.add(sphere);
+          }
+          
+          document.getElementById('info').textContent = 'Topology Operations Example - Edge Split';
+        } else {
+          console.error("threeEdit.topology not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.topology not found';
+        }
+      } catch (error) {
+        console.error("Error in test-topology:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test History/Undo
+    document.getElementById('test-history').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing History/Undo...");
+        if (window.threeEdit && window.threeEdit.core && window.threeEdit.history) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Create a history manager
+          const historyManager = new window.threeEdit.history.HistoryManager(cube);
+          
+          // Make some changes and record them
+          historyManager.startOperation('Move Vertex');
+          const vertex = cube.vertices[0]; // Get the first vertex
+          const originalPosition = { x: vertex.x, y: vertex.y, z: vertex.z };
+          vertex.x += 0.5;
+          vertex.y += 0.5;
+          historyManager.endOperation();
+          
+          // Display the modified mesh
+          const modifiedMesh = createAndAddMesh(cube, 0x00ff00, new THREE.Vector3(0, 0, 0));
+          
+          // Add buttons for undo/redo
+          const undoButton = document.createElement('button');
+          undoButton.textContent = 'Undo';
+          undoButton.onclick = () => {
+            if (historyManager.canUndo()) {
+              historyManager.undo();
+              // Update the mesh visualization
+              scene.remove(modifiedMesh);
+              CommonUtils.createAndAddMesh(scene, cube, 0xff0000, new THREE.Vector3(0, 0, 0));
+              document.getElementById('info').textContent = 'History Example - Undone';
+            }
+          };
+          document.getElementById('controls').appendChild(undoButton);
+          
+          const redoButton = document.createElement('button');
+          redoButton.textContent = 'Redo';
+          redoButton.onclick = () => {
+            if (historyManager.canRedo()) {
+              historyManager.redo();
+              // Update the mesh visualization
+              scene.remove(modifiedMesh);
+              CommonUtils.createAndAddMesh(scene, cube, 0x00ff00, new THREE.Vector3(0, 0, 0));
+              document.getElementById('info').textContent = 'History Example - Redone';
+            }
+          };
+          document.getElementById('controls').appendChild(redoButton);
+          
+          document.getElementById('info').textContent = 'History/Undo Example - Try Undo/Redo';
+        } else {
+          console.error("threeEdit.history not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.history not found';
+        }
+      } catch (error) {
+        console.error("Error in test-history:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test Mesh Queries
+    document.getElementById('test-query').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing Mesh Queries...");
+        if (window.threeEdit && window.threeEdit.core && window.threeEdit.query) {
+          // Create a cube as base mesh
+          const cube = window.threeEdit.primitives.createCube({ 
+            width: 1, 
+            height: 1,
+            depth: 1
+          });
+          
+          // Display the mesh
+          CommonUtils.createAndAddMesh(scene, cube, 0x888888);
+          
+          // Perform some queries
+          
+          // 1. Find adjacent vertices to a vertex
+          const vertexId = 0;
+          const adjacentVertices = window.threeEdit.query.findAdjacentVertices(cube, vertexId);
+          console.log(`Adjacent vertices to vertex ${vertexId}:`, adjacentVertices);
+          
+          // Visualize the query vertex
+          const queryVertex = cube.vertices[vertexId];
+          const querySphere = new THREE.Mesh(
+            new THREE.SphereGeometry(0.1, 16, 16),
+            new THREE.MeshBasicMaterial({ color: 0xff0000 })
+          );
+          querySphere.position.set(queryVertex.x, queryVertex.y, queryVertex.z);
+          scene.add(querySphere);
+          
+          // Visualize the adjacent vertices
+          adjacentVertices.forEach(adjId => {
+            const adjVertex = cube.vertices[adjId];
+            const adjSphere = new THREE.Mesh(
+              new THREE.SphereGeometry(0.08, 16, 16),
+              new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+            );
+            adjSphere.position.set(adjVertex.x, adjVertex.y, adjVertex.z);
+            scene.add(adjSphere);
+            
+            // Draw a line connecting them
+            const lineGeom = new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(queryVertex.x, queryVertex.y, queryVertex.z),
+              new THREE.Vector3(adjVertex.x, adjVertex.y, adjVertex.z)
+            ]);
+            const line = new THREE.Line(
+              lineGeom,
+              new THREE.LineBasicMaterial({ color: 0xffff00 })
+            );
+            scene.add(line);
+          });
+          
+          // 2. Find faces connected to a vertex
+          const connectedFaces = window.threeEdit.query.findConnectedFaces(cube, vertexId);
+          console.log(`Faces connected to vertex ${vertexId}:`, connectedFaces);
+          
+          document.getElementById('info').textContent = 'Mesh Query Example - Adjacent Vertices';
+        } else {
+          console.error("threeEdit.query not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.query not found';
+        }
+      } catch (error) {
+        console.error("Error in test-query:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Test all
+    document.getElementById('test-all').addEventListener('click', () => {
+      CommonUtils.clearMeshes(scene);
+      try {
+        console.log("Testing all advanced core features...");
+        if (window.threeEdit && window.threeEdit.core) {
+          const spacing = 2.5;
+          
+          // Topology example - edge split
+          if (window.threeEdit.topology) {
+            const cube1 = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+            const modifiedCube1 = window.threeEdit.core.cloneMesh(cube1);
+            
+            // Split an edge
+            const edgeToSplit = modifiedCube1.edges[0];
+            const splitResult = window.threeEdit.topology.splitEdge(modifiedCube1, edgeToSplit.id, 0.5);
+            
+            CommonUtils.createAndAddMesh(scene, modifiedCube1, 0xff0000, new THREE.Vector3(-spacing, 0, -spacing));
+            
+            // Highlight the new vertex
+            if (splitResult && splitResult.newVertexId !== undefined) {
+              const newVertex = modifiedCube1.vertices[splitResult.newVertexId];
+              const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.1, 16, 16),
+                new THREE.MeshBasicMaterial({ color: 0xffff00 })
+              );
+              sphere.position.set(
+                newVertex.x - spacing, 
+                newVertex.y, 
+                newVertex.z - spacing
+              );
+              scene.add(sphere);
+            }
+          }
+          
+          // Query example - adjacent vertices
+          if (window.threeEdit.query) {
+            const cube2 = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+            CommonUtils.createAndAddMesh(scene, cube2, 0x00ff00, new THREE.Vector3(spacing, 0, -spacing));
+            
+            // Find adjacent vertices
+            const vertexId = 0;
+            const adjacentVertices = window.threeEdit.query.findAdjacentVertices(cube2, vertexId);
+            
+            // Highlight the query vertex
+            const queryVertex = cube2.vertices[vertexId];
+            const querySphere = new THREE.Mesh(
+              new THREE.SphereGeometry(0.1, 16, 16),
+              new THREE.MeshBasicMaterial({ color: 0xff0000 })
+            );
+            querySphere.position.set(
+              queryVertex.x + spacing, 
+              queryVertex.y, 
+              queryVertex.z - spacing
+            );
+            scene.add(querySphere);
+          }
+          
+          // History example
+          if (window.threeEdit.history) {
+            const cube3 = window.threeEdit.primitives.createCube({ width: 1, height: 1, depth: 1 });
+            
+            // Move a vertex
+            const vertex = cube3.vertices[0];
+            vertex.y += 0.5;
+            
+            CommonUtils.createAndAddMesh(scene, cube3, 0x0000ff, new THREE.Vector3(0, 0, spacing));
+          }
+          
+          document.getElementById('info').textContent = 'All Advanced Core Examples';
+        } else {
+          console.error("threeEdit.core not found");
+          document.getElementById('info').textContent = 'Error: threeEdit.core not found';
+        }
+      } catch (error) {
+        console.error("Error in test-all:", error);
+        document.getElementById('info').textContent = 'Error: ' + error.message;
+      }
+    });
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Check if three-edit is loaded
+    window.addEventListener('load', () => {
+      console.log('Window loaded, checking for three-edit...');
+      console.log('window.threeEdit:', window.threeEdit);
+      
+      if (window.threeEdit) {
+        console.log('three-edit library loaded successfully!');
+        console.log('Available modules:', Object.keys(window.threeEdit));
+        document.getElementById('info').textContent = 'three-edit loaded! Click a test button to begin.';
+        
+        // Auto-run the test-all function to show something immediately
+        setTimeout(() => {
+          document.getElementById('test-all').click();
+        }, 500);
+      } else {
+        console.error('three-edit library not found!');
+        document.getElementById('info').textContent = 'Error: three-edit library not found! Check console for details.';
+      }
+    });
+  </script>
+</body>
+</html>

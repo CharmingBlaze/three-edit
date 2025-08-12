@@ -1,5 +1,5 @@
 import { Vector3, Box3 } from 'three';
-import { EditableMesh, Vertex, Face } from '../../core/index.ts';
+import { EditableMesh, Vertex, Face } from '../../core/index';
 import { OctreeNode, OctreeOptions, BoundingBox } from './types';
 
 /**

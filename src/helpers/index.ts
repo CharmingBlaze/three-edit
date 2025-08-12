@@ -78,13 +78,18 @@ export {
   createFacesFromGrid
 } from './geometry/face-operations';
 
-// Primitive creation helpers - NEW MODULAR SYSTEM
+// Primitive creation helpers - MODULAR SYSTEM (no naming conflicts)
 export * from './primitives/types';
 export * from './primitives/geometry-builders';
 export * from './primitives/transform-helpers';
-export * from './primitives/basic-shapes';
-export * from './primitives/complex-shapes';
-export * from './primitives/parametric-shapes';
+
+// Note: Individual primitive helper modules are available for import:
+// - primitives/vertex-generators: createVertex, createGridVertices, etc.
+// - primitives/face-generators: createFace, createGridFaces, etc.  
+// - primitives/uv-generators: generateUVs, generatePlanarUVs, etc.
+// - primitives/basic-shapes: createCubeHelper, createSphereHelper, etc.
+// - primitives/complex-shapes: createTorusKnotHelper, createMobiusStripHelper, etc.
+// - primitives/parametric-shapes: createParametricSurface, createKleinBottle, etc.
 
 // Note: Individual primitive helper modules are available for import:
 // - primitives/vertex-generators: createVertex, createGridVertices, etc.
@@ -100,10 +105,11 @@ export * from './validation';
 // Note: mesh.ts exports are included in validation.ts, so we don't need to export mesh separately
 export * from './debug';
 
-// Editor helper modules
-export * from './highlight';
-export * from './grid';
-export * from './overlay';
+// Editor helper modules - MOVED TO VISUALS SYSTEM
+// These modules have been refactored into the new modular visuals system:
+// - highlight.ts -> src/visuals/highlights/
+// - grid.ts -> src/visuals/grids/  
+// - overlay.ts -> src/visuals/overlays/
 
 // Shared interfaces and types
 export interface HelperOptions {

@@ -1,7 +1,8 @@
 import { Matrix4, Vector3 } from 'three';
-import { Vertex } from './Vertex.ts';
-import { Edge } from './Edge.ts';
-import { Face } from './Face.ts';
+import { Vertex } from './Vertex';
+import { Edge } from './Edge';
+import { Face } from './Face';
+import { UserData, EditableMeshOptions } from '../types/core';
 
 /**
  * @class EditableMesh
@@ -42,28 +43,15 @@ export class EditableMesh {
   matrix: Matrix4;
   
   /** 
-   * @property {Record<string, any>} userData - A flexible object for storing custom data.
+   * @property {UserData} userData - A flexible object for storing custom data.
    */
-  userData: Record<string, any> = {};
+  userData: UserData = {};
   
   /**
    * Creates a new EditableMesh instance.
-   * @param {object} [options={}] - Optional parameters for initializing the mesh.
-   * @param {string} [options.id] - A unique identifier. If not provided, one will be generated.
-   * @param {string} [options.name='EditableMesh'] - A name for the mesh.
-   * @param {Vertex[]} [options.vertices=[]] - An initial array of vertices.
-   * @param {Edge[]} [options.edges=[]] - An initial array of edges.
-   * @param {Face[]} [options.faces=[]] - An initial array of faces.
-   * @param {Matrix4} [options.matrix] - An initial transformation matrix.
+   * @param options - Optional parameters for initializing the mesh.
    */
-  constructor(options: {
-    id?: string;
-    name?: string;
-    vertices?: Vertex[];
-    edges?: Edge[];
-    faces?: Face[];
-    matrix?: Matrix4;
-  } = {}) {
+  constructor(options: EditableMeshOptions = {}) {
     this.id = options.id || crypto.randomUUID();
     this.name = options.name || 'EditableMesh';
     this.vertices = options.vertices || [];

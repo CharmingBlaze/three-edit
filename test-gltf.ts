@@ -1,5 +1,5 @@
-import { exportGLTF } from './src/io/gltf.ts';
-import { createCube } from './src/primitives/createCube.ts';
+import { exportGLTF } from './src/io/gltf';
+import { createCube } from './src/primitives/createCube';
 
 const mesh = createCube();
 const gltf = exportGLTF(mesh);

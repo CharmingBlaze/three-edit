@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Edit - Simple Modern Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        #viewport {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 4px;
+            position: relative;
+        }
+        
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status.error {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status.info {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .primitives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .primitive-card {
+            background: #333;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .primitive-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .primitive-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .primitive-desc {
+            font-size: 12px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Three-Edit - Simple Modern Demo</h1>
+        
+        <div class="demo-section">
+            <h2>Easy to Use - Just One Script Tag!</h2>
+            <p>This demo shows how simple it should be to use our library. No complex loading, no dependencies to manage.</p>
+            
+            <div class="controls">
+                <button onclick="createCube()">Create Cube</button>
+                <button onclick="createSphere()">Create Sphere</button>
+                <button onclick="createCylinder()">Create Cylinder</button>
+                <button onclick="createPlane()">Create Plane</button>
+                <button onclick="createAll()">Create All</button>
+                <button onclick="clearScene()">Clear Scene</button>
+            </div>
+            
+            <div id="viewport"></div>
+            <div id="status" class="status info">Ready to create primitives!</div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>Available Primitives</h2>
+            <div class="primitives-grid">
+                <div class="primitive-card">
+                    <div class="primitive-icon">🧱</div>
+                    <div class="primitive-name">Cube</div>
+                    <div class="primitive-desc">Basic 3D cube with customizable dimensions</div>
+                </div>
+                <div class="primitive-card">
+                    <div class="primitive-icon">🔵</div>
+                    <div class="primitive-name">Sphere</div>
+                    <div class="primitive-desc">Smooth sphere with configurable segments</div>
+                </div>
+                <div class="primitive-card">
+                    <div class="primitive-icon">🔘</div>
+                    <div class="primitive-name">Cylinder</div>
+                    <div class="primitive-desc">3D cylinder with height and radius options</div>
+                </div>
+                <div class="primitive-card">
+                    <div class="primitive-icon">⬜</div>
+                    <div class="primitive-name">Plane</div>
+                    <div class="primitive-desc">Flat plane with width and height</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple loading - just one script tag! -->
+    <script src="../browser/three-edit.browser.iife.js"></script>
+    <script>
+        // ThreeEdit is available globally - it's that simple!
+        
+        // Global variables
+        let scene, camera, renderer, controls;
+        let objects = [];
+        
+        // Initialize the demo
+        function init() {
+            console.log('🚀 Three-Edit loaded successfully!');
+            console.log('Available functions:', Object.keys(ThreeEdit));
+            
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 5);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(800, 400);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Add to viewport
+            const viewport = document.getElementById('viewport');
+            viewport.appendChild(renderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            // Add OrbitControls
+            if (typeof THREE.OrbitControls !== 'undefined') {
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+            }
+            
+            // Start animation
+            animate();
+            
+            updateStatus('✅ Demo ready! Click any button to create primitives.', 'success');
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (controls) {
+                controls.update();
+            }
+            
+            // Rotate objects
+            objects.forEach((obj, index) => {
+                obj.rotation.y += 0.01;
+                obj.rotation.x += 0.005;
+            });
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Create primitives
+        function createCube() {
+            try {
+                const editableMesh = ThreeEdit.createCube({ width: 1, height: 1, depth: 1 });
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                const material = new THREE.MeshPhongMaterial({ color: 0x4CAF50 });
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                mesh.position.set(-2, 0, 0);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
+                scene.add(mesh);
+                objects.push(mesh);
+                
+                updateStatus('✅ Cube created successfully!', 'success');
+            } catch (error) {
+                updateStatus(`❌ Error creating cube: ${error.message}`, 'error');
+            }
+        }
+        
+        function createSphere() {
+            try {
+                const editableMesh = ThreeEdit.createSphere({ radius: 0.5, segments: 16, rings: 12 });
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                const material = new THREE.MeshPhongMaterial({ color: 0x2196F3 });
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                mesh.position.set(0, 0, 0);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
+                scene.add(mesh);
+                objects.push(mesh);
+                
+                updateStatus('✅ Sphere created successfully!', 'success');
+            } catch (error) {
+                updateStatus(`❌ Error creating sphere: ${error.message}`, 'error');
+            }
+        }
+        
+        function createCylinder() {
+            try {
+                const editableMesh = ThreeEdit.createCylinder({ radius: 0.5, height: 1, segments: 16 });
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                const material = new THREE.MeshPhongMaterial({ color: 0xFF9800 });
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                mesh.position.set(2, 0, 0);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
+                scene.add(mesh);
+                objects.push(mesh);
+                
+                updateStatus('✅ Cylinder created successfully!', 'success');
+            } catch (error) {
+                updateStatus(`❌ Error creating cylinder: ${error.message}`, 'error');
+            }
+        }
+        
+        function createPlane() {
+            try {
+                const editableMesh = ThreeEdit.createPlane({ width: 2, height: 2, widthSegments: 2, heightSegments: 2 });
+                const geometry = ThreeEdit.toBufferGeometry(editableMesh);
+                const material = new THREE.MeshPhongMaterial({ color: 0x607D8B });
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                mesh.position.set(0, -2, 0);
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.receiveShadow = true;
+                
+                scene.add(mesh);
+                objects.push(mesh);
+                
+                updateStatus('✅ Plane created successfully!', 'success');
+            } catch (error) {
+                updateStatus(`❌ Error creating plane: ${error.message}`, 'error');
+            }
+        }
+        
+        function createAll() {
+            clearScene();
+            createCube();
+            createSphere();
+            createCylinder();
+            createPlane();
+            updateStatus('✅ All primitives created!', 'success');
+        }
+        
+        function clearScene() {
+            objects.forEach(obj => {
+                scene.remove(obj);
+                obj.geometry.dispose();
+                obj.material.dispose();
+            });
+            objects = [];
+            updateStatus('🗑️ Scene cleared!', 'info');
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        // Make functions global for button clicks
+        window.createCube = createCube;
+        window.createSphere = createSphere;
+        window.createCylinder = createCylinder;
+        window.createPlane = createPlane;
+        window.createAll = createAll;
+        window.clearScene = clearScene;
+        
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html> 
