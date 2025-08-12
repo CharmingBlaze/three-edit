@@ -411,15 +411,15 @@ function onPointerMove(e: PointerEvent){
     .addScaledVector(viewUpOrtho, delta[1]);
 
   if (mode === "vertex") {
-    const verts = Array.from(selVerts);
-    const cmd = new ops.TranslateCommand(verts, [worldDelta.x, worldDelta.y, worldDelta.z]);
-    cmd.do({ mesh: editable } as any);
+    const verts = selectionEasy.getVerticesForEdit(editable);
+    if (verts.length){
+      easy.applyTranslate(verts as any, worldDelta as any, meshObj, editable);
+    }
   } else if (mode === "object") {
     const V = editable.vertices(); const allV: number[] = [];
     for (let i=0;i<V.length;i++){ if (V[i]) allV.push(i); }
     if (allV.length){
-      const cmd = new ops.TranslateCommand(allV, [worldDelta.x, worldDelta.y, worldDelta.z]);
-      cmd.do({ mesh: editable } as any);
+      easy.applyTranslate(allV as any, worldDelta as any, meshObj, editable);
     }
   }
   rebuildThree();
@@ -478,7 +478,7 @@ function closestEdgeOfHit(hit: PickResult){
   return far; // map to corner index as representative
 }
 
-function prevOf(mesh: core.topology.EditableMesh, he: number){
+function prevOf(mesh: any, he: number){
   const HE = mesh.halfEdges();
   let cur = he; for (let i=0; i<HE.length; i++) { const n = HE[cur]!.next; if (n === he) return cur; cur = n; }
   return he;
@@ -491,19 +491,7 @@ function updateOverlays(){
   updateFacesOverlay();
 }
 
-function syncSelectionToEasy(){
-  selectionEasy.setMode(mode as any);
-  selectionEasy.clear();
-  if (mode === 'object'){
-    selectionEasy.objectSelected = objectSelected;
-  } else if (mode === 'vertex'){
-    for (const v of selVerts) selectionEasy.verts.add(v);
-  } else if (mode === 'edge'){
-    for (const k of selEdges) selectionEasy.edges.add(k);
-  } else if (mode === 'face'){
-    for (const f of selFaces) selectionEasy.faces.add(f);
-  }
-}
+// removed legacy syncSelectionToEasy()
 
 function updateVertsOverlay(){
   Overlays.showVerts(Array.from(selectionEasy.verts), editable, scene, { color: 0x33ccff, size: 6 });
