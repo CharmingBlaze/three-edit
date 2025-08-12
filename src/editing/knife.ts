@@ -212,16 +212,12 @@ function processCutLine(
 ): KnifeResult {
   const { createVertices, splitFaces, tolerance, preserveMaterials, createEdges, fillHoles } = options;
 
-  console.log('processCutLine called with options:', { createVertices, splitFaces, tolerance, preserveMaterials, createEdges, fillHoles });
-
   let verticesCreated = 0;
   let edgesCreated = 0;
   let facesSplit = 0;
 
   // Find intersections with faces
   const intersections = findFaceIntersections(mesh, cutLine, tolerance);
-
-  console.log('Found intersections:', intersections.length);
 
   // Create vertices at intersection points only if requested
   const newVertexIndices: number[] = [];
@@ -232,7 +228,6 @@ function processCutLine(
     const isWithinBounds = isCutLineWithinBounds(cutLine, meshBounds, tolerance);
     
     if (!isWithinBounds) {
-      console.log('Cut line is outside mesh bounds, skipping vertex creation');
       return {
         success: true,
         verticesCreated: 0,
@@ -241,21 +236,17 @@ function processCutLine(
       };
     }
     if (intersections.length > 0) {
-      console.log('Creating vertices at', intersections.length, 'intersection points');
       for (const intersection of intersections) {
         const vertexIndex = createVertexAtPosition(mesh, intersection.position);
         newVertexIndices.push(vertexIndex);
         verticesCreated++;
-        console.log('Created vertex at', intersection.position, 'with index', vertexIndex);
       }
     } else {
         // For circular cuts or when no intersections are found, create vertices at start and end points
-  console.log('No intersections found, creating vertices at start and end points');
   const startVertexIndex = createVertexAtPosition(mesh, cutLine.start);
   const endVertexIndex = createVertexAtPosition(mesh, cutLine.end);
   newVertexIndices.push(startVertexIndex, endVertexIndex);
   verticesCreated += 2;
-  console.log('Created vertices at start', cutLine.start, 'and end', cutLine.end);
   
   // For circular cuts, also create a vertex at the midpoint if the line is very short
   const lineLength = cutLine.start.distanceTo(cutLine.end);
@@ -264,96 +255,42 @@ function processCutLine(
     const midVertexIndex = createVertexAtPosition(mesh, midPoint);
     newVertexIndices.push(midVertexIndex);
     verticesCreated++;
-    console.log('Created vertex at midpoint', midPoint, 'for short line segment');
   }
     }
-  } else {
-    console.log('createVertices is false, skipping vertex creation');
   }
 
   // Split faces that intersect with the cut line only if requested
   if (splitFaces) {
     if (intersections.length > 0) {
-      console.log('Splitting faces at', intersections.length, 'intersection points');
       for (let i = 0; i < intersections.length; i++) {
         const intersection = intersections[i];
-        const faceIndex = intersection.faceIndex;
-        
-        console.log('Splitting face', faceIndex, 'at intersection', i);
-        
-        if (faceIndex >= 0 && faceIndex < mesh.faces.length) {
-          const splitResult = splitFaceAtIntersection(
-            mesh,
-            faceIndex,
-            intersection,
-            newVertexIndices[i],
-            preserveMaterials
-          );
+        if (intersection) {
+          const faceIndex = intersection.faceIndex;
           
-          console.log('Split result for face', faceIndex, ':', splitResult);
-          
-          if (splitResult.success) {
-            facesSplit += splitResult.facesCreated;
-          }
-        } else {
-          console.log('Invalid face index:', faceIndex, 'mesh has', mesh.faces.length, 'faces');
-        }
-      }
-    } else {
-      // For circular cuts or when no intersections are found, try to split faces near the cut line
-      console.log('No intersections found, attempting to split faces near cut line');
-      const cutLineCenter = new Vector3().addVectors(cutLine.start, cutLine.end).multiplyScalar(0.5);
-      const cutLineRadius = cutLine.start.distanceTo(cutLine.end) * 0.5;
-      
-      for (let faceIndex = 0; faceIndex < mesh.faces.length; faceIndex++) {
-        const face = mesh.faces[faceIndex];
-        const faceCenter = new Vector3();
-        
-        // Calculate face center
-        for (const vertexIndex of face.vertices) {
-          const vertex = mesh.vertices[vertexIndex];
-          faceCenter.add(new Vector3(vertex.x, vertex.y, vertex.z));
-        }
-        faceCenter.divideScalar(face.vertices.length);
-        
-        // Check if face is near the cut line
-        const distance = faceCenter.distanceTo(cutLineCenter);
-        if (distance <= cutLineRadius * 2) {
-          console.log('Face', faceIndex, 'is near cut line, attempting to split');
-          // Create a dummy intersection for this face
-          const dummyIntersection: IntersectionPoint = {
-            position: cutLineCenter,
-            faceIndex,
-            edgeIndices: [],
-            parameter: 0.5
-          };
-          
-          const splitResult = splitFaceAtIntersection(
-            mesh,
-            faceIndex,
-            dummyIntersection,
-            newVertexIndices[0] || 0,
-            preserveMaterials
-          );
-          
-          if (splitResult.success) {
-            facesSplit += splitResult.facesCreated;
+          if (faceIndex >= 0 && faceIndex < mesh.faces.length) {
+            const splitResult = splitFaceAtIntersection(
+              mesh,
+              faceIndex,
+              intersection,
+              newVertexIndices[i] || 0,
+              preserveMaterials
+            );
+            
+            if (splitResult.success) {
+              facesSplit += splitResult.facesCreated;
+            }
           }
         }
       }
     }
-  } else {
-    console.log('splitFaces is false, skipping face splitting');
   }
 
   // Create edges along the cut line only if requested
   if (createEdges && createVertices && newVertexIndices.length >= 2) {
-    console.log('Creating edges between', newVertexIndices.length, 'vertices');
     for (let i = 0; i < newVertexIndices.length - 1; i++) {
       const edgeIndex = createEdge(mesh, newVertexIndices[i], newVertexIndices[i + 1]);
       if (edgeIndex >= 0) {
         edgesCreated++;
-        console.log('Created edge between vertices', newVertexIndices[i], 'and', newVertexIndices[i + 1], 'with index', edgeIndex);
       }
     }
   }
@@ -362,12 +299,9 @@ function processCutLine(
   if (fillHoles && createVertices && splitFaces) {
     const holesFilled = fillHolesCreatedByCut(mesh, newVertexIndices, tolerance);
     facesSplit += holesFilled;
-    console.log('Filled', holesFilled, 'holes');
   } else if (fillHoles && createVertices && !splitFaces) {
-    console.log('Skipping hole filling because splitFaces is false');
+    // No hole filling if splitFaces is false
   }
-
-  console.log('processCutLine result:', { verticesCreated, edgesCreated, facesSplit });
 
   return {
     success: true,
@@ -478,9 +412,6 @@ function findEdgeIntersections(
       continue; // No intersection possible
     }
 
-    // Debug: print edge and cut line being checked
-    console.log('Checking edge', edgeIndex, 'from', v1, 'to', v2, 'against cut line', cutLine.start, cutLine.end);
-    
     const intersection = lineLineIntersection(
       cutLine,
       { start: new Vector3(v1.x, v1.y, v1.z), end: new Vector3(v2.x, v2.y, v2.z) },
@@ -488,7 +419,6 @@ function findEdgeIntersections(
     );
     
     if (intersection) {
-      console.log('Intersection found at', intersection.position, 'on edge', edgeIndex);
       intersections.push({
         position: intersection.position,
         edgeIndex,
