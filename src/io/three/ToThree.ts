@@ -193,3 +193,108 @@ export function toThreeBufferGeometry(mesh: EditableMesh, policy: TriangulationP
   g.computeBoundingBox(); g.computeBoundingSphere(); g.computeVertexNormals();
   return g;
 }
+
+/**
+ * Build a non-indexed THREE.BufferGeometry plus mapping data for picking.
+ * Mapping arrays align with THREE's triangle indices:
+ * - triFaces[t] -> source face id for triangle t
+ * - triCornerHEs[t] -> tuple [he0, he1, he2] for the triangle's three corners (same order as emitted vertices)
+ */
+export function toThreeWithMapping(
+  mesh: EditableMesh,
+  policy: TriangulationPolicy = DefaultTriangulation
+): {
+  geometry: THREE.BufferGeometry;
+  triFaces: number[];
+  triCornerHEs: Array<[number, number, number]>;
+} {
+  const g = new THREE.BufferGeometry();
+  const faces = mesh.faces();
+  const hes = mesh.halfEdges();
+  const posOut: number[] = [];
+  const uvOut: number[] = [];
+  const triFaces: number[] = [];
+  const triCornerHEs: Array<[number, number, number]> = [];
+
+  const pushCorner = (vIndex: number, heIndex: number) => {
+    const p = mesh.position.get(vIndex)!;
+    posOut.push(p[0]!, p[1]!, p[2]!);
+    const uv = mesh.uv0.get(heIndex) ?? [0, 0];
+    uvOut.push(uv[0]!, uv[1]!);
+  };
+
+  const pushTriByVerts = (
+    loop: Array<{ v: number; he: number }>,
+    a: number,
+    b: number,
+    c: number,
+    faceId: number
+  ) => {
+    const ca = loop.find((ci) => ci.v === a)!;
+    const cb = loop.find((ci) => ci.v === b)!;
+    const cc = loop.find((ci) => ci.v === c)!;
+    pushCorner(ca.v, ca.he);
+    pushCorner(cb.v, cb.he);
+    pushCorner(cc.v, cc.he);
+    triFaces.push(faceId);
+    triCornerHEs.push([ca.he, cb.he, cc.he]);
+  };
+
+  for (let f = 0; f < faces.length; f++) {
+    const face = faces[f];
+    if (!face) continue;
+    // Build face loop
+    const loop: Array<{ v: number; he: number }> = [];
+    let he = face.he;
+    let sides = 0;
+    do {
+      loop.push({ v: hes[he]!.v, he });
+      he = hes[he]!.next;
+      sides++;
+    } while (he !== face.he && sides < 100000); // basic guard
+
+    if (sides === 3) {
+      // Emit in cycle order
+      pushCorner(loop[0]!.v, loop[0]!.he);
+      pushCorner(loop[1]!.v, loop[1]!.he);
+      pushCorner(loop[2]!.v, loop[2]!.he);
+      triFaces.push(f);
+      triCornerHEs.push([loop[0]!.he, loop[1]!.he, loop[2]!.he]);
+    } else if (sides === 4) {
+      // Pick diagonal using same policy as toThreeBufferGeometry
+      // Compute vertices in order to evaluate diagonals
+      const v0 = loop[0]!.v, v1 = loop[1]!.v, v2 = loop[2]!.v, v3 = loop[3]!.v;
+      const edgeLen = (a: number, b: number) => {
+        const pa = mesh.position.get(a)!; const pb = mesh.position.get(b)!;
+        const dx = pa[0]! - pb[0]!; const dy = pa[1]! - pb[1]!; const dz = pa[2]! - pb[2]!;
+        return Math.hypot(dx, dy, dz);
+      };
+      const d1 = edgeLen(v0, v2);
+      const d2 = edgeLen(v1, v3);
+      const choose14 = policy.diagonal === "shortest" ? d1 <= d2 : d1 <= d2; // placeholder, same as above
+      if (choose14) {
+        pushTriByVerts(loop, v0, v1, v2, f);
+        pushTriByVerts(loop, v0, v2, v3, f);
+      } else {
+        pushTriByVerts(loop, v1, v2, v3, f);
+        pushTriByVerts(loop, v1, v3, v0, f);
+      }
+    } else if (sides > 0) {
+      // Fan triangulation
+      for (let i = 1; i < loop.length - 1; i++) {
+        pushCorner(loop[0]!.v, loop[0]!.he);
+        pushCorner(loop[i]!.v, loop[i]!.he);
+        pushCorner(loop[i + 1]!.v, loop[i + 1]!.he);
+        triFaces.push(f);
+        triCornerHEs.push([loop[0]!.he, loop[i]!.he, loop[i + 1]!.he]);
+      }
+    }
+  }
+
+  g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(posOut), 3));
+  if (uvOut.length > 0) g.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(uvOut), 2));
+  g.computeBoundingBox();
+  g.computeBoundingSphere();
+  g.computeVertexNormals();
+  return { geometry: g, triFaces, triCornerHEs };
+}

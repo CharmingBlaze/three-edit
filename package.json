@@ -4,22 +4,30 @@
   "description": "Headless, modular editing core for building Three.js-based 3D editors (half-edge, attributes, ops, adapters)",
   "license": "MIT",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "unpkg": "dist/index.global.js",
+  "jsdelivr": "dist/index.global.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.mjs"
     }
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "dev": "tsc -w -p tsconfig.build.json",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "demo": "vite",
+    "demo:build": "vite build",
+    "demo:preview": "vite preview"
   },
   "peerDependencies": {
     "three": ">=0.155.0"
@@ -34,6 +42,8 @@
     "prettier": "^3.3.3",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5",
-    "three": "^0.169.0"
+    "three": "^0.169.0",
+    "vite": "^5.3.4",
+    "tsup": "^8.1.0"
   }
 }

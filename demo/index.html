@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three-Edit: 3D Editor Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="toolbar">
+        <div class="group">
+          <label>New Primitive</label>
+          <select id="primitive-select">
+            <option value="none">Choose…</option>
+            <optgroup label="Three-Edit Primitives (Adapter)">
+              <option value="box">Box</option>
+              <option value="plane">Plane</option>
+              <option value="sphere">Sphere</option>
+              <option value="icosphere">Icosphere</option>
+              <option value="cylinder">Cylinder</option>
+              <option value="cone">Cone</option>
+              <option value="capsule">Capsule</option>
+              <option value="pyramid">Pyramid</option>
+              <option value="lathe">Lathe</option>
+              <option value="tube">Tube</option>
+              <option value="torus">Torus</option>
+              <option value="torusKnot">Torus Knot</option>
+            </optgroup>
+            <optgroup label="Raw Three.js Geometries">
+              <option value="three:box">Three.BoxGeometry</option>
+              <option value="three:plane">Three.PlaneGeometry</option>
+              <option value="three:sphere">Three.SphereGeometry</option>
+              <option value="three:capsule">Three.CapsuleGeometry</option>
+            </optgroup>
+          </select>
+          <button id="add-primitive">Add</button>
+        </div>
+        <div class="group">
+          <label>Mode</label>
+          <select id="mode-select">
+            <option value="object">Object</option>
+            <option value="vertex">Vertex</option>
+            <option value="edge">Edge</option>
+            <option value="face">Face</option>
+          </select>
+        </div>
+        <div class="group">
+          <label>Transform</label>
+          <button id="btn-translate">Translate</button>
+          <button id="btn-rotate">Rotate</button>
+          <button id="btn-scale">Scale</button>
+        </div>
+        <div class="group">
+          <label>Ops</label>
+          <button id="btn-extrude">Extrude</button>
+          <button id="btn-inset">Inset</button>
+          <button id="btn-bevel">Bevel</button>
+        </div>
+        <div class="group">
+          <button id="btn-delete">Delete</button>
+          <button id="btn-clear-select">Clear Select</button>
+          <button id="btn-new">New Scene</button>
+        </div>
+      </header>
+      <div id="viewport"></div>
+      <footer class="status">
+        <span id="status-text">Ready.</span>
+      </footer>
+    </div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>
