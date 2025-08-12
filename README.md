@@ -42,17 +42,17 @@ Three-Edit is a headless 3D editing library designed for integration into existi
 
 ### npm
 ```bash
-npm install @ghost9000/three-edit
+npm install three-edit-tools
 ```
 
 ### yarn
 ```bash
-yarn add @ghost9000/three-edit
+yarn add three-edit-tools
 ```
 
 ### pnpm
 ```bash
-pnpm add @ghost9000/three-edit
+pnpm add three-edit-tools
 ```
 
 ### CDN
@@ -61,16 +61,16 @@ pnpm add @ghost9000/three-edit
 <script type="importmap">
 {
   "imports": {
-    "@ghost9000/three-edit": "https://unpkg.com/@ghost9000/three-edit@1.2.0/dist/index.global.js"
+    "three-edit-tools": "https://unpkg.com/three-edit-tools@1.2.0/dist/index.global.js"
   }
 }
 </script>
 <script type="module">
-  import { createCube, createSphere } from '@ghost9000/three-edit';
+  import { createCube, createSphere } from 'three-edit-tools';
 </script>
 
 <!-- UMD/IIFE -->
-<script src="https://unpkg.com/@ghost9000/three-edit@1.2.0/dist/index.global.js"></script>
+<script src="https://unpkg.com/three-edit-tools@1.2.0/dist/index.global.js"></script>
 <script>
   const { createCube, createSphere } = window.threeEdit;
 </script>
@@ -84,9 +84,9 @@ import { createCube, EditableMesh } from 'three-edit';
 
 // Create a basic cube
 const cube = createCube({ 
-  width: 2, 
-  height: 2, 
-  depth: 2 
+    width: 2,
+    height: 2,
+    depth: 2
 });
 
 // Access mesh properties

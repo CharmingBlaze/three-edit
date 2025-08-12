@@ -1,5 +1,5 @@
 {
-  "name": "@ghost9000/three-edit",
+  "name": "three-edit-tools",
   "version": "1.2.0",
   "description": "A powerful, modular 3D editing library built on Three.js with a comprehensive set of tools for mesh manipulation, geometry operations, and 3D content creation.",
   "license": "MIT",
