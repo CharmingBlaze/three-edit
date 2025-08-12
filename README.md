@@ -40,19 +40,40 @@ Three-Edit is a headless 3D editing library designed for integration into existi
 
 ## Installation
 
-### NPM Package
+### npm
 ```bash
-npm install three-edit
+npm install @ghost9000/three-edit
 ```
 
-### CDN Usage
+### yarn
+```bash
+yarn add @ghost9000/three-edit
+```
+
+### pnpm
+```bash
+pnpm add @ghost9000/three-edit
+```
+
+### CDN
 ```html
-<script src="https://unpkg.com/three-edit@latest/dist/index.global.js"></script>
-```
+<!-- ES6 Module -->
+<script type="importmap">
+{
+  "imports": {
+    "@ghost9000/three-edit": "https://unpkg.com/@ghost9000/three-edit@1.2.0/dist/index.global.js"
+  }
+}
+</script>
+<script type="module">
+  import { createCube, createSphere } from '@ghost9000/three-edit';
+</script>
 
-### TypeScript
-```typescript
-import { createCube, knifeCut, EditableMesh } from 'three-edit';
+<!-- UMD/IIFE -->
+<script src="https://unpkg.com/@ghost9000/three-edit@1.2.0/dist/index.global.js"></script>
+<script>
+  const { createCube, createSphere } = window.threeEdit;
+</script>
 ```
 
 ## Quick Start

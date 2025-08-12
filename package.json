@@ -1,14 +1,14 @@
 {
-  "name": "three-edit",
+  "name": "@ghost9000/three-edit",
   "version": "1.2.0",
-  "description": "Modular headless 3D editing library for Three.js",
+  "description": "A powerful, modular 3D editing library built on Three.js with a comprehensive set of tools for mesh manipulation, geometry operations, and 3D content creation.",
   "license": "MIT",
   "type": "module",
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
-  "unpkg": "dist/index.global.js",
-  "jsdelivr": "dist/index.global.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "unpkg": "./dist/index.global.js",
+  "jsdelivr": "./dist/index.global.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
