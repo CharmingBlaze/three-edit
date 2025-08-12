@@ -61,6 +61,7 @@
   
   <script src="../browser/three-edit.js"></script>
   
+  <!-- Import map for modern browsers -->
   <script type="importmap">
     {
       "imports": {
@@ -70,9 +71,41 @@
     }
   </script>
   
+  <!-- Fallback for browsers without importmap support -->
+  <script>
+    // Check if importmap is supported
+    if (!('importmap' in HTMLScriptElement.prototype)) {
+      console.log('Importmap not supported, using fallback loading');
+      // Load Three.js via traditional script tag
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/three@0.150.1/build/three.min.js';
+      script.onload = function() {
+        // Load OrbitControls after Three.js
+        const controlsScript = document.createElement('script');
+        controlsScript.src = 'https://unpkg.com/three@0.150.1/examples/js/controls/OrbitControls.js';
+        document.head.appendChild(controlsScript);
+      };
+      document.head.appendChild(script);
+    }
+  </script>
+  
   <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    // Check if we're using importmap or fallback
+    let THREE, OrbitControls;
+    
+    try {
+      // Try to use importmap (modern browsers)
+      THREE = await import('three');
+      OrbitControls = await import('three/addons/controls/OrbitControls.js');
+      THREE = THREE.default || THREE;
+      OrbitControls = OrbitControls.OrbitControls;
+    } catch (error) {
+      // Fallback to global variables (older browsers)
+      console.log('Using fallback Three.js loading');
+      THREE = window.THREE;
+      OrbitControls = window.THREE.OrbitControls;
+    }
+    
     import * as CommonUtils from './common-utils.js';
     // Fallback conversion function in case window.threeEdit.conversion is not available
     function convertToBufferGeometry(editableMesh) {

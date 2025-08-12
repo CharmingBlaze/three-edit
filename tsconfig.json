@@ -19,6 +19,7 @@
     "declarationDir": "dist",
     "outDir": "dist",
     "baseUrl": ".",
+    "forceConsistentCasingInFileNames": true,
     "paths": {
       "three-edit/*": ["src/*"]
     }
