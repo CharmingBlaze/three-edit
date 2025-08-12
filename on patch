@@ -1,0 +1,3 @@
+[33ma0a6252[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m Eliminate Safari iOS compatibility warning: Replace importmap with dynamic script loading
+[33m6adc801[m Fix compatibility issues: Add forceConsistentCasingInFileNames and Safari iOS importmap fallback
+[33m1d0bd09[m Fix memory leak in knife tool: Remove excessive console.log statements causing performance issues

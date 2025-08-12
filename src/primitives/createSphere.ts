@@ -84,9 +84,9 @@ export function createSphere(options: CreateSphereOptions = {}): EditableMesh {
   mesh.faces.forEach(face => {
     if (face.normal) {
       // Recalculate normal to ensure it's correct
-      const v1 = mesh.getVertex(face.vertices[0]);
-      const v2 = mesh.getVertex(face.vertices[1]);
-      const v3 = mesh.getVertex(face.vertices[2]);
+      const v1 = mesh.getVertex(face.vertices[0]!);
+      const v2 = mesh.getVertex(face.vertices[1]!);
+      const v3 = mesh.getVertex(face.vertices[2]!);
       
       if (v1 && v2 && v3) {
         const edge1 = new Vector3(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);

@@ -85,7 +85,7 @@ export function createCone(options: CreateConeOptions = {}): EditableMesh {
     createFacesFromGrid(mesh, grid, normalizedOptions.materialId, context);
     
     // Store base vertices for cap creation
-    baseVertices = grid[0].slice(0, -1); // Exclude the last vertex which is the same as the first
+    baseVertices = grid[0]!.slice(0, -1); // Exclude the last vertex which is the same as the first
   } else {
     // Single height segment - create triangular faces from apex to base
     const apex = createVertex(mesh, {
@@ -113,8 +113,8 @@ export function createCone(options: CreateConeOptions = {}): EditableMesh {
 
     // Create side faces as triangles
     for (let r = 0; r < normalizedOptions.radialSegments; r++) {
-      const v1 = baseVertices[r];
-      const v2 = baseVertices[(r + 1) % normalizedOptions.radialSegments];
+      const v1 = baseVertices[r]!;
+      const v2 = baseVertices[(r + 1) % normalizedOptions.radialSegments]!;
       createFace(mesh, {
         vertexIds: [v1, v2, apex.id],
         materialId: normalizedOptions.materialId
@@ -132,8 +132,8 @@ export function createCone(options: CreateConeOptions = {}): EditableMesh {
     }, context);
 
     for (let r = 0; r < normalizedOptions.radialSegments; r++) {
-      const v1 = baseVertices[r];
-      const v2 = baseVertices[(r + 1) % normalizedOptions.radialSegments];
+      const v1 = baseVertices[r]!;
+      const v2 = baseVertices[(r + 1) % normalizedOptions.radialSegments]!;
       createFace(mesh, {
         vertexIds: [baseCenterVertex.id, v2, v1],
         materialId: normalizedOptions.materialId
