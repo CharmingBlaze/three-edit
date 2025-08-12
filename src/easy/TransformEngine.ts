@@ -26,25 +26,61 @@ export function applyTranslate(
   }
 }
 
+// Overloads:
+// 1) applyRotate(verts, deltaQuat, pivotWorld, meshObj, editable)
+// 2) applyRotate(verts, { pivot, axis, angle }, meshObj, editable)
 export function applyRotate(
   verts: number[],
   deltaQuat: THREE.Quaternion,
   pivotWorld: THREE.Vector3,
   meshObj: THREE.Object3D,
   editable: EditableLike
+): void;
+export function applyRotate(
+  verts: number[],
+  params: { pivot: THREE.Vector3; axis: THREE.Vector3; angle: number },
+  meshObj: THREE.Object3D,
+  editable: EditableLike
+): void;
+export function applyRotate(
+  verts: number[],
+  a: any,
+  b: any,
+  c: any,
+  d?: any
 ): void {
   if (verts.length === 0) return;
-  const pivot = pivotWorld.clone();
+  let dq: THREE.Quaternion;
+  let pivot: THREE.Vector3;
+  let meshObj: THREE.Object3D;
+  let editable: EditableLike;
+  if (a && typeof a.w === 'number' && b && 'x' in b && 'y' in b && 'z' in b) {
+    // Signature 1
+    dq = a as THREE.Quaternion;
+    pivot = (b as THREE.Vector3).clone();
+    meshObj = c as THREE.Object3D;
+    editable = d as EditableLike;
+  } else {
+    // Signature 2
+    const params = a as { pivot: THREE.Vector3; axis: THREE.Vector3; angle: number };
+    pivot = params.pivot.clone();
+    dq = new THREE.Quaternion().setFromAxisAngle(params.axis, params.angle);
+    meshObj = b as THREE.Object3D;
+    editable = c as EditableLike;
+  }
   for (const v of verts){
     const p = editable.position.get(v);
     const world = meshObj.localToWorld(new THREE.Vector3(p[0], p[1], p[2]));
-    const off = world.sub(pivot).applyQuaternion(deltaQuat);
+    const off = world.sub(pivot).applyQuaternion(dq);
     const nw = pivot.clone().add(off);
     const nl = meshObj.worldToLocal(nw);
     editable.position.set(v, [nl.x, nl.y, nl.z]);
   }
 }
 
+// Overloads:
+// 1) applyScale(verts, deltaScale, pivotWorld, gizmoRot, meshObj, editable)
+// 2) applyScale(verts, { pivot, scale }, meshObj, editable) // assumes identity gizmo rotation
 export function applyScale(
   verts: number[],
   deltaScale: THREE.Vector3,
@@ -52,16 +88,49 @@ export function applyScale(
   gizmoRot: THREE.Quaternion,
   meshObj: THREE.Object3D,
   editable: EditableLike
+): void;
+export function applyScale(
+  verts: number[],
+  params: { pivot: THREE.Vector3; scale: THREE.Vector3 },
+  meshObj: THREE.Object3D,
+  editable: EditableLike
+): void;
+export function applyScale(
+  verts: number[],
+  a: any,
+  b: any,
+  c: any,
+  d?: any,
+  e?: any,
+  f?: any
 ): void {
   if (verts.length === 0) return;
-  const pivot = pivotWorld.clone();
-  const rot = gizmoRot.clone();
-  const rotInv = gizmoRot.clone().invert();
+  let scale: THREE.Vector3;
+  let pivot: THREE.Vector3;
+  let rot: THREE.Quaternion;
+  let meshObj: THREE.Object3D;
+  let editable: EditableLike;
+  if (a && 'x' in a && b && 'x' in b && c && typeof c.w === 'number'){
+    // Signature 1
+    scale = a as THREE.Vector3;
+    pivot = (b as THREE.Vector3).clone();
+    rot = (c as THREE.Quaternion).clone();
+    meshObj = d as THREE.Object3D;
+    editable = e as EditableLike;
+  } else {
+    const params = a as { pivot: THREE.Vector3; scale: THREE.Vector3 };
+    scale = params.scale.clone();
+    pivot = params.pivot.clone();
+    rot = new THREE.Quaternion(); // identity
+    meshObj = b as THREE.Object3D;
+    editable = c as EditableLike;
+  }
+  const rotInv = rot.clone().invert();
   for (const v of verts){
     const p = editable.position.get(v);
     const world = meshObj.localToWorld(new THREE.Vector3(p[0], p[1], p[2]));
     const off = world.sub(pivot).applyQuaternion(rotInv);
-    off.set(off.x * deltaScale.x, off.y * deltaScale.y, off.z * deltaScale.z);
+    off.set(off.x * scale.x, off.y * scale.y, off.z * scale.z);
     const nw = pivot.clone().add(off.applyQuaternion(rot));
     const nl = meshObj.worldToLocal(nw);
     editable.position.set(v, [nl.x, nl.y, nl.z]);
