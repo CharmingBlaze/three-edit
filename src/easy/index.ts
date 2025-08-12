@@ -12,5 +12,5 @@ export * from './EventHub';
 export * from './Mouse';
 export * from './TransformEngine';
 export * from './InteractionController';
-export * from './gizmos/GizmoAdapter';
+export type { GizmoAdapter } from './gizmos/GizmoAdapter';
 export * from './gizmos/TransformControlsGizmo';
